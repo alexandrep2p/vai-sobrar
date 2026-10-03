@@ -1,0 +1,15 @@
+meta {
+  name: Detalhar recorrencia
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

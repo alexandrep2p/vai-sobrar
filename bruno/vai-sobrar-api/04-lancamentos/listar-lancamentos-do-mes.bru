@@ -1,0 +1,19 @@
+meta {
+  name: Listar lancamentos do mes
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/transactions?month={{currentMonth}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Filtros opcionais: month, status (PENDING|PAID), origin (MANUAL|CREDIT_CARD|INSTALLMENT|RECURRENCE), category_id, payment_method_id.
+}

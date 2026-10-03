@@ -1,0 +1,19 @@
+meta {
+  name: Pular ocorrencia
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}/occurrences/{{monthPlus2}}/skip
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Ocorrência paga ou de cartão gerada não pode ser pulada.
+}

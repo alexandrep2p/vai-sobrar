@@ -1,0 +1,15 @@
+meta {
+  name: Detalhar lancamento
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/transactions/{{transactionId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

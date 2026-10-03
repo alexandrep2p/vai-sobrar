@@ -1,0 +1,25 @@
+meta {
+  name: Editar recorrencia
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": 13000
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Vale para as ocorrências ainda não geradas; as geradas nunca mudam. end_date: null remove o término.
+}

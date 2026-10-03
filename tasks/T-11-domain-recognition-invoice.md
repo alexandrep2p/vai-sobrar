@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-06
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -53,3 +53,8 @@ Implementar `recognitionInvoice`, que decide em qual fatura cada alocação é r
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `recognitionInvoice` recebe a fatura do alvo, `refund_date`, faturas persistidas, `ClosedMonths` e `today`. Fatura `OPEN` persistida é aceita pelo status gravado (a transição automática é da T-23). Ciclo sem fatura com fechamento passado (`closing_date < hoje`) é pulado.
+* `validateRefundDate` lança `INVALID_REFUND_DATE`. Código em `src/domain/refund-recognition.ts`.

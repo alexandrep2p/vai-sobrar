@@ -1,0 +1,19 @@
+meta {
+  name: Estornos de um lancamento
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/transactions/{{cardPurchaseId}}/refunds
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Inclui valor original, estornado, saldo estornável e a situação (FULLY_REFUNDED / PARTIALLY_REFUNDED).
+}

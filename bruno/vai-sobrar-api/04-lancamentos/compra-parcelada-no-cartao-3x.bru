@@ -1,0 +1,34 @@
+meta {
+  name: Compra parcelada no cartao (3x)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "TV",
+    "amount": 30000,
+    "purchase_date": "{{today}}",
+    "category_id": "{{categoryId}}",
+    "payment_method_id": "{{cardMethodId}}",
+    "installment_count": 3
+  }
+}
+
+vars:post-response {
+  planId: res.body.installment_plan.id
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  installment_count entre 2 e 120. Os centavos restantes vão para as últimas parcelas.
+}

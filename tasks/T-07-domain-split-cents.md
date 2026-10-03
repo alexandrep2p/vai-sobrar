@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-04
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,8 @@ Implementar `splitCents(total, n)` e a variante proporcional usada por estornos.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `splitCents(total, n)` exige `n >= 1`; o mínimo de 2 parcelas e o limite de 120 são regras do caso de uso (T-26), não desta função.
+* `splitCentsProportional(total, pesos)`: participantes são os de peso > 0; usa `BigInt` no produto `total × peso` para evitar perda de precisão. Código em `src/domain/split-cents.ts`.

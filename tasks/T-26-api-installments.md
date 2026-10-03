@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-07, T-22
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,9 @@ Implementar criação, leitura e edição de compras parceladas.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `installment_count: 1` explícito é rejeitado (`INVALID_INSTALLMENT_OPERATION`, CA-PAR-07); para compra à vista omite-se o campo. Limite técnico de 120 (validação 400).
+* Parcela 1 pela regra de postagem; parcelas k ≥ 2 vão para o ciclo imediatamente seguinte (`invoiceForCycle`), sem regra de compra tardia; se esse ciclo estiver em mês fechado ou em fatura paga, a criação inteira é desfeita.
+* `PUT /installment-plans/:id` aceita só `description` e `category_id`; outros campos → 400. A edição passa pela matriz de edição usando a primeira parcela.

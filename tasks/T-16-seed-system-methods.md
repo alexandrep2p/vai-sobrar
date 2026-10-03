@@ -2,7 +2,7 @@
 
 * **Fase:** 2 — Persistência
 * **Depende de:** T-15
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -46,3 +46,7 @@ Garantir que PIX, Dinheiro e Débito existam desde a instalação.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Seed idempotente em `src/shared/seed.ts` (`seedSystemMethods`): cria PIX, Dinheiro e Débito (`SYSTEM`/`STANDARD`/ativos) só se não existir método com o mesmo nome (sem diferenciar maiúsculas). Integrado a `prisma db seed` (`prisma/seed.ts`, via `tsx`) e também executado na inicialização do servidor.

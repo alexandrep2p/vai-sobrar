@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-21, T-24, T-27, T-29
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -52,3 +52,8 @@ Implementar `GET /api/monthly-statement?month=YYYY-MM`.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Itens com `item_type` (`TRANSACTION`, `PROJECTED_OCCURRENCE`, `REFUND_CREDIT`), `display_date` por tipo, `amount` (positivo) e `signed_amount` (entradas e créditos de saída positivos). Ordenação pela data de exibição; empates: lançamentos, projeções, créditos.
+* Totais: `incomes`, `expenses` (com créditos abatidos pela natureza da compra original) e `balance`. Teste reproduz o extrato de janeiro/2027 da home §4 (8.800 / 2.759 / 6.041).

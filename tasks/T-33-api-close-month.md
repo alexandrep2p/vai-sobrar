@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-13, T-25, T-31
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,7 @@ Implementar `POST /api/financial-periods/:month/close`.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `canClose` é alimentado por contagens reais dentro de uma transação com o lock exclusivo de meses. `closed_at` usa o instante real do servidor. A resposta de recusa traz `details` com as contagens (lançamentos pendentes, ocorrências projetadas, faturas não pagas).

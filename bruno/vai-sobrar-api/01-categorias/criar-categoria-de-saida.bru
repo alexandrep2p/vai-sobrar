@@ -1,0 +1,26 @@
+meta {
+  name: Criar categoria de saida
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/categories
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Mercado {{runId}}",
+    "type": "EXPENSE"
+  }
+}
+
+vars:post-response {
+  categoryId: res.body.id
+}
+
+assert {
+  res.status: eq 201
+}

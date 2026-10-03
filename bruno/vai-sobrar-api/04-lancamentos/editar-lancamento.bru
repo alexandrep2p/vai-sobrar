@@ -1,0 +1,27 @@
+meta {
+  name: Editar lancamento
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/transactions/{{transactionId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "Aluguel (ajustado)",
+    "amount": 160000,
+    "due_date": "{{dueNextMonth}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Campos editáveis seguem a matriz da spec de lançamentos. Mover o vencimento para outro mês muda o mês financeiro.
+}

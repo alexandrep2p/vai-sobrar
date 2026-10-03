@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: vai-sobrar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vai_sobrar
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18+ mantém o PGDATA em subpasta de /var/lib/postgresql
+      - vai_sobrar_pgdata:/var/lib/postgresql
+      # Cria o banco de testes na primeira inicialização
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d vai_sobrar']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  vai_sobrar_pgdata:

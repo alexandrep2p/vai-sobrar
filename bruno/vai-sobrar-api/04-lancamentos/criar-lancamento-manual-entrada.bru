@@ -1,0 +1,30 @@
+meta {
+  name: Criar lancamento manual (entrada)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "Salario",
+    "amount": 850000,
+    "due_date": "{{dueDate}}",
+    "category_id": "{{incomeCategoryId}}",
+    "payment_method_id": "{{pixId}}",
+    "type": "INCOME"
+  }
+}
+
+vars:post-response {
+  incomeTransactionId: res.body.id
+}
+
+assert {
+  res.status: eq 201
+}

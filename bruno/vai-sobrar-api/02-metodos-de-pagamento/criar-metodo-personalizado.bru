@@ -1,0 +1,29 @@
+meta {
+  name: Criar metodo personalizado
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/payment-methods
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Vale-refeicao {{runId}}"
+  }
+}
+
+vars:post-response {
+  customMethodId: res.body.id
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  Cria somente métodos comuns (STANDARD). Cartões são criados na pasta de cartões.
+}

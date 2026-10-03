@@ -308,6 +308,8 @@ Consequências diretas das decisões acima, aplicadas na documentação. Não in
 | CD-19 | Créditos de estorno exibem a `refund_date` no extrato, por analogia à data da compra. | PD-25 | `home.md` §3.1 |
 | CD-20 | Se a fatura do ciclo da `refund_date` não puder receber crédito (`CLOSED`, `PAID` ou mês fechado), o crédito vai para a próxima fatura `OPEN` do mesmo cartão, com mês aberto. | PD-23, PD-04 | `refunds.md` §8 |
 | CD-21 | Depois que qualquer parcela está em fatura `PAID`, a descrição e a categoria do parcelamento não podem mais ser alteradas. | PD-12, PD-27 | `installments.md` §9 |
+| CD-22 | O cancelamento de uma recorrência bloqueia as ocorrências com data igual ou posterior à data do cancelamento; as anteriores permanecem. | PD-19 | `recurrences.md` §12 |
+| CD-23 | A pausa cobre as datas de `paused_from` até a véspera de `paused_until`; na data `paused_until` a recorrência volta a gerar ocorrências. | PD-10 | `recurrences.md` §11 |
 
 ### Decisão de compra tardia (confirmada nesta etapa)
 

@@ -2,7 +2,7 @@
 
 * **Fase:** 0 — Base técnica
 * **Depende de:** T-01
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Estado atual
 
@@ -54,3 +54,11 @@ Disponibilizar o banco PostgreSQL de desenvolvimento e teste e preparar o fluxo 
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Imagem `postgres:18` (mesma que o desenvolvedor já tinha). Volume montado em `/var/lib/postgresql`, como exige o Postgres 18+. Usuário/senha de desenvolvimento `postgres`/`postgres` (somente local).
+* Um servidor, dois bancos: `vai_sobrar` (dev) e `vai_sobrar_test`, este criado por `docker/postgres-init/01-create-test-db.sql` na primeira inicialização do volume (para recriar: `docker compose down -v`).
+* `npm test` roda só testes sem banco; testes de integração são `tests/**/*.int.spec.ts`, rodam com `npm run test:integration` (config `vitest.integration.config.ts`, arquivos em sequência, `DATABASE_URL` forçada para `TEST_DATABASE_URL`). `db:test:migrate` aplica migrations no banco de testes.
+* Cliente único em `src/shared/prisma.ts`; `tests/integration/db.ts` exporta `resetDatabase()` (TRUNCATE de todas as tabelas, exceto `_prisma_migrations`), a ser chamado em `beforeEach`.
+* Sem modelos ainda, `prisma migrate dev` reporta "Already in sync"; a primeira migration é criada na T-15.

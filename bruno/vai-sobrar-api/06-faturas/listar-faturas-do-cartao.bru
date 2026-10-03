@@ -1,0 +1,24 @@
+meta {
+  name: Listar faturas do cartao
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}/invoices?from={{currentMonth}}&to={{monthPlus5}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:post-response {
+  const first = res.body.data.find((i) => i.persisted);
+  if (first) bru.setVar('invoiceId', first.id);
+}
+
+docs {
+  Traz as faturas persistidas e os ciclos futuros sem lançamentos (persisted: false).
+}

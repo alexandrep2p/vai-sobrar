@@ -1,0 +1,56 @@
+# Dependências
+node_modules/
+
+# Build / saída
+dist/
+out/
+build/
+.angular/
+*.tsbuildinfo
+
+# Variáveis de ambiente (mantém os exemplos)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testes / cobertura
+coverage/
+.nyc_output/
+.vite/
+.vitest/
+
+# Banco local (SQLite)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Cache de ferramentas
+.eslintcache
+.cache/
+.parcel-cache/
+.npm/
+
+# Editores / IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.suo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code (configuração local)
+.claude/settings.local.json

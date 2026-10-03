@@ -1,0 +1,26 @@
+meta {
+  name: Pausar recorrencia
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}/pause
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "paused_from": "{{today}}",
+    "paused_until": "{{pauseUntil}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  paused_from: hoje ou futuro. paused_until é opcional. Sem ocorrências retroativas na retomada.
+}

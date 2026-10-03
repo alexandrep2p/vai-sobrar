@@ -1,0 +1,25 @@
+meta {
+  name: Editar categoria
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/categories/{{categoryId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Supermercado {{runId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  O tipo só pode ser alterado enquanto a categoria não tiver uso (lançamento ou recorrência).
+}

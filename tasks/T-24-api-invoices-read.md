@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-09, T-23
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,8 @@ Expor faturas persistidas e ciclos projetados vazios, com totais e situação.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Listagem: `from` padrão = mês atual, `to` = `from` + 11; máximo de 60 meses. Ciclos sem fatura são projetados (`persisted: false`, `id: null`, total zero, `status` derivado do fechamento). Cartão desativado só projeta ciclos até a última fatura persistida.
+* `situation: "OVERDUE"` para `CLOSED` com `due_date` passado, independentemente do valor. O detalhe traz lançamentos, créditos (alocações) e créditos recebidos.

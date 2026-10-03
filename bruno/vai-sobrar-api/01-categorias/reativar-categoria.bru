@@ -1,0 +1,15 @@
+meta {
+  name: Reativar categoria
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/categories/{{categoryId}}/activate
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

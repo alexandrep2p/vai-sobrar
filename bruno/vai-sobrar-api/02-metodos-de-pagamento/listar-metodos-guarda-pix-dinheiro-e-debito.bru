@@ -1,0 +1,22 @@
+meta {
+  name: Listar metodos (guarda PIX, Dinheiro e Debito)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/payment-methods
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:post-response {
+  const find = (n) => res.body.data.find((m) => m.name === n);
+  bru.setVar('pixId', find('PIX').id);
+  bru.setVar('cashId', find('Dinheiro').id);
+  bru.setVar('debitId', find('Débito').id);
+}

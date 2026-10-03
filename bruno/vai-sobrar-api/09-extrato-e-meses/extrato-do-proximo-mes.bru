@@ -1,0 +1,15 @@
+meta {
+  name: Extrato do proximo mes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/monthly-statement?month={{nextMonth}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
