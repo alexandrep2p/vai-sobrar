@@ -1,0 +1,32 @@
+meta {
+  name: Criar cartao
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/credit-cards
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Nubank {{runId}}",
+    "best_purchase_day": 6,
+    "due_day": 15
+  }
+}
+
+vars:post-response {
+  cardId: res.body.id
+  cardMethodId: res.body.payment_method_id
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  cardId é usado em /credit-cards/:id; cardMethodId (payment_method_id) é usado ao lançar compras no cartão.
+}

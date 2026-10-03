@@ -2,7 +2,7 @@
 
 * **Fase:** 0 — Base técnica
 * **Depende de:** —
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Estado atual
 
@@ -55,3 +55,9 @@ Completar o esqueleto do backend já existente para a organização por módulos
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Testes em `backend/tests/domain/` (unitários de domínio) e `backend/tests/api/` (API); o Vitest inclui `tests/**/*.spec.ts`. O teste de `/health` foi movido para `tests/api/`.
+* ESLint 9 (flat config, `typescript-eslint`) + Prettier (`eslint-config-prettier`); aspas simples, `printWidth` 100. Diretório `prisma/` ignorado pelo lint e pelo format.
+* Diretórios vazios mantidos com `.gitkeep`.

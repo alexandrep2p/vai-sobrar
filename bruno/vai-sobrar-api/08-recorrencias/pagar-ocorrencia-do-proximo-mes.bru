@@ -1,0 +1,25 @@
+meta {
+  name: Pagar ocorrencia (do proximo mes)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}/occurrences/{{nextMonth}}/pay
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "paid_at": "{{today}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Somente método comum.
+}

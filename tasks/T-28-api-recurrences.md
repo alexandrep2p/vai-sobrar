@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-17, T-18, T-23
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,9 @@ Implementar o cadastro e o ciclo de vida das recorrências.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Nova coluna técnica `recurrences.created_on` (migration `technical_additions`): data de criação segundo o relógio injetado, usada na condição 1 da elegibilidade (não há ocorrência anterior à criação). Mais a tabela técnica `job_states`.
+* Pausa: só recorrência `ACTIVE` pausa; `paused_from` hoje ou futuro; `paused_until` posterior. Retomar encerra a pausa vigente em hoje (`paused_until = hoje`) ou cancela uma pausa agendada. Cancelar grava `cancelled_at` (CD-22). Estados inválidos → `RECURRENCE_INVALID_STATE`/`RECURRENCE_CANCELLED`; pausa inválida → `INVALID_PAUSE_PERIOD`.
+* Alterações em recorrência cancelada são rejeitadas (`RECURRENCE_CANCELLED`).

@@ -1,0 +1,15 @@
+meta {
+  name: Desativar categoria
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/categories/{{categoryId}}/deactivate
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

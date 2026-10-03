@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-15
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,9 @@ Implementar o módulo de categorias.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Respostas de lista usam o envelope `{ "data": [...] }`; cada categoria traz `in_use` (lançamento ou recorrência). `PUT` aceita `name` e/ou `type`; informar o tipo atual não conta como mudança.
+* Códigos técnicos novos: `CATEGORY_NOT_FOUND` (404) e `CATEGORY_NAME_TAKEN` (409). O índice único em `lower(name)` cobre corridas (violação P2002 traduzida para o mesmo erro).
+* Reativar uma categoria dispara a geração das ocorrências do dia (recurrences.md §14).

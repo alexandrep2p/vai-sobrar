@@ -9,7 +9,18 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "db:reset": "prisma migrate reset",
+    "db:test:migrate": "node scripts/migrate-test.mjs",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:seed": "prisma db seed",
+    "test:all": "vitest run && vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -19,14 +30,23 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
     "@types/supertest": "^6.0.2",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
     "prisma": "^6.4.1",
     "supertest": "^7.0.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^3.0.6"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

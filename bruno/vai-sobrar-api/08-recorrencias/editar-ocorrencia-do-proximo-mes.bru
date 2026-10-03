@@ -1,0 +1,25 @@
+meta {
+  name: Editar ocorrencia (do proximo mes)
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}/occurrences/{{nextMonth}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": 14000
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Se a ocorrência ainda é projetada, ela é gerada com os valores editados. A categoria não pode ser alterada.
+}

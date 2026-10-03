@@ -1,0 +1,15 @@
+meta {
+  name: Desativar cartao
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}/deactivate
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-12, T-28
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,7 @@ Calcular ocorrências futuras não geradas a partir da configuração atual, sem
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Projeção calculada na leitura, sem persistir. Para o mês financeiro X consideram-se as ocorrências dos meses X-1 e X (uma ocorrência de cartão cai no mês da ocorrência ou no seguinte). Só entram ocorrências elegíveis com data futura, sem lançamento gerado e sem exceção, usando método/categoria ativos hoje.

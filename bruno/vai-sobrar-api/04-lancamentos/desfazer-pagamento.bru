@@ -1,0 +1,15 @@
+meta {
+  name: Desfazer pagamento
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/transactions/{{transactionId}}/unpay
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Editar descricao e categoria da compra parcelada
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/installment-plans/{{planId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "TV 4K"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Vale para todas as parcelas; só é permitido se nenhuma estiver em mês fechado ou fatura paga.
+}

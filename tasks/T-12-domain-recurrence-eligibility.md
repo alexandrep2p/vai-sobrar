@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-05
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -52,3 +52,8 @@ Implementar a data da ocorrência e `occurrenceEligibility`.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* **Interpretações a confirmar** (a spec não fixa): cancelamento bloqueia ocorrências com data **>=** `cancelledOn`; pausa vale no intervalo `[paused_from, paused_until)` (no dia do retorno a recorrência volta). `Recurrence` em recurrences.md §3 não tem campo de data de cancelamento — a T-15 precisa de um (`cancelled_at`) para esta avaliação.
+* Ordem de avaliação = ordem da spec; retorna o primeiro motivo (`IneligibilityReason`). Atividade de método/categoria "na data" e exceção chegam prontas em `OccurrenceState`. Código em `src/domain/recurrence-eligibility.ts`.

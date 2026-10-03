@@ -1,0 +1,25 @@
+meta {
+  name: Editar metodo personalizado
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/payment-methods/{{customMethodId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Vale-alimentacao {{runId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Métodos do sistema (PIX, Dinheiro, Débito) não são editáveis.
+}

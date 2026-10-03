@@ -1,0 +1,26 @@
+meta {
+  name: Editar cartao
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "best_purchase_day": 6,
+    "due_day": 15
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  A alteração vale só para ciclos cuja fatura ainda não foi criada.
+}

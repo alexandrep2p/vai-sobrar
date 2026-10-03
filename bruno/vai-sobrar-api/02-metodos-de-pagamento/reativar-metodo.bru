@@ -1,0 +1,15 @@
+meta {
+  name: Reativar metodo
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/payment-methods/{{customMethodId}}/activate
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

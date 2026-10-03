@@ -1,0 +1,31 @@
+meta {
+  name: Estornar compra a vista
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/refunds
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "transaction_id": "{{cardPurchaseId}}",
+    "amount": 5000,
+    "refund_date": "{{today}}"
+  }
+}
+
+vars:post-response {
+  refundId: res.body.id
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  refund_date entre a data da compra e hoje. O crédito é reconhecido na fatura do alvo (se OPEN) ou na fatura do estorno.
+}

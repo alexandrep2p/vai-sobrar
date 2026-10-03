@@ -1,0 +1,15 @@
+meta {
+  name: Fechar mes (IRREVERSIVEL)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/financial-periods/{{currentMonth}}/close
+  body: none
+  auth: none
+}
+
+docs {
+  ATENÇÃO: o fechamento é irreversível e torna o mês imutável. Exige todos os lançamentos pagos, faturas do mês pagas, nenhuma ocorrência projetada e meses anteriores com lançamentos fechados.
+}

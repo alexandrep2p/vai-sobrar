@@ -1,0 +1,19 @@
+meta {
+  name: Extrato do mes atual
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/monthly-statement?month={{currentMonth}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Itens do mês financeiro (lançamentos, ocorrências projetadas e créditos de estorno) + entradas, saídas e saldo previsto.
+}

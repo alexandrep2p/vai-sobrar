@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-10, T-11, T-25, T-26
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,8 @@ Implementar o registro de estornos de compras de cartão.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `POST /api/refunds` valida o alvo (`REFUND_TARGET_NOT_ALLOWED` para PIX/manual, recorrência sem cartão e parcela individual), a `refund_date`, o saldo e distribui; tudo sob o lock do cartão, o que serializa estornos simultâneos. Um alvo e `strategy` coerentes são exigidos na validação do corpo (400).
+* Consultas por estorno, por lançamento (`/transactions/:id/refunds`) e por plano (`/installment-plans/:id/refunds`), com `refunded_amount`, `refundable_amount` e `refund_status` derivado (`FULLY_REFUNDED`/`PARTIALLY_REFUNDED`).

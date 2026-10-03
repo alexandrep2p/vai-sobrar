@@ -1,5 +1,10 @@
-// Prisma schema file
-// Configuração mínima para PostgreSQL sem modelos de domínio nesta etapa
+// Schema do Vai Sobrar — domain-model.md §3 e architecture.md §7.
+//
+// Convenções:
+// * dinheiro em centavos (Int); datas sem horário em DATE; meses como CHAR(7) 'YYYY-MM';
+// * nomes de tabelas e colunas em snake_case (@@map/@map);
+// * CHECKs, unicidade case-insensitive de nomes e formato de mês não são expressáveis em
+//   Prisma e vivem em prisma/migrations/*_domain_schema/migration.sql.
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +13,300 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ---------- Enums (domain-model.md §5) ----------
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+
+  @@map("category_type")
+}
+
+enum PaymentMethodSource {
+  SYSTEM
+  USER
+
+  @@map("payment_method_source")
+}
+
+enum PaymentMethodKind {
+  STANDARD
+  CREDIT_CARD
+
+  @@map("payment_method_kind")
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+
+  @@map("transaction_status")
+}
+
+enum TransactionOrigin {
+  MANUAL
+  CREDIT_CARD
+  INSTALLMENT
+  RECURRENCE
+
+  @@map("transaction_origin")
+}
+
+enum FinancialPeriodStatus {
+  OPEN
+  CLOSED
+
+  @@map("financial_period_status")
+}
+
+enum InvoiceStatus {
+  OPEN
+  CLOSED
+  PAID
+
+  @@map("invoice_status")
+}
+
+enum RecurrenceStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+
+  @@map("recurrence_status")
+}
+
+enum RefundStrategy {
+  FIRST_INSTALLMENTS
+  LAST_INSTALLMENTS
+  PROPORTIONAL
+
+  @@map("refund_strategy")
+}
+
+// ---------- Modelos ----------
+
+model FinancialPeriod {
+  id             String                @id @default(uuid()) @db.Uuid
+  referenceMonth String                @unique @map("reference_month") @db.Char(7)
+  status         FinancialPeriodStatus @default(OPEN)
+  closedAt       DateTime?             @map("closed_at") @db.Timestamptz(3)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("financial_periods")
+}
+
+model Category {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(100)
+  type         CategoryType
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  transactions Transaction[]
+  recurrences  Recurrence[]
+
+  @@map("categories")
+}
+
+model PaymentMethod {
+  id           String              @id @default(uuid()) @db.Uuid
+  name         String              @db.VarChar(100)
+  source       PaymentMethodSource
+  kind         PaymentMethodKind   @default(STANDARD)
+  active       Boolean             @default(true)
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  creditCard   CreditCard?
+  transactions Transaction[]
+  recurrences  Recurrence[]
+  paidInvoices Invoice[]           @relation("InvoicePaymentMethod")
+
+  @@map("payment_methods")
+}
+
+model CreditCard {
+  id               String            @id @default(uuid()) @db.Uuid
+  paymentMethodId  String            @unique @map("payment_method_id") @db.Uuid
+  bestPurchaseDay  Int               @map("best_purchase_day") @db.SmallInt
+  dueDay           Int               @map("due_day") @db.SmallInt
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  paymentMethod    PaymentMethod     @relation(fields: [paymentMethodId], references: [id])
+  invoices         Invoice[]
+  installmentPlans InstallmentPlan[]
+
+  @@map("credit_cards")
+}
+
+model Invoice {
+  id                           String             @id @default(uuid()) @db.Uuid
+  creditCardId                 String             @map("credit_card_id") @db.Uuid
+  referenceMonth               String             @map("reference_month") @db.Char(7)
+  closingDate                  DateTime           @map("closing_date") @db.Date
+  dueDate                      DateTime           @map("due_date") @db.Date
+  status                       InvoiceStatus      @default(OPEN)
+  paidAt                       DateTime?          @map("paid_at") @db.Date
+  paymentMethodId              String?            @map("payment_method_id") @db.Uuid
+  creditBalance                Int                @default(0) @map("credit_balance")
+  creditTransferredToInvoiceId String?            @map("credit_transferred_to_invoice_id") @db.Uuid
+  createdAt                    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                    DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  creditCard                   CreditCard         @relation(fields: [creditCardId], references: [id])
+  paymentMethod                PaymentMethod?     @relation("InvoicePaymentMethod", fields: [paymentMethodId], references: [id])
+  creditTransferredTo          Invoice?           @relation("InvoiceCreditTransfer", fields: [creditTransferredToInvoiceId], references: [id])
+  creditReceivedFrom           Invoice[]          @relation("InvoiceCreditTransfer")
+  transactions                 Transaction[]
+  refundAllocations            RefundAllocation[]
+
+  @@unique([creditCardId, referenceMonth])
+  @@index([creditTransferredToInvoiceId])
+  @@map("invoices")
+}
+
+model Transaction {
+  id                String             @id @default(uuid()) @db.Uuid
+  description       String             @db.VarChar(200)
+  amount            Int
+  financialMonth    String             @map("financial_month") @db.Char(7)
+  dueDate           DateTime           @map("due_date") @db.Date
+  paidAt            DateTime?          @map("paid_at") @db.Date
+  status            TransactionStatus  @default(PENDING)
+  categoryId        String             @map("category_id") @db.Uuid
+  paymentMethodId   String             @map("payment_method_id") @db.Uuid
+  origin            TransactionOrigin
+  purchaseDate      DateTime?          @map("purchase_date") @db.Date
+  invoiceId         String?            @map("invoice_id") @db.Uuid
+  recurrenceId      String?            @map("recurrence_id") @db.Uuid
+  occurrenceMonth   String?            @map("occurrence_month") @db.Char(7)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  category          Category           @relation(fields: [categoryId], references: [id])
+  paymentMethod     PaymentMethod      @relation(fields: [paymentMethodId], references: [id])
+  invoice           Invoice?           @relation(fields: [invoiceId], references: [id])
+  recurrence        Recurrence?        @relation(fields: [recurrenceId], references: [id])
+  installment       Installment?
+  refunds           Refund[]
+  refundAllocations RefundAllocation[]
+
+  // Nulos são distintos no PostgreSQL: a unicidade só vale para ocorrências de recorrência.
+  @@unique([recurrenceId, occurrenceMonth])
+  @@index([financialMonth])
+  @@index([invoiceId])
+  @@index([categoryId])
+  @@index([paymentMethodId])
+  @@map("transactions")
+}
+
+model InstallmentPlan {
+  id               String        @id @default(uuid()) @db.Uuid
+  creditCardId     String        @map("credit_card_id") @db.Uuid
+  totalAmount      Int           @map("total_amount")
+  installmentCount Int           @map("installment_count") @db.SmallInt
+  purchaseDate     DateTime      @map("purchase_date") @db.Date
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  creditCard       CreditCard    @relation(fields: [creditCardId], references: [id])
+  installments     Installment[]
+  refunds          Refund[]
+
+  @@index([creditCardId])
+  @@map("installment_plans")
+}
+
+model Installment {
+  id                String          @id @default(uuid()) @db.Uuid
+  installmentPlanId String          @map("installment_plan_id") @db.Uuid
+  transactionId     String          @unique @map("transaction_id") @db.Uuid
+  number            Int             @db.SmallInt
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  installmentPlan   InstallmentPlan @relation(fields: [installmentPlanId], references: [id])
+  transaction       Transaction     @relation(fields: [transactionId], references: [id])
+
+  @@unique([installmentPlanId, number])
+  @@map("installments")
+}
+
+model Recurrence {
+  id              String                @id @default(uuid()) @db.Uuid
+  description     String                @db.VarChar(200)
+  amount          Int
+  categoryId      String                @map("category_id") @db.Uuid
+  paymentMethodId String                @map("payment_method_id") @db.Uuid
+  dueDay          Int                   @map("due_day") @db.SmallInt
+  startDate       DateTime              @map("start_date") @db.Date
+  endDate         DateTime?             @map("end_date") @db.Date
+  status          RecurrenceStatus      @default(ACTIVE)
+  pausedFrom      DateTime?             @map("paused_from") @db.Date
+  pausedUntil     DateTime?             @map("paused_until") @db.Date
+  // Data do cancelamento (CD-22); preenchida somente quando status = CANCELLED.
+  cancelledAt     DateTime?             @map("cancelled_at") @db.Date
+  // Data de criação segundo o relógio da aplicação (recurrences.md §5, condição 1).
+  createdOn       DateTime              @default(dbgenerated("CURRENT_DATE")) @map("created_on") @db.Date
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  category        Category              @relation(fields: [categoryId], references: [id])
+  paymentMethod   PaymentMethod         @relation(fields: [paymentMethodId], references: [id])
+  transactions    Transaction[]
+  exceptions      RecurrenceException[]
+
+  @@index([categoryId])
+  @@index([paymentMethodId])
+  @@map("recurrences")
+}
+
+model RecurrenceException {
+  id              String     @id @default(uuid()) @db.Uuid
+  recurrenceId    String     @map("recurrence_id") @db.Uuid
+  occurrenceMonth String     @map("occurrence_month") @db.Char(7)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  recurrence      Recurrence @relation(fields: [recurrenceId], references: [id])
+
+  @@unique([recurrenceId, occurrenceMonth])
+  @@map("recurrence_exceptions")
+}
+
+model Refund {
+  id                String             @id @default(uuid()) @db.Uuid
+  transactionId     String?            @map("transaction_id") @db.Uuid
+  installmentPlanId String?            @map("installment_plan_id") @db.Uuid
+  amount            Int
+  refundDate        DateTime           @map("refund_date") @db.Date
+  strategy          RefundStrategy?
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  transaction       Transaction?       @relation(fields: [transactionId], references: [id])
+  installmentPlan   InstallmentPlan?   @relation(fields: [installmentPlanId], references: [id])
+  allocations       RefundAllocation[]
+
+  @@index([transactionId])
+  @@index([installmentPlanId])
+  @@map("refunds")
+}
+
+model RefundAllocation {
+  id            String      @id @default(uuid()) @db.Uuid
+  refundId      String      @map("refund_id") @db.Uuid
+  transactionId String      @map("transaction_id") @db.Uuid
+  amount        Int
+  invoiceId     String      @map("invoice_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  refund        Refund      @relation(fields: [refundId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id])
+
+  @@index([refundId])
+  @@index([transactionId])
+  @@index([invoiceId])
+  @@map("refund_allocations")
+}
+
+// Estado técnico de rotinas (ex.: marca d'água da geração de ocorrências); não é entidade de domínio.
+model JobState {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("job_states")
 }

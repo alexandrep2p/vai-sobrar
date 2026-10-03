@@ -1,0 +1,15 @@
+meta {
+  name: Retomar recorrencia
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/recurrences/{{recurrenceId}}/resume
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

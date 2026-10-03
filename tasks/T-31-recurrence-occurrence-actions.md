@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-30
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,7 @@ Permitir editar, pagar e pular ocorrências.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Editar/pagar uma ocorrência projetada a gera na mesma transação (rejeições desfazem a geração). Editar usa a matriz de edição; `category_id` é aceito no corpo apenas para ser rejeitado. Pular: projetada → exceção; gerada comum `PENDING` → remove o lançamento e cria a exceção; demais casos → `RECURRENCE_OCCURRENCE_NOT_SKIPPABLE`; ocorrência inexistente → `RECURRENCE_OCCURRENCE_NOT_FOUND`.

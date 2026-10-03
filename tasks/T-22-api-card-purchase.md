@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-06, T-19, T-21
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,7 @@ Registrar compras à vista no cartão com postagem na fatura correta.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Postagem via `postingInvoice` dentro de transação com o lock do cartão; a fatura é criada com `INSERT ... ON CONFLICT DO NOTHING` (idempotente sob concorrência). Sem `purchase_date` → `INVALID_PURCHASE_DATE`; cartão inativo → `CARD_INACTIVE`.
