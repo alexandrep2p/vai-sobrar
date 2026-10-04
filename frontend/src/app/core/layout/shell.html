@@ -1,0 +1,40 @@
+<mat-sidenav-container class="container">
+  <mat-sidenav
+    class="sidenav"
+    [mode]="isDesktop() ? 'side' : 'over'"
+    [opened]="navOpen()"
+    (closedStart)="navOpen.set(false)"
+    [attr.aria-label]="'Navegação principal'"
+  >
+    <a class="brand" routerLink="/home" (click)="onNavigate()">Vai Sobrar</a>
+    <mat-nav-list>
+      @for (item of items; track item.path) {
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive
+          #active="routerLinkActive"
+          [activated]="active.isActive"
+          (click)="onNavigate()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    @if (!isDesktop()) {
+      <mat-toolbar class="topbar">
+        <button mat-icon-button aria-label="Abrir menu" (click)="navOpen.set(true)">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="topbar-title">Vai Sobrar</span>
+      </mat-toolbar>
+    }
+    <main class="content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

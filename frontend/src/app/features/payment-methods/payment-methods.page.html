@@ -1,0 +1,40 @@
+<div class="page-header">
+  <h1>Métodos de pagamento</h1>
+  <button mat-flat-button (click)="create()">
+    <mat-icon>add</mat-icon>
+    Novo método
+  </button>
+</div>
+
+<app-load-state
+  [status]="status()"
+  [empty]="methods().length === 0"
+  emptyMessage="Nenhum método de pagamento cadastrado."
+  (retry)="load()"
+>
+  @for (section of sections(); track section.title) {
+    @if (section.items.length > 0) {
+      <h2 class="section-title">{{ section.title }}</h2>
+      <div class="list-card">
+        @for (method of section.items; track method.id) {
+          <div class="list-row" data-testid="method-row">
+            <div class="grow">
+              <div>{{ method.name }}</div>
+              <div class="sub">{{ sourceLabel(method.source) }} · {{ kindLabel(method.kind) }}</div>
+            </div>
+            @if (isEditable(method)) {
+              <button mat-icon-button aria-label="Editar" (click)="edit(method)" data-testid="edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+            } @else if (method.kind === 'CREDIT_CARD') {
+              <a mat-button routerLink="/cartoes" data-testid="card-link">Editar no cartão</a>
+            }
+            <button mat-stroked-button (click)="toggle(method)" data-testid="toggle">
+              {{ method.active ? 'Desativar' : 'Reativar' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  }
+</app-load-state>

@@ -1,0 +1,79 @@
+<div class="page-header">
+  <h1>Faturas</h1>
+</div>
+
+<app-load-state
+  [status]="status()"
+  [empty]="cards().length === 0"
+  emptyMessage="Nenhum cartão cadastrado."
+  (retry)="loadCards()"
+>
+  @if (cards().length === 0) {
+    <a mat-flat-button routerLink="/cartoes">Cadastrar cartão</a>
+  }
+  <div class="filters">
+    <mat-form-field>
+      <mat-label>Cartão</mat-label>
+      <mat-select
+        [value]="cardId()"
+        (selectionChange)="selectCard($event.value)"
+        data-testid="card-select"
+      >
+        @for (c of cards(); track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}{{ c.active ? '' : ' (inativo)' }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>De</mat-label>
+      <input
+        matInput
+        type="month"
+        [value]="from()"
+        (change)="setRange($any($event.target).value, to())"
+        data-testid="from"
+      />
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Até</mat-label>
+      <input
+        matInput
+        type="month"
+        [value]="to()"
+        (change)="setRange(from(), $any($event.target).value)"
+        data-testid="to"
+      />
+    </mat-form-field>
+  </div>
+
+  @if (invoices().length === 0) {
+    <div class="state-box" data-testid="empty-invoices">Nenhuma fatura no período.</div>
+  } @else {
+    <div class="list-card">
+      @for (invoice of invoices(); track invoice.reference_month) {
+        <div class="list-row wrap" data-testid="invoice-row">
+          <div class="grow">
+            <div>{{ month(invoice.reference_month) }}</div>
+            <div class="sub">
+              Fecha em {{ date(invoice.closing_date) }} · Vence em {{ date(invoice.due_date) }}
+            </div>
+          </div>
+          @if (invoice.persisted) {
+            <div class="amount" data-testid="amount-due">
+              {{ money(invoice.totals.amount_due) }}
+            </div>
+            <span class="chip" [class.positive]="invoice.status === 'PAID'" data-testid="status">
+              {{ statusLabel(invoice.status) }}
+            </span>
+            @if (invoice.situation === 'OVERDUE') {
+              <span class="chip warn" data-testid="overdue">{{ overdueLabel }}</span>
+            }
+            <button mat-stroked-button (click)="open(invoice)" data-testid="open">Detalhes</button>
+          } @else {
+            <span class="chip" data-testid="no-entries">{{ emptyCycleLabel }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
+</app-load-state>

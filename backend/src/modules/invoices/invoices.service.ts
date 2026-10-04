@@ -306,9 +306,6 @@ export const payInvoice = async (
     if (invoice.status === 'PAID') {
       throw new BusinessError('INVOICE_ALREADY_PAID', 'A fatura já foi paga.');
     }
-    if (invoice.status !== 'CLOSED') {
-      throw new BusinessError('INVOICE_NOT_CLOSED', 'Só faturas fechadas podem ser pagas.');
-    }
     if (closed.has(invoice.referenceMonth as YearMonth)) {
       throw new BusinessError('PERIOD_CLOSED', `O mês ${invoice.referenceMonth} está fechado.`);
     }

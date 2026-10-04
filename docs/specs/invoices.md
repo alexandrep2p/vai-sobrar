@@ -75,22 +75,24 @@ Total: R$ 0,00
 ## 5. Estados (normativo)
 
 ```text
-OPEN ──(data atual > closing_date)──► CLOSED ──(ação "Pagar fatura")──► PAID
+OPEN ──(data atual > closing_date)──► CLOSED
+  │                                       │
+  └──────(ação "Pagar fatura")────────────┴──► PAID
 ```
 
 | Estado | Significado |
 |---|---|
 | `OPEN` (Aberta) | Ciclo de compras em andamento: data atual ≤ `closing_date`. |
 | `CLOSED` (Fechada) | Ciclo encerrado e fatura ainda não paga. |
-| `PAID` (Paga) | Fatura liquidada pela ação "Pagar fatura". Estado final. |
+| `PAID` (Paga) | Fatura liquidada pela ação "Pagar fatura" (com a fatura `OPEN` ou `CLOSED`). Estado final. |
 
 Regras:
 
 * `OPEN → CLOSED` ocorre automaticamente quando a data atual ultrapassa o `closing_date`. Não existe fechamento manual.
-* `CLOSED → PAID` ocorre **somente** pela ação "Pagar fatura" (§9).
+* `OPEN → PAID` e `CLOSED → PAID` ocorrem **somente** pela ação "Pagar fatura" (§9, PD-32). A fatura `OPEN` pode ser paga antes do `closing_date`; depois de paga, ela mantém o `closing_date` gravado e não passa a `CLOSED`.
 * Uma fatura **não** passa a `PAID` porque o valor a pagar chegou a zero. Lançamentos de cartão não são pagos individualmente (§9.3).
 * Não existe `PAID → CLOSED` nem `PAID → OPEN`. Uma fatura paga nunca é reaberta.
-* Não existe pagamento de fatura `OPEN`.
+* Não existe fechamento manual de fatura; o usuário pode, porém, pagar a fatura `OPEN` (PD-32).
 
 ### 5.1 O que cada estado aceita
 
@@ -100,7 +102,7 @@ Regras:
 | Receber compra tardia de ciclo anterior | sim | sim | não |
 | Receber crédito de estorno | sim | não → fatura do estorno (`refunds.md` §8) | não |
 | Editar descrição, categoria ou valor de lançamento postado (quando a matriz de `transactions.md` §12 permitir) | sim | sim | não |
-| Pagar | não | sim | não |
+| Pagar | sim (PD-32) | sim | não |
 
 A fatura `CLOSED` continua aceitando compras do próprio ciclo e compras tardias (DEC-06), mas **não** recebe créditos de estorno (PD-23).
 
@@ -182,7 +184,7 @@ Ação explícita: **Pagar fatura**.
 
 ### 9.1 Pré-condições
 
-* `status = CLOSED`;
+* `status = OPEN` ou `CLOSED` (não `PAID`);
 * o mês financeiro do `reference_month` está aberto;
 * `paid_at` informado: data válida, não posterior a hoje e não pertencente a um mês financeiro fechado;
 * `payment_method_id` informado: método ativo e diferente do método do próprio cartão da fatura.
@@ -287,7 +289,9 @@ Faturas persistidas preservam cartão, `reference_month`, `closing_date`, `due_d
 * **CA-FAT-01** — Primeira compra de um ciclo cria a fatura `OPEN` com `closing_date` e `due_date` calculados.
 * **CA-FAT-02** — Fatura criada para ciclo já encerrado é gravada como `CLOSED`.
 * **CA-FAT-03** — Após o `closing_date`, a fatura passa automaticamente a `CLOSED`.
-* **CA-FAT-04** — Tentativa de pagar fatura `OPEN` é rejeitada.
+* **CA-FAT-04** — Tentativa de pagar fatura `PAID` é rejeitada.
+* **CA-FAT-22** — Fatura `OPEN` (fecha em 06/10) paga em 03/10 → fatura `PAID`, lançamentos `PAID`; ela não passa a `CLOSED` depois de 06/10.
+* **CA-FAT-23** — Fatura de outubro paga em 03/10 antes do fechamento; compra de 05/10 do mesmo ciclo é postada na fatura de novembro, com `purchase_date` 05/10, sem alterar a fatura paga.
 * **CA-FAT-05** — Pagar fatura `CLOSED` com A, B e C em aberto em 12/10 → A, B e C pagos em 12/10; fatura `PAID`.
 * **CA-FAT-06** — Tentativa de marcar como pago, individualmente, um lançamento de cartão é rejeitada.
 * **CA-FAT-07** — Pagamento com o próprio cartão da fatura é rejeitado.
@@ -295,7 +299,7 @@ Faturas persistidas preservam cartão, `reference_month`, `closing_date`, `due_d
 * **CA-FAT-09** — Pagamento com data futura é rejeitado.
 * **CA-FAT-10** — Fatura com débitos R$ 100 e créditos R$ 150: valor a pagar R$ 0; após "Pagar fatura", `credit_balance` R$ 50 transferido para a fatura seguinte, que tem seu valor a pagar reduzido em R$ 50.
 * **CA-FAT-11** — O rollover não cria lançamento e não altera o saldo previsto de nenhum mês.
-* **CA-FAT-12** — Fatura com valor a pagar zero continua `CLOSED` até a ação "Pagar fatura".
+* **CA-FAT-12** — Fatura com valor a pagar zero continua no estado atual (`OPEN` ou `CLOSED`) até a ação "Pagar fatura".
 * **CA-FAT-13** — Fatura `CLOSED` com vencimento 15/09 e hoje 20/09 é exibida como atrasada; continua sendo a fatura de setembro.
 * **CA-FAT-14** — Tentativa de alterar ou reabrir fatura `PAID` é rejeitada.
 * **CA-FAT-15** — Alteração de `due_day` do cartão não altera o `due_date` de faturas persistidas.
@@ -312,7 +316,7 @@ Faturas persistidas preservam cartão, `reference_month`, `closing_date`, `due_d
 
 * criação na primeira postagem e no primeiro crédito; criação já `CLOSED`;
 * transição automática `OPEN → CLOSED`;
-* rejeição de pagamento em `OPEN` e em `PAID`;
+* pagamento de fatura `OPEN` (antecipado) e `CLOSED`; rejeição em `PAID`; fatura paga antecipadamente não passa a `CLOSED`; compra do ciclo de fatura paga vai para a próxima;
 * pagamento: atomicidade, data e método válidos, rejeição do próprio cartão;
 * rejeição de pagamento individual de lançamento de cartão;
 * rejeição de crédito de estorno em fatura `CLOSED`;

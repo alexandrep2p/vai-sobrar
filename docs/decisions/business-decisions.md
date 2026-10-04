@@ -118,6 +118,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Fonte:** `invoices.md` §7–§8.
 
 ### PD-06 — Estados da fatura
+* **Status:** Vigente; a regra de que só `CLOSED` pode ser paga foi alterada pela PD-32.
 * **Decisão:** máquina de estados persistida `OPEN → CLOSED → PAID`.
 * **Regra:**
   * `PAID` significa paga pela ação "Pagar fatura";
@@ -279,6 +280,18 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Decisão:** fatura `CLOSED` com vencimento passado é apresentada como atrasada mesmo com R$ 0,00 a pagar, até ser paga.
 * **Fonte:** `invoices.md` §6.
 
+### PD-32 — Pagamento antecipado de fatura aberta
+* **Status:** Vigente. Substitui a restrição de PD-06 / CD-03 de que somente fatura `CLOSED` podia ser paga.
+* **Decisão:** a ação "Pagar fatura" é permitida com a fatura `OPEN` ou `CLOSED`, sem esperar o `closing_date`. O usuário ainda não pode fechar a fatura manualmente (não existe "fechar fatura").
+* **Regra:**
+  * `OPEN → PAID` e `CLOSED → PAID`, somente pela ação "Pagar fatura"; `PAID` continua final e nunca é reaberta;
+  * a fatura paga mantém o `closing_date` gravado, mas não passa a `CLOSED` depois (a transição por tempo só vale para `OPEN`);
+  * a compra cujo ciclo pertença a fatura `PAID` é postada na próxima fatura não paga (compra tardia, `credit-cards.md` §8.2). Exemplo: fatura de outubro (fecha em 06/10) paga em 03/10; compra de 05/10 entra na fatura de novembro, mantendo a `purchase_date` 05/10;
+  * as demais pré-condições do pagamento não mudam (mês aberto, `paid_at` válido, método ativo e diferente do cartão);
+  * o código de erro `INVOICE_NOT_CLOSED` deixa de existir.
+* **Impacto:** o mês pode ser fechado assim que todos os lançamentos e faturas do mês estiverem pagos, inclusive antes do `closing_date` das faturas do cartão.
+* **Fonte:** `invoices.md` §5 e §9.1; `credit-cards.md` §8.2; `financial-periods.md` §4.3.
+
 ---
 
 ## 3. Consequências registradas (CD)
@@ -289,7 +302,7 @@ Consequências diretas das decisões acima, aplicadas na documentação. Não in
 |---|---|---|---|
 | CD-01 | O estorno não é `Transaction`. Cada alocação aparece no extrato do mês da fatura de reconhecimento como linha de crédito e reduz as Saídas previstas (abatida da natureza da compra original). A origem `REFUND` deixa de existir. | PD-02 | `refunds.md` §9; `home.md` §2 |
 | CD-02 | Uma ocorrência é "gerada" quando a sua data chega ou antes, quando o usuário a paga ou edita. Ocorrências futuras não geradas são projetadas da configuração atual. | PD-11 ("futuras ainda não geradas") | `recurrences.md` §6 |
-| CD-03 | Somente fatura `CLOSED` pode ser paga (a cadeia `OPEN → CLOSED → PAID` não admite `OPEN → PAID`). | PD-06 | `invoices.md` §5 |
+| CD-03 | Fatura `OPEN` ou `CLOSED` pode ser paga; fatura `PAID` não. (Redação original — só `CLOSED` — substituída pela PD-32.) | PD-06, PD-32 | `invoices.md` §5 |
 | CD-04 | Fatura com valor a pagar R$ 0,00 só passa a `PAID` pela ação "Pagar fatura". | PD-06, PD-07 | `invoices.md` §9.2 |
 | CD-05 | O saldo credor é apurado quando a fatura passa a `PAID` e transferido para a próxima fatura não paga do mesmo cartão. | PD-05, PD-06 | `invoices.md` §8 |
 | CD-06 | A fatura grava `closing_date`. O ciclo de fatura persistida usa o valor gravado; ciclos sem fatura usam a configuração vigente. | PD-16, PD-01 | `credit-cards.md` §6.2 |
@@ -321,4 +334,4 @@ Consequências diretas das decisões acima, aplicadas na documentação. Não in
 
 ## 4. Pendências abertas (Q)
 
-Não há pendências abertas. Q-01 a Q-06 foram resolvidas pelas PD-23 a PD-28. As lacunas da revisão final foram resolvidas pelas PD-29 a PD-31.
+Não há pendências abertas. Q-01 a Q-06 foram resolvidas pelas PD-23 a PD-28. As lacunas da revisão final foram resolvidas pelas PD-29 a PD-31, e o pagamento antecipado de fatura aberta pela PD-32.

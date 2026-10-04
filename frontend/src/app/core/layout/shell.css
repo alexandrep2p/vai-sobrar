@@ -1,0 +1,46 @@
+/* Mobile first: o base vale para telas pequenas; min-width amplia para telas maiores. */
+:host {
+  display: block;
+}
+
+.container {
+  min-height: 100vh;
+}
+
+.sidenav {
+  width: min(18rem, 85vw);
+}
+
+.brand {
+  display: block;
+  padding: 1.25rem 1rem 0.75rem;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  gap: 0.5rem;
+  background: var(--mat-sys-surface-container);
+}
+
+.topbar-title {
+  font: var(--mat-sys-title-medium);
+}
+
+.content {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .sidenav {
+    width: 15rem;
+  }
+
+  .content {
+    padding: 1.5rem 2rem;
+  }
+}

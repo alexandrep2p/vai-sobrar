@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-27, T-42
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -46,3 +46,7 @@ Permitir estornar compras de cartão.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `RefundDialog`: mostra saldo estornável e a situação (estornada/parcialmente), sugere o estorno total e valida valor > 0. Compra à vista/ocorrência de cartão envia `transaction_id`; parcelada envia `installment_plan_id` e a estratégia (labels de domain-model §5). Limites e datas são validados pelo backend.

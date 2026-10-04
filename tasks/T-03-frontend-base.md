@@ -2,7 +2,7 @@
 
 * **Fase:** 0 — Base técnica
 * **Depende de:** —
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Estado atual
 
@@ -53,3 +53,10 @@ Validar e ajustar o projeto Angular 22 já criado para servir de base às telas.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `ng build`, `ng test` e `ng serve` verificados. Biblioteca de componentes escolhida na T-35 (Angular Material; ver lá).
+* Organização: `src/app/core/` (serviços singleton, HTTP, config), `src/app/shared/` (componentes, pipes e utilitários reutilizáveis) e `src/app/features/` (uma pasta por tela/módulo).
+* API por ambiente via proxy de desenvolvimento: `frontend/proxy.conf.json` encaminha `/api` para `http://localhost:3000` (configurado em `serve.options.proxyConfig` do `angular.json`). O frontend usa sempre URLs relativas `/api/...`; em produção, o servidor web deve fazer o mesmo encaminhamento.
+* Conteúdo de exemplo removido (título e `signal` do `App`); `index.html` com `lang="pt-BR"` e título "Vai Sobrar".

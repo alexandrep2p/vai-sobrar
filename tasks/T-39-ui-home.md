@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-32, T-35
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,10 @@ Implementar a tela principal.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Home em `features/home`: seletor de mês (anterior/próximo/atual e seletor nativo de mês), estado do mês, resumo (entradas, saídas, saldo), extrato e saldo ao final.
+* O extrato exibe o que o backend devolve (`/monthly-statement`): data exibida, valor com sinal, status, `n/N`, link "Ver compra original" (plano da parcela ou compra original do crédito de estorno), créditos sem status e ocorrências projetadas (itálico, "prevista"). Nenhum cálculo no frontend.
+* A situação "Estornada/Parcialmente estornada" de cada compra de cartão é buscada em `GET /transactions/:id/refunds` e `GET /installment-plans/:id/refunds` após carregar o extrato (uma chamada por alvo distinto).
+* "Compra de ciclo anterior" (domain-model §5) não é exibida: o extrato não traz o início do ciclo, e o frontend não calcula ciclos.

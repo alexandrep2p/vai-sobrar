@@ -53,6 +53,7 @@ Implementar a ação "Pagar fatura" com liquidação atômica e transferência d
 
 ## Decisões técnicas registradas
 
-* Ordem das validações: fatura existe → `PAID` (`INVOICE_ALREADY_PAID`) → não `CLOSED` (`INVOICE_NOT_CLOSED`) → mês fechado (`PERIOD_CLOSED`) → `paid_at` (`INVALID_PAYMENT_DATE`) → método igual ao do cartão (`INVOICE_PAYMENT_METHOD_INVALID`) → método inativo (`PAYMENT_METHOD_INACTIVE`).
+* **Revisada pela PD-32:** a fatura `OPEN` também pode ser paga (antecipado); o código `INVOICE_NOT_CLOSED` foi removido. A fatura paga antes do `closing_date` mantém o `closing_date` gravado e não vira `CLOSED`.
+* Ordem das validações: fatura existe → `PAID` (`INVOICE_ALREADY_PAID`) → mês fechado (`PERIOD_CLOSED`) → `paid_at` (`INVALID_PAYMENT_DATE`) → método igual ao do cartão (`INVOICE_PAYMENT_METHOD_INVALID`) → método inativo (`PAYMENT_METHOD_INACTIVE`).
 * Saldo credor: transferido para a fatura do mesmo cartão com menor `reference_month` posterior e não paga (`OPEN` ou `CLOSED`); se não existir, fica pendente e é vinculado quando uma fatura posterior é criada (`ensureInvoice`).
 * Teste de atomicidade com falha injetada (extensão do Prisma) confirma que lançamentos e fatura voltam ao estado anterior.

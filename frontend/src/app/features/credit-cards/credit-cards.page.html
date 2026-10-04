@@ -1,0 +1,47 @@
+<div class="page-header">
+  <h1>Cartões</h1>
+  <button mat-flat-button (click)="create()">
+    <mat-icon>add</mat-icon>
+    Novo cartão
+  </button>
+</div>
+
+<app-load-state
+  [status]="status()"
+  [empty]="cards().length === 0"
+  emptyMessage="Nenhum cartão cadastrado. Cadastre o primeiro."
+  (retry)="load()"
+>
+  @for (section of sections(); track section.title) {
+    @if (section.items.length > 0) {
+      <h2 class="section-title">{{ section.title }}</h2>
+      <div class="list-card">
+        @for (card of section.items; track card.id) {
+          <div class="list-row" data-testid="card-row">
+            <div class="grow">
+              <div>{{ card.name }}</div>
+              <div class="sub">
+                Melhor dia de compra: {{ card.best_purchase_day }} · Vencimento: dia
+                {{ card.due_day }}
+              </div>
+            </div>
+            <a
+              mat-icon-button
+              aria-label="Ver faturas"
+              routerLink="/faturas"
+              [queryParams]="{ cartao: card.id }"
+            >
+              <mat-icon>receipt_long</mat-icon>
+            </a>
+            <button mat-icon-button aria-label="Editar" (click)="edit(card)" data-testid="edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-stroked-button (click)="toggle(card)" data-testid="toggle">
+              {{ card.active ? 'Desativar' : 'Reativar' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  }
+</app-load-state>

@@ -10,7 +10,7 @@ O modelo de domínio (`docs/domain/domain-model.md`) e as feature specs (`docs/s
 
 ## 2. Stack
 
-* **Frontend:** Angular 22
+* **Frontend:** Angular 22 + Angular Material (tema Azure & Blue), mobile first
 * **Backend:** Node.js + Express
 * **Linguagem:** TypeScript (frontend e backend)
 * **Banco:** PostgreSQL
@@ -224,7 +224,7 @@ O mesmo mecanismo cobre `PAUSED ⇄ ACTIVE` de recorrências com pausa programad
 
 ```text
 POST /api/invoices/:id/pay   { paid_at, payment_method_id }
-  ├── status = CLOSED
+  ├── status = OPEN ou CLOSED (não PAID)
   ├── mês do reference_month aberto
   ├── paid_at válido, <= hoje, fora de mês fechado
   ├── método ativo e diferente do método do próprio cartão
@@ -466,7 +466,6 @@ CATEGORY_TYPE_LOCKED
 PAYMENT_METHOD_INACTIVE
 PAYMENT_METHOD_NOT_EDITABLE
 CARD_INACTIVE
-INVOICE_NOT_CLOSED
 INVOICE_ALREADY_PAID
 INVOICE_PAYMENT_METHOD_INVALID
 INVOICE_NOT_OPEN_FOR_CREDIT
@@ -495,7 +494,7 @@ O agente de programação recebe uma task pequena por vez, com os documentos fon
 
 ## 25. Decisões arquiteturais fechadas
 
-Angular 22, Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; single-user.
+Angular 22 com Angular Material (tema Azure & Blue, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; single-user.
 
 ---
 
@@ -503,7 +502,6 @@ Angular 22, Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST
 
 Podem ser definidas na task correspondente, sem alterar regras de negócio:
 
-* biblioteca de componentes Angular;
 * mecanismo de transição de status por tempo (fatura `OPEN → CLOSED`, pausa de recorrência) e de geração de ocorrências na data: rotina agendada, avaliação ao acessar ou ambos;
 * técnica para avaliar "ativo na data da ocorrência" (geração pontual ou histórico de ativação);
 * mecanismo de lock por operação;

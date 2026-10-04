@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-17, T-35
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,9 @@ Implementar a tela de categorias.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Tela em `features/categories`: lista agrupada por estado (ativas/inativas) e tipo (entradas/saídas); diálogo de criar/editar; ativar/desativar. Sem exclusão (categories §9).
+* O tipo fica desabilitado na edição quando `in_use` é verdadeiro (dica de interface); o backend continua sendo a autoridade (CATEGORY_TYPE_LOCKED).
+* Estados carregando, vazio e erro com nova tentativa pelo componente compartilhado `app-load-state`.

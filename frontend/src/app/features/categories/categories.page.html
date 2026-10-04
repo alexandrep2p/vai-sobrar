@@ -1,0 +1,39 @@
+<div class="page-header">
+  <h1>Categorias</h1>
+  <button mat-flat-button (click)="create()">
+    <mat-icon>add</mat-icon>
+    Nova categoria
+  </button>
+</div>
+
+<app-load-state
+  [status]="status()"
+  [empty]="categories().length === 0"
+  emptyMessage="Nenhuma categoria cadastrada. Crie a primeira."
+  (retry)="load()"
+>
+  @for (section of sections(); track section.title) {
+    @if (section.groups.length > 0) {
+      <h2 class="section-title">{{ section.title }}</h2>
+      @for (group of section.groups; track group.type) {
+        <h3 class="group-title">{{ group.label }}</h3>
+        <div class="list-card">
+          @for (category of group.items; track category.id) {
+            <div class="list-row" data-testid="category-row">
+              <div class="grow">
+                <div>{{ category.name }}</div>
+                <div class="sub">{{ typeLabel(category.type) }}</div>
+              </div>
+              <button mat-icon-button aria-label="Editar" (click)="edit(category)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-stroked-button (click)="toggle(category)" data-testid="toggle">
+                {{ category.active ? 'Desativar' : 'Reativar' }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</app-load-state>

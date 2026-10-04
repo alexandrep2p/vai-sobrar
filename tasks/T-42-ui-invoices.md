@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-24, T-25, T-38
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ Implementar a lista de faturas por cartão, o detalhe e o pagamento.
 
 * Lista por período, incluindo ciclos "Sem lançamentos".
 * Detalhe: status, situação de atraso, fechamento, vencimento, lançamentos, créditos, crédito recebido, valor a pagar, saldo credor.
-* Ação "Pagar fatura" (somente `CLOSED`) com data e método (exclui o próprio cartão).
+* Ação "Pagar fatura" (fatura `OPEN` ou `CLOSED`, não `PAID` — PD-32) com data e método (exclui o próprio cartão).
 
 ## Fora de escopo
 
@@ -46,3 +46,8 @@ Implementar a lista de faturas por cartão, o detalhe e o pagamento.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Faturas em `features/invoices`: seleção de cartão (aceita `?cartao=`) e período (padrão: 3 meses atrás a 8 à frente = 12 meses, dentro do limite de 60 do backend). Ciclos sem fatura aparecem como "Sem lançamentos", sem detalhe.
+* Detalhe em diálogo: status, atraso, fechamento, vencimento, lançamentos, créditos, crédito recebido, totais e saldo credor. "Pagar fatura" com status `OPEN` ou `CLOSED` (PD-32), nunca `PAID`; data e método (ativos, exceto o método do próprio cartão); R$ 0,00 permitido.

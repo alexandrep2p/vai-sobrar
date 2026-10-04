@@ -1,59 +1,79 @@
-# Frontend
+# Frontend — Vai Sobrar
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+Angular 22 (standalone, signals, Vitest) com **Angular Material** (tema Azure & Blue). Interface **mobile first**: o CSS base vale para telas pequenas e o layout cresce com `min-width` (breakpoint de 768px). Arquitetura em `docs/architecture/architecture.md` §5; decisões técnicas nas tasks T-03 e T-35.
 
-## Development server
+O frontend apenas exibe o que o backend retorna: não calcula saldo, fatura, ciclo, parcelas, estornos, elegibilidade de recorrência nem pré-condições de fechamento.
 
-To start a local development server, run:
+## Estrutura
 
-```bash
-ng serve
+```text
+src/app/
+├── core/        base da aplicação
+│   ├── api/       ApiClient, ApiError, mensagens de erro em português e interceptor (snackbar)
+│   ├── data/      serviços de dados (CatalogService, LedgerService) e tipos em api/models.ts
+│   ├── layout/    shell (barra superior no mobile, menu lateral no desktop) e itens de navegação
+│   └── clock.ts   "hoje" injetável (usado nos padrões de data e nos testes)
+├── shared/      reutilizáveis
+│   ├── format/    dinheiro (centavos ↔ R$) e datas, sem fuso horário
+│   ├── forms/     validadores (valor, texto)
+│   ├── labels/    labels em português dos enums (domain-model §5)
+│   └── ui/        LoadState, ConfirmDialog, PayDialog e config padrão de diálogos
+├── features/    uma pasta por tela, com diálogos próprios
+│   ├── home/  invoices/  recurrences/  categories/  payment-methods/  credit-cards/
+└── app.routes.ts  rotas (/home, /faturas, /recorrencias, /categorias, /metodos, /cartoes)
+src/testing/     helpers e fixtures usados só nos testes
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Como rodar
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+O frontend precisa do backend e do banco no ar. Na primeira vez, siga a seção "Como rodar" do [README do backend](../backend/README.md) (Docker, `.env`, migrations). Depois, em três terminais:
 
 ```bash
-ng generate component component-name
+# raiz do repositório
+docker compose up -d
 ```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
 ```bash
-ng generate --help
+# backend/
+npm run dev
 ```
-
-## Building
-
-To build the project run:
 
 ```bash
-ng build
+# frontend/
+npm install
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+A aplicação abre em `http://localhost:4200`.
 
-## Running unit tests
+### API em desenvolvimento
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+O `ng serve` usa o proxy `proxy.conf.json`, que encaminha `/api` para `http://localhost:3000`. O código sempre chama URLs relativas (`/api/...`); para apontar para outro backend em desenvolvimento, altere o `target` desse arquivo. Em produção, o servidor web deve fazer o mesmo encaminhamento de `/api`.
+
+## Scripts
+
+| Script          | O que faz                                                                        |
+| --------------- | -------------------------------------------------------------------------------- |
+| `npm start`     | servidor de desenvolvimento (`ng serve`) com proxy para a API                    |
+| `npm run build` | build de produção em `dist/frontend`                                             |
+| `npm run watch` | build em modo watch (configuração de desenvolvimento)                            |
+| `npm test`      | testes unitários e de componente (Vitest); `-- --watch=false` para rodar uma vez |
+
+Verificações adicionais usadas no projeto:
 
 ```bash
-ng test
+npx prettier --check src     # formatação
+npx tsc --noEmit -p tsconfig.app.json   # tipos do app
+npx tsc --noEmit -p tsconfig.spec.json  # tipos dos testes
 ```
 
-## Running end-to-end tests
+## Testes
 
-For end-to-end (e2e) testing, run:
+Os testes de componente usam serviços simulados (sem backend). Testes ponta a ponta no navegador ainda não existem. Em testes, o "hoje" vem de `Clock` (substitua-o por um valor fixo) e os diálogos são testados criando o componente diretamente com `MAT_DIALOG_DATA` e `MatDialogRef` simulados (ver `src/testing/helpers.ts`).
 
-```bash
-ng e2e
-```
+## Convenções
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Valores monetários sempre em **centavos inteiros**; texto digitado é convertido por `parseCents` e exibido por `formatCents`.
+- Datas da API (`YYYY-MM-DD`, `YYYY-MM`) são tratadas como texto, nunca via `Date`/fuso.
+- Erros da API viram `ApiError` com mensagem em português, a partir do **código** (nunca do texto interno do backend), e são exibidos em snackbar pelo interceptor.
+- Telas novas: CSS mobile first (base para telas pequenas, `@media (min-width: 768px)` para ampliar); estados de carregando, vazio e erro com nova tentativa via `app-load-state`.

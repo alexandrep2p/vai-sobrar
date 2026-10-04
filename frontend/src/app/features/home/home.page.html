@@ -1,0 +1,172 @@
+<div class="month-nav">
+  <button mat-icon-button aria-label="Mês anterior" (click)="go(-1)" data-testid="prev">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+  <div class="month-title">
+    <label class="month-picker">
+      <span data-testid="month-label">{{ monthLabel() }}</span>
+      <input
+        type="month"
+        aria-label="Escolher mês"
+        [value]="month()"
+        (change)="onMonthPicked($any($event.target).value)"
+      />
+    </label>
+    @if (statement(); as s) {
+      <span class="chip" [class.warn]="!monthOpen()" data-testid="period-status">
+        {{ periodLabel() }}
+      </span>
+    }
+  </div>
+  <button mat-icon-button aria-label="Próximo mês" (click)="go(1)" data-testid="next">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+  @if (!isCurrentMonth()) {
+    <button mat-stroked-button (click)="goToday()" data-testid="today">Mês atual</button>
+  }
+</div>
+
+<app-load-state [status]="status()" (retry)="load()">
+  @if (statement(); as s) {
+    <section class="summary" aria-label="Resumo do mês">
+      <div class="summary-card">
+        <span class="label">Entradas previstas</span>
+        <strong class="income" data-testid="incomes">{{ money(s.totals.incomes) }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="label">Saídas previstas</span>
+        <strong class="expense" data-testid="expenses">{{ money(s.totals.expenses) }}</strong>
+      </div>
+      <div class="summary-card balance">
+        <span class="label">Saldo previsto</span>
+        <strong data-testid="balance">{{ money(s.totals.balance) }}</strong>
+      </div>
+    </section>
+
+    <div class="page-header">
+      <h2 class="section-title no-margin">Extrato</h2>
+      @if (monthOpen()) {
+        <div class="header-actions">
+          <button mat-flat-button (click)="newTransaction()" data-testid="new-transaction">
+            <mat-icon>add</mat-icon>
+            Lançamento
+          </button>
+          <button mat-stroked-button (click)="closeMonth()" data-testid="close-month">
+            Fechar mês
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (s.items.length === 0) {
+      <div class="state-box" data-testid="empty">Nenhum item neste mês.</div>
+    } @else {
+      <div class="list-card">
+        @for (item of s.items; track trackKey(item, $index)) {
+          @let a = actions(item);
+          <div class="statement-row" data-testid="item" [class.projected]="isProjected(item)">
+            <span class="date">{{ shortDate(item.display_date) }}</span>
+            <div class="main">
+              <div class="description">
+                {{ item.description }}
+                @if (item.installment; as inst) {
+                  <span class="installment" data-testid="installment">
+                    · {{ inst.number }}/{{ inst.installment_count }}
+                  </span>
+                }
+              </div>
+              <div class="sub">
+                {{ item.category.name }} ·
+                {{ item.credit_card ? item.credit_card.name : item.payment_method.name }}
+                @if (item.origin === 'RECURRENCE' || isProjected(item)) {
+                  · recorrência
+                }
+                @if (isProjected(item)) {
+                  · prevista
+                }
+                @if (isRefundCredit(item)) {
+                  · estorno
+                }
+              </div>
+              @if (refundLabel(item); as label) {
+                <span class="chip warn" data-testid="refund-label">{{ label }}</span>
+              }
+              @if (a.settledByInvoice && item.status === 'PENDING') {
+                <div class="sub" data-testid="settled-by-invoice">
+                  Liquidação pelo pagamento da fatura
+                </div>
+              }
+              @if (item.installment || item.refund) {
+                <button
+                  mat-button
+                  class="link"
+                  (click)="openPurchase(item)"
+                  data-testid="purchase-link"
+                >
+                  Ver compra original
+                </button>
+              }
+            </div>
+            <div class="side">
+              <span
+                [class]="item.nature === 'INCOME' ? 'income amount' : 'expense amount'"
+                data-testid="amount"
+              >
+                {{ signed(item.signed_amount) }}
+              </span>
+              @if (item.status) {
+                <span class="chip" [class.positive]="item.status === 'PAID'" data-testid="status">
+                  {{ statusLabel(item.status) }}
+                </span>
+              } @else {
+                <span class="chip positive" data-testid="status">Crédito</span>
+              }
+            </div>
+            @if (hasActions(a)) {
+              <button
+                mat-icon-button
+                class="menu-trigger"
+                aria-label="Ações"
+                [matMenuTriggerFor]="menu"
+                data-testid="menu"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                @if (a.edit) {
+                  <button mat-menu-item (click)="edit(item)" data-testid="act-edit">Editar</button>
+                }
+                @if (a.pay) {
+                  <button mat-menu-item (click)="pay(item)" data-testid="act-pay">Pagar</button>
+                }
+                @if (a.unpay) {
+                  <button mat-menu-item (click)="unpay(item)" data-testid="act-unpay">
+                    Desfazer pagamento
+                  </button>
+                }
+                @if (a.refund) {
+                  <button mat-menu-item (click)="refund(item)" data-testid="act-refund">
+                    Estornar
+                  </button>
+                }
+                @if (a.skip) {
+                  <button mat-menu-item (click)="skip(item)" data-testid="act-skip">Pular</button>
+                }
+                @if (a.delete) {
+                  <button mat-menu-item (click)="remove(item)" data-testid="act-delete">
+                    Excluir
+                  </button>
+                }
+              </mat-menu>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="final-balance">
+      <span>Saldo previsto</span>
+      <strong>{{ money(s.totals.balance) }}</strong>
+    </div>
+  }
+</app-load-state>
