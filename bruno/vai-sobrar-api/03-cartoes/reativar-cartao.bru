@@ -1,0 +1,15 @@
+meta {
+  name: Reativar cartao
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}/activate
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

@@ -53,6 +53,7 @@ Recurrence
 ├── status               (ACTIVE | PAUSED | CANCELLED)
 ├── paused_from          (início da pausa; opcional)
 ├── paused_until         (retorno programado; opcional)
+├── cancelled_at         (data do cancelamento; somente com status = CANCELLED)
 ├── created_at
 └── updated_at
 
@@ -198,7 +199,7 @@ Novembro continua normalmente.
 
 * Uma recorrência `ACTIVE` pode ser pausada, indefinidamente ou com retorno programado.
 * A pausa tem início (`paused_from`, hoje ou uma data futura) e retorno opcional (`paused_until`).
-* Ocorrências com data no intervalo da pausa não são geradas. Ao retornar, **não** são criadas ocorrências retroativas.
+* Ocorrências com data no intervalo da pausa não são geradas. A pausa cobre as datas de `paused_from` até a véspera de `paused_until`; na data `paused_until` a recorrência volta a gerar (CD-23). Ao retornar, **não** são criadas ocorrências retroativas.
 * Ocorrências já geradas não são removidas.
 * O status é `PAUSED` enquanto a pausa estiver vigente e volta a `ACTIVE` ao atingir `paused_until` ou quando o usuário retoma.
 * A pausa não apaga histórico nem configuração.
@@ -217,7 +218,7 @@ Abril/2027 → volta a gerar
 ## 12. Cancelamento
 
 * Cancelar encerra a recorrência definitivamente (`CANCELLED`).
-* Nenhuma ocorrência com data posterior ao cancelamento é gerada; as projetadas deixam de existir.
+* Nenhuma ocorrência com data igual ou posterior à data do cancelamento é gerada (CD-22); as projetadas deixam de existir.
 * Ocorrências já geradas permanecem.
 * A recorrência cancelada não volta a gerar; para retomar, cria-se uma nova recorrência.
 * Cancelar não equivale a estornar.

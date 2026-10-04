@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-16
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,7 @@ Implementar o módulo de métodos de pagamento.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `POST` aceita só `name` (e `kind: "STANDARD"` opcional); qualquer outro campo, inclusive `source` e `kind: "CREDIT_CARD"`, é rejeitado por validação (400). `PUT` de método `SYSTEM` ou cartão → `PAYMENT_METHOD_NOT_EDITABLE`. Códigos novos: `PAYMENT_METHOD_NOT_FOUND`, `PAYMENT_METHOD_NAME_TAKEN`.

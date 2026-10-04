@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-04
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -51,3 +51,8 @@ Implementar as funções `effectiveDay`, `closingDate` e `dueDate`.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `closingDate`/`dueDate` retornam `LocalDate` (string `YYYY-MM-DD`); `closingDate` recebe a fatura persistida do mesmo mês (o chamador seleciona a fatura).
+* Código em `src/domain/card-dates.ts`; testes em `tests/domain/card-dates.spec.ts`, incluindo varredura de CA-CAR-07 (vencimento sempre posterior ao fechamento).

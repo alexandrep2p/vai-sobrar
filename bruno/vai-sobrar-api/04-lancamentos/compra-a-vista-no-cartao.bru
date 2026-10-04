@@ -1,0 +1,34 @@
+meta {
+  name: Compra a vista no cartao
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/transactions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "Supermercado",
+    "amount": 25000,
+    "purchase_date": "{{today}}",
+    "category_id": "{{categoryId}}",
+    "payment_method_id": "{{cardMethodId}}"
+  }
+}
+
+vars:post-response {
+  cardPurchaseId: res.body.id
+  invoiceId: res.body.invoice.id
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  A fatura é definida pelo ciclo da purchase_date; o mês financeiro é o mês de referência da fatura.
+}

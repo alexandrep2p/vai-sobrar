@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-24
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,9 @@ Implementar a ação "Pagar fatura" com liquidação atômica e transferência d
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Ordem das validações: fatura existe → `PAID` (`INVOICE_ALREADY_PAID`) → não `CLOSED` (`INVOICE_NOT_CLOSED`) → mês fechado (`PERIOD_CLOSED`) → `paid_at` (`INVALID_PAYMENT_DATE`) → método igual ao do cartão (`INVOICE_PAYMENT_METHOD_INVALID`) → método inativo (`PAYMENT_METHOD_INACTIVE`).
+* Saldo credor: transferido para a fatura do mesmo cartão com menor `reference_month` posterior e não paga (`OPEN` ou `CLOSED`); se não existir, fica pendente e é vinculado quando uma fatura posterior é criada (`ensureInvoice`).
+* Teste de atomicidade com falha injetada (extensão do Prisma) confirma que lançamentos e fatura voltam ao estado anterior.

@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-05
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -55,3 +55,10 @@ Implementar `cycleOf` e `postingInvoice`, incluindo compra retroativa e compra t
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `postingInvoice` recebe também `today` (do `Clock`) para decidir `CLOSED`/`OPEN` na criação: `closing_date < hoje` → `CLOSED`; fechamento no próprio dia → `OPEN` (invoices.md §5).
+* Estado dos meses entra como `ClosedMonths` (conjunto de meses fechados). Mês fechado sem fatura persistida também é pulado.
+* Resultado: `{ needsCreation, invoice }`; a fatura persistida é devolvida com o status recebido (a transição automática é da T-23).
+* Código em `src/domain/posting.ts`.

@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-05
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,7 @@ Implementar `financialMonth(item)` para todos os tipos de item do planejamento.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `financialMonth` recebe uma união discriminada (`COMMON_TRANSACTION`, `CARD_TRANSACTION`, `REFUND_ALLOCATION`, `PROJECTED_OCCURRENCE` com o item projetado dentro); `paid_at` não é parâmetro. Código em `src/domain/financial-month.ts`.

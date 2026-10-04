@@ -1,0 +1,28 @@
+meta {
+  name: Estornar compra parcelada
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/refunds
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "installment_plan_id": "{{planId}}",
+    "amount": 10000,
+    "refund_date": "{{today}}",
+    "strategy": "FIRST_INSTALLMENTS"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+docs {
+  strategy: FIRST_INSTALLMENTS | LAST_INSTALLMENTS | PROPORTIONAL (obrigatória para compra parcelada).
+}

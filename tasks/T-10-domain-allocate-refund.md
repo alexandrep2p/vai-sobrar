@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-07
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -51,3 +51,8 @@ Implementar `allocateRefund` com as três estratégias e os limites de valor.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Alvo modelado como `SINGLE` (compra à vista/ocorrência) ou `PLAN` (parcelas com valor original e alocado). Retorna só alocações > 0, em ordem de parcela.
+* `amount` não positivo ou estratégia incoerente com o alvo lançam `RangeError` (erro de programação/validação Zod); acima do saldo lança `BusinessError` `REFUND_EXCEEDS_REMAINING_AMOUNT`. Código em `src/domain/refund-allocation.ts`.

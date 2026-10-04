@@ -1,0 +1,31 @@
+meta {
+  name: Criar recorrencia (com termino)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/recurrences
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "Curso",
+    "amount": 30000,
+    "category_id": "{{categoryId}}",
+    "payment_method_id": "{{pixId}}",
+    "due_day": 20,
+    "start_date": "{{today}}",
+    "end_date": "{{endDate}}"
+  }
+}
+
+vars:post-response {
+  courseRecurrenceId: res.body.id
+}
+
+assert {
+  res.status: eq 201
+}

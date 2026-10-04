@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-04
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -47,3 +47,7 @@ Implementar `invoiceTotals(invoice)`.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `invoiceTotals` recebe listas de centavos (débitos, créditos, créditos recebidos) e devolve também as somas parciais. Código em `src/domain/invoice-totals.ts`.

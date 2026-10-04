@@ -1,0 +1,25 @@
+meta {
+  name: Pagar lancamento
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/transactions/{{transactionId}}/pay
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "paid_at": "{{today}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Somente método comum. Lançamentos de cartão são liquidados pelo pagamento da fatura.
+}

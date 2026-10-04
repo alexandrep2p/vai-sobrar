@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-22
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -36,23 +36,4 @@ Garantir que o status persistido de faturas (`OPEN → CLOSED`) e de recorrênci
 
 ## Decisões técnicas registradas
 
-_Registrar aqui o mecanismo escolhido (decisão técnica aberta da architecture §26)._
-
-* (preencher durante a implementação)
-
-## Regras para o agente
-
-* Implemente **somente** o escopo desta task.
-* As regras de negócio vêm exclusivamente dos documentos fonte listados. Não invente regras.
-* Se encontrar ambiguidade ou contradição nos documentos, **interrompa** aquela parte, descreva a dúvida e peça definição (`architecture.md` §24).
-* Regras de cálculo ficam nas funções de domínio centralizadas (`architecture.md` §9); não as reimplemente em controllers, repositories ou no frontend.
-* Valores monetários sempre em centavos inteiros.
-* Datas que dependem de "hoje" usam o relógio injetável (T-04), para permitir testes determinísticos.
-
-## Definição de pronto
-
-* Critérios de aceite atendidos.
-* Testes obrigatórios escritos e passando (`npm test`).
-* Build sem erros (`npm run build`).
-* Nenhuma regra de negócio nova ou divergente da documentação.
-* Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+* **Mecanismo escolhido (architecture §26):** avaliação a cada acesso à API (middleware `refreshState`, antes de qualquer rota `/api`) **somada** a uma rotina periódica no servidor (`startBackgroundJobs`, a cada 15 min e na inicialização). A transição é um único `UPDATE` idempotente (`OPEN` com `closing_date < hoje` → `CLOSED`); a pausa de recorrência segue o mesmo mecanismo (`syncRecurrencePauses`).

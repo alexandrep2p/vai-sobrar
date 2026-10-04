@@ -2,7 +2,7 @@
 
 * **Fase:** 5 — Validação
 * **Depende de:** T-34
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,7 @@ Validar os fluxos que atravessam várias specs com testes de integração no bac
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Os 8 cenários estão em `tests/api/scenarios.int.spec.ts`, com relógio fixo e banco de teste limpo a cada teste.

@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-25, T-27, T-30, T-33
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -30,23 +30,6 @@ Proteger as operações críticas contra execução simultânea.
 
 ## Decisões técnicas registradas
 
-_Registrar aqui o mecanismo usado em cada cenário._
-
-* (preencher durante a implementação)
-
-## Regras para o agente
-
-* Implemente **somente** o escopo desta task.
-* As regras de negócio vêm exclusivamente dos documentos fonte listados. Não invente regras.
-* Se encontrar ambiguidade ou contradição nos documentos, **interrompa** aquela parte, descreva a dúvida e peça definição (`architecture.md` §24).
-* Regras de cálculo ficam nas funções de domínio centralizadas (`architecture.md` §9); não as reimplemente em controllers, repositories ou no frontend.
-* Valores monetários sempre em centavos inteiros.
-* Datas que dependem de "hoje" usam o relógio injetável (T-04), para permitir testes determinísticos.
-
-## Definição de pronto
-
-* Critérios de aceite atendidos.
-* Testes obrigatórios escritos e passando (`npm test`).
-* Build sem erros (`npm run build`).
-* Nenhuma regra de negócio nova ou divergente da documentação.
-* Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+* Mecanismo geral: locks advisory de transação do PostgreSQL (`pg_advisory_xact_lock`), em ordem fixa (períodos → cartão/recorrência) para evitar deadlock.
+* Pagamento duplo / pagamento × postagem / estorno duplo / parcelamento: lock do cartão (reavalia o estado sob o lock). Criação duplicada de fatura: `INSERT ... ON CONFLICT DO NOTHING` + unicidade `(cartão, mês)`. Fechamento duplo e fechamento × escritas: lock exclusivo de meses no fechamento, compartilhado nas escritas. Geração duplicada de ocorrência: lock da recorrência + unicidade `(recurrence_id, occurrence_month)`; pular × gerar: mesmo lock.
+* Cobertura: `tests/api/concurrency.int.spec.ts` (operações paralelas por cenário).

@@ -1,0 +1,15 @@
+meta {
+  name: Listar cartoes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/credit-cards
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

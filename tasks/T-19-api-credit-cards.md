@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-18
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,7 @@ Implementar o módulo de cartões de crédito.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* O `id` do cartão é o da tabela `credit_cards`; o `payment_method_id` é o que o usuário informa ao lançar compras. Criação em transação única (teste de atomicidade com falha no segundo insert). Reativar dispara a geração do dia.

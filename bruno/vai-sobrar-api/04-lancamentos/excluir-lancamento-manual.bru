@@ -1,0 +1,19 @@
+meta {
+  name: Excluir lancamento manual
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/api/transactions/{{incomeTransactionId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Somente lançamentos MANUAL em mês aberto.
+}

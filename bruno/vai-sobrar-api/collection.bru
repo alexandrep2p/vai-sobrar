@@ -1,0 +1,39 @@
+meta {
+  name: Vai Sobrar API
+}
+
+docs {
+  # Vai Sobrar — API
+
+  1. Suba o banco e o servidor (veja bruno/README.md).
+  2. Selecione o ambiente **Local**.
+  3. Rode as pastas em ordem (ou a coleção inteira no Runner): os ids são guardados em variáveis
+     (categoryId, cardId, transactionId, invoiceId...) e reutilizados pelas requisições seguintes.
+
+  Variáveis de data (calculadas automaticamente): today, currentMonth, nextMonth, monthPlus2,
+  monthPlus5, dueDate, dueNextMonth, pauseUntil, endDate.
+}
+
+script:pre-request {
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const ym = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+  const addMonths = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+
+  const now = new Date();
+  bru.setVar('today', fmt(now));
+  bru.setVar('currentMonth', ym(now));
+  bru.setVar('nextMonth', ym(addMonths(now, 1)));
+  bru.setVar('monthPlus2', ym(addMonths(now, 2)));
+  bru.setVar('monthPlus5', ym(addMonths(now, 5)));
+  // vencimento de lançamentos manuais: hoje (aceito: dentro do mês corrente)
+  bru.setVar('dueDate', fmt(now));
+  // vencimento no mês seguinte (dia 15)
+  const next = addMonths(now, 1);
+  bru.setVar('dueNextMonth', fmt(new Date(next.getFullYear(), next.getMonth(), 15)));
+  // retorno de pausa (30 dias) e término de recorrência (12 meses)
+  bru.setVar('pauseUntil', fmt(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30)));
+  bru.setVar('endDate', fmt(new Date(now.getFullYear() + 1, now.getMonth(), 28)));
+  // sufixo para tornar nomes únicos entre execuções
+  if (!bru.getVar('runId')) bru.setVar('runId', String(Date.now()).slice(-6));
+}

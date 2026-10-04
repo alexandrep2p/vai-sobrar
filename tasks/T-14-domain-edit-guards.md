@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-08
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -53,3 +53,8 @@ Implementar as guardas que dizem se um campo de um lançamento pode ser alterado
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Retorno `Verdict` (`allowed` ou `code`) + `assertAllowed` para lançar `BusinessError`. Códigos escolhidos (a spec não mapeia): mês fechado → `PERIOD_CLOSED`; fatura `PAID` → `INVOICE_ALREADY_PAID`; célula "não" → `TRANSACTION_NOT_EDITABLE`; status de cartão → `CARD_TRANSACTION_SETTLED_BY_INVOICE`; plano com parcela em mês fechado/fatura paga → `INVALID_INSTALLMENT_OPERATION`; exclusão fora de `MANUAL` → `TRANSACTION_NOT_DELETABLE`; troca de método comum↔cartão → `TRANSACTION_NOT_EDITABLE`; crédito em fatura `CLOSED` → `INVOICE_NOT_OPEN_FOR_CREDIT`.
+* Precedência: mês fechado → fatura `PAID` (lançamentos de cartão) → matriz. Validação de tipo/atividade da categoria e do método fica nos casos de uso. Código em `src/domain/edit-guards.ts`.

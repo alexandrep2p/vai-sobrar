@@ -2,7 +2,7 @@
 
 * **Fase:** 0 — Base técnica
 * **Depende de:** T-01
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -54,3 +54,11 @@ Criar os utilitários transversais usados por todos os módulos: erros de negóc
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Mapeamento código → status HTTP (a architecture §23 não define): 404 `TRANSACTION_NOT_FOUND`; 409 para conflitos com o estado atual (período fechado/pendências, não editável/deletável, fatura paga/não fechada, ocorrência não pulável, recorrência cancelada etc.); 422 para os demais. Lista em `src/shared/errors.ts`.
+* Formato de erro: `{ "error": { "code", "message", "details?" } }`. Erro Zod → 400 `VALIDATION_ERROR` (details = lista de `{path, message, code}`); JSON malformado → 400 `INVALID_JSON`; erro inesperado → 500 `INTERNAL_ERROR` sem vazar a causa. Os três códigos não-de-negócio são técnicos.
+* `Cents`, `LocalDate` e `YearMonth` são tipos com brand sobre `number`/`string`; datas são strings `YYYY-MM-DD`/`YYYY-MM`, sem `Date`/fuso.
+* `SystemClock.today()` usa a data civil no fuso do servidor.
+* Testes em `backend/tests/shared/`.

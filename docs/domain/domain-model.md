@@ -202,6 +202,7 @@ end_date            (opcional)
 status              (RecurrenceStatus)
 paused_from         (opcional)
 paused_until        (opcional)
+cancelled_at        (opcional; data do cancelamento, somente com status = CANCELLED)
 created_at
 updated_at
 ```

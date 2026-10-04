@@ -1,0 +1,22 @@
+meta {
+  name: Pagar fatura
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/invoices/{{invoiceId}}/pay
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "paid_at": "{{today}}",
+    "payment_method_id": "{{pixId}}"
+  }
+}
+
+docs {
+  Só faturas CLOSED (depois do melhor dia do cartão). Uma fatura OPEN retorna INVOICE_NOT_CLOSED. O pagamento é irreversível.
+}

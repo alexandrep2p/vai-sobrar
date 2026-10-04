@@ -2,7 +2,7 @@
 
 * **Fase:** 1 — Domínio puro
 * **Depende de:** T-08
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,8 @@ Implementar `canClose(month)` retornando o resultado e o motivo da recusa.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Ordem de verificação: mês já fechado → futuro → pendências (lançamentos `PENDING` ou ocorrências projetadas, mesmo código `PERIOD_HAS_PENDING_TRANSACTIONS`) → faturas não pagas → mês anterior aberto com lançamentos. Retorna o primeiro motivo.
+* Contagens e o conjunto de meses com lançamentos são calculados pelo caso de uso (T-33). Código em `src/domain/can-close.ts`.

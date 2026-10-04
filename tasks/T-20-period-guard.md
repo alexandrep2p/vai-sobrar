@@ -2,7 +2,7 @@
 
 * **Fase:** 3 — API
 * **Depende de:** T-08, T-15
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -48,3 +48,8 @@ Criar o serviço que informa o estado de qualquer mês (lógico ou persistido) e
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Guarda de escrita `guardMonthsOpen` (`periods.service.ts`): toma o lock compartilhado de meses (`pg_advisory_xact_lock_shared`) e rejeita com `PERIOD_CLOSED` qualquer mês informado (origem e destino) que esteja fechado. O fechamento toma o lock exclusivo — fechamento e escritas não se intercalam.
+* Ordem de aquisição de locks (evita deadlock): períodos (compartilhado) → cartão/recorrência. `lockCard` e `lockRecurrence` já tomam o lock de períodos primeiro.
