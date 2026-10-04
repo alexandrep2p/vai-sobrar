@@ -77,7 +77,7 @@ Se alguma pré-condição falhar, o fechamento é rejeitado e o usuário é info
 ### 4.3 Consequências do fechamento cronológico
 
 * Os lançamentos de cartão de um mês ficam no mês do `reference_month` e só são liquidados pelo pagamento da fatura. Por isso, uma fatura não paga impede o fechamento do seu mês e, por consequência, dos meses seguintes.
-* Exemplo: melhor dia 25, vencimento 5. Outubro só pode ser fechado depois que a fatura de outubro, que vence em 05/11, for paga. Isso exige que ela esteja `CLOSED`, ou seja, depois de 25/10.
+* Exemplo: melhor dia 25, vencimento 5. Outubro só pode ser fechado depois que a fatura de outubro, que vence em 05/11, for paga. A fatura pode ser paga a qualquer momento, aberta ou fechada (PD-32): não é preciso esperar 25/10.
 
 ---
 

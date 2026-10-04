@@ -33,14 +33,13 @@ npm run dev
 
 ## O que esperar no fluxo completo
 
-Duas requisições retornam `409` **de propósito** quando a collection roda do início ao fim, porque dependem do calendário:
+Uma requisição retorna `409` **de propósito** quando a collection roda do início ao fim, porque depende do estado do mês:
 
-| Requisição                                         | Por quê                                                                                                                |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `06 - Faturas / Pagar fatura`                      | A fatura do ciclo ainda está `OPEN` (`INVOICE_NOT_CLOSED`). Só dá para pagar depois do melhor dia de compra do cartão. |
-| `09 - Extrato e meses / Fechar mes (IRREVERSIVEL)` | O mês tem lançamentos em aberto (`PERIOD_HAS_PENDING_TRANSACTIONS`).                                                   |
+| Requisição                                         | Por quê                                                              |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `09 - Extrato e meses / Fechar mes (IRREVERSIVEL)` | O mês tem lançamentos em aberto (`PERIOD_HAS_PENDING_TRANSACTIONS`). |
 
-Para ver o pagamento e o fechamento funcionando, pague/estorne o que estiver pendente, ou crie o cartão com um melhor dia já passado neste mês (por exemplo `best_purchase_day: 1`) antes de lançar a compra.
+`Pagar fatura` funciona com a fatura aberta ou fechada (PD-32). Para ver o fechamento do mês funcionando, pague antes o que estiver pendente: lançamentos de método comum (`Pagar lancamento`) e as faturas do cartão.
 
 > **Cuidado:** `Fechar mes` é irreversível. Depois de fechado, o mês (e as faturas daquele mês) ficam imutáveis. Para desfazer em ambiente de desenvolvimento, recrie o banco (`npm run db:reset` na pasta `backend`).
 

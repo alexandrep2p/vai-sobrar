@@ -308,12 +308,46 @@ describe('leitura de faturas (T-23, T-24)', () => {
 });
 
 describe('pagar fatura (T-25)', () => {
-  it('CA-FAT-04: fatura OPEN não pode ser paga', async () => {
+  it('CA-FAT-04: fatura PAID não pode ser paga de novo', async () => {
     const { methodId } = await setup('2027-10-01');
     const res = await buy(methodId, '2027-10-05');
-    const pay = await payInvoice(res.body.invoice.id, '2027-10-01');
-    expect(pay.status).toBe(409);
-    expect(pay.body.error.code).toBe('INVOICE_NOT_CLOSED');
+    expect((await payInvoice(res.body.invoice.id, '2027-10-01')).status).toBe(200);
+    const again = await payInvoice(res.body.invoice.id, '2027-10-01');
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('INVOICE_ALREADY_PAID');
+  });
+
+  it('CA-FAT-22 (PD-32): fatura OPEN é paga antes do fechamento e não vira CLOSED depois', async () => {
+    const { methodId } = await setup('2027-10-03');
+    const res = await buy(methodId, '2027-10-02');
+    expect(res.body.invoice.status).toBe('OPEN');
+    const pay = await payInvoice(res.body.invoice.id, '2027-10-03');
+    expect(pay.status).toBe(200);
+    expect(pay.body).toMatchObject({
+      status: 'PAID',
+      paid_at: '2027-10-03',
+      closing_date: '2027-10-06',
+    });
+    expect(pay.body.transactions[0]).toMatchObject({ status: 'PAID', paid_at: '2027-10-03' });
+
+    env.clock.set(parseLocalDate('2027-10-10')); // depois do closing_date
+    const after = await invoiceOf(res.body.invoice.id);
+    expect(after).toMatchObject({ status: 'PAID', situation: null });
+  });
+
+  it('CA-FAT-23 (PD-32): compra do ciclo de fatura paga antecipadamente vai para a próxima fatura', async () => {
+    const { methodId } = await setup('2027-10-03');
+    const first = await buy(methodId, '2027-10-02');
+    await payInvoice(first.body.invoice.id, '2027-10-03');
+    env.clock.set(parseLocalDate('2027-10-05'));
+    const late = await buy(methodId, '2027-10-05');
+    expect(late.status).toBe(201);
+    expect(late.body).toMatchObject({
+      purchase_date: '2027-10-05',
+      financial_month: '2027-11',
+    });
+    expect(late.body.invoice.id).not.toBe(first.body.invoice.id);
+    expect((await invoiceOf(first.body.invoice.id)).transactions).toHaveLength(1);
   });
 
   it('CA-FAT-05: pagar liquida A, B e C com a data do pagamento', async () => {

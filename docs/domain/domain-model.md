@@ -124,7 +124,7 @@ updated_at
 ```
 
 * Persistida somente quando recebe o primeiro lançamento ou crédito.
-* `OPEN → CLOSED` automático após o `closing_date`; `CLOSED → PAID` somente pela ação "Pagar fatura"; `PAID` é final.
+* `OPEN → CLOSED` automático após o `closing_date`; `OPEN → PAID` e `CLOSED → PAID` somente pela ação "Pagar fatura"; `PAID` é final.
 * Atraso (`OVERDUE`) é situação derivada.
 * Recebe créditos de estorno somente quando `OPEN` e com mês aberto.
 * Seus lançamentos são liquidados somente pela ação "Pagar fatura"; lançamentos de fatura `PAID` não são editáveis.

@@ -224,7 +224,7 @@ O mesmo mecanismo cobre `PAUSED ⇄ ACTIVE` de recorrências com pausa programad
 
 ```text
 POST /api/invoices/:id/pay   { paid_at, payment_method_id }
-  ├── status = CLOSED
+  ├── status = OPEN ou CLOSED (não PAID)
   ├── mês do reference_month aberto
   ├── paid_at válido, <= hoje, fora de mês fechado
   ├── método ativo e diferente do método do próprio cartão
@@ -466,7 +466,6 @@ CATEGORY_TYPE_LOCKED
 PAYMENT_METHOD_INACTIVE
 PAYMENT_METHOD_NOT_EDITABLE
 CARD_INACTIVE
-INVOICE_NOT_CLOSED
 INVOICE_ALREADY_PAID
 INVOICE_PAYMENT_METHOD_INVALID
 INVOICE_NOT_OPEN_FOR_CREDIT

@@ -125,7 +125,7 @@ export interface InvoiceDetailData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Fechar</button>
-      @if (invoice()?.status === 'CLOSED') {
+      @if (invoice() && invoice()?.status !== 'PAID') {
         <button mat-flat-button (click)="pay()" data-testid="pay-invoice">Pagar fatura</button>
       }
     </mat-dialog-actions>

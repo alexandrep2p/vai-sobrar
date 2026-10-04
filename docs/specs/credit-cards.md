@@ -234,7 +234,7 @@ Nesses casos aplica-se a regra da **compra tardia**:
 
 * a compra é postada na **próxima fatura do mesmo cartão** que não esteja `PAID` e cujo mês financeiro esteja aberto, percorrendo os ciclos seguintes em ordem;
 * a `purchase_date` original é preservada;
-* a fatura `PAID` não é reaberta nem alterada;
+* a fatura `PAID` não é reaberta nem alterada (inclusive a fatura paga antes do `closing_date`, PD-32);
 * o mês financeiro da compra passa a ser o `reference_month` da fatura em que foi postada.
 
 Exemplo:

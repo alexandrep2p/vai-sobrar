@@ -126,7 +126,7 @@ A fatura agrupa os lançamentos de um ciclo do cartão: `Aberta` (ciclo em andam
 
 * Ciclos futuros sem lançamentos são exibidos como "Sem lançamentos — R$ 0,00", sem existir no banco.
 * Itens de cartão não são pagos individualmente: ficam em aberto até a fatura ser paga.
-* A ação **Pagar fatura** (somente para fatura fechada) usa uma data e um método de pagamento diferente do próprio cartão, liquida os lançamentos pendentes e não cria despesa. Não há pagamento parcial nem desfazer pagamento.
+* A ação **Pagar fatura** (para fatura aberta ou fechada, ainda não paga) usa uma data e um método de pagamento diferente do próprio cartão, liquida os lançamentos pendentes e não cria despesa. Não há pagamento parcial nem desfazer pagamento.
 * Fatura paga nunca é reaberta, e os seus lançamentos não podem mais ser editados.
 * Fatura vencida e não paga é exibida como atrasada, sem juros ou multa.
 * Créditos que superem os débitos viram saldo credor da fatura, aproveitado na fatura seguinte, sem novo lançamento.

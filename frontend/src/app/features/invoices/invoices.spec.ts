@@ -247,14 +247,14 @@ describe('InvoiceDetailDialog', () => {
     expect(one(f, '[data-testid="overdue"]').textContent).toContain('Atrasada');
   });
 
-  it('só oferece "Pagar fatura" quando a fatura está fechada', () => {
+  it('oferece "Pagar fatura" enquanto a fatura não está paga (aberta ou fechada)', () => {
     expect(
       root(setup(detail({ status: 'CLOSED' }))).querySelector('[data-testid="pay-invoice"]'),
     ).not.toBeNull();
     TestBed.resetTestingModule();
     expect(
       root(setup(detail({ status: 'OPEN' }))).querySelector('[data-testid="pay-invoice"]'),
-    ).toBeNull();
+    ).not.toBeNull();
     TestBed.resetTestingModule();
     expect(
       root(setup(detail({ status: 'PAID' }))).querySelector('[data-testid="pay-invoice"]'),

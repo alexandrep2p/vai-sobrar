@@ -18,7 +18,6 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   PAYMENT_METHOD_INACTIVE: 'O método de pagamento está inativo.',
   PAYMENT_METHOD_NOT_EDITABLE: 'Este método de pagamento não pode ser editado.',
   CARD_INACTIVE: 'O cartão está inativo.',
-  INVOICE_NOT_CLOSED: 'A fatura precisa estar fechada para ser paga.',
   INVOICE_ALREADY_PAID: 'Esta fatura já foi paga.',
   INVOICE_PAYMENT_METHOD_INVALID: 'O método escolhido não pode ser usado para pagar a fatura.',
   INVOICE_NOT_OPEN_FOR_CREDIT: 'A fatura não está disponível para receber o crédito.',

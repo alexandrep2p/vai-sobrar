@@ -55,18 +55,15 @@ describe('cenários de integração ponta a ponta (T-46)', () => {
     expect((await statement('2027-10')).items).toHaveLength(1); // a fatura paga não foi alterada
   });
 
-  it('2. vencimento no mês seguinte: outubro só fecha depois que a fatura (vence 05/11) é paga', async () => {
+  it('2. vencimento no mês seguinte: outubro só fecha depois que a fatura (vence 05/11) é paga, mesmo antes do fechamento dela', async () => {
     await setup('2027-10-20');
     const card = await api.card('Nubank', 25, 5);
     const purchase = await buy(card.methodId, '2027-10-20', 40000);
     expect(purchase.body).toMatchObject({ financial_month: '2027-10', due_date: '2027-11-05' });
-    expect(code(await payInvoice(purchase.body.invoice.id, '2027-10-20'))).toBe(
-      'INVOICE_NOT_CLOSED',
-    );
     expect(code(await close('2027-10'))).toBe('PERIOD_HAS_PENDING_TRANSACTIONS');
 
-    goto('2027-10-26'); // fatura fecha em 25/10
-    const paid = await payInvoice(purchase.body.invoice.id, '2027-10-26');
+    // PD-32: a fatura pode ser paga ainda aberta (fecha em 25/10), sem esperar o fechamento
+    const paid = await payInvoice(purchase.body.invoice.id, '2027-10-20');
     expect(paid.status).toBe(200);
     expect((await close('2027-10')).status).toBe(200);
     // pagamento antes do vencimento (05/11): o mês financeiro continua outubro
