@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-33, T-39
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,7 @@ Implementar a ação "Fechar mês".
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* `CloseMonthDialog` com a mensagem de confirmação de home §7 (irreversível). Se o backend rejeitar, o motivo (mensagem amigável do código de erro) aparece no próprio diálogo, que permanece aberto. Mês fechado: chip "Fechado" e nenhuma ação de alteração.

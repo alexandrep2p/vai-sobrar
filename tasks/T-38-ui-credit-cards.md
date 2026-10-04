@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-19, T-35
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,7 @@ Implementar a tela de cartões.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Tela em `features/credit-cards`: lista, criar, editar (nome, melhor dia, vencimento, dias 1–31), (des)ativar e atalho para as faturas do cartão (`/faturas?cartao=id`). A edição exibe o aviso de que a mudança vale só para ciclos futuros.

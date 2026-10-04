@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-24, T-25, T-38
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -46,3 +46,8 @@ Implementar a lista de faturas por cartão, o detalhe e o pagamento.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Faturas em `features/invoices`: seleção de cartão (aceita `?cartao=`) e período (padrão: 3 meses atrás a 8 à frente = 12 meses, dentro do limite de 60 do backend). Ciclos sem fatura aparecem como "Sem lançamentos", sem detalhe.
+* Detalhe em diálogo: status, atraso, fechamento, vencimento, lançamentos, créditos, crédito recebido, totais e saldo credor. "Pagar fatura" só com status `CLOSED`; data e método (ativos, exceto o método do próprio cartão); R$ 0,00 permitido.

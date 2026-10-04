@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-03
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,14 @@ Criar a base compartilhada das telas.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Biblioteca de componentes: **Angular Material 22** (MIT, gratuita, acompanha o Angular), tema pré-construído **Azure & Blue** (`@angular/material/prebuilt-themes/azure-blue.css`, tokens `--mat-sys-*`), fontes Roboto e Material Icons via Google Fonts em `index.html`. Sem modo escuro por ora.
+* Histórico: a primeira versão da T-35 usou PrimeNG 22, abandonado porque a v22 exige license key (banner "Invalid PrimeUI License"; a v21 MIT não suporta Angular 22). Substituído por Angular Material; `primeng`, `@primeuix/themes` e `primeicons` foram removidos.
+* **Mobile first**: CSS base para telas pequenas e ampliação com `min-width` (breakpoint 768px). Mobile: barra superior (`mat-toolbar`) com menu em gaveta (`mat-sidenav` modo `over`); a partir de 768px: `mat-sidenav` fixo (modo `side`), alternado por `BreakpointObserver`.
+* Rotas em português (`/home`, `/faturas`, `/recorrencias`, `/categorias`, `/metodos`, `/cartoes`), com `loadComponent` e páginas provisórias em `features/*` a serem substituídas nas tasks de tela.
+* Erros: `ApiClient` (`core/api`) usa URLs relativas `/api`; `errorInterceptor` converte `HttpErrorResponse` em `ApiError` (código + mensagem em português de `error-messages.ts`, ignorando o texto interno do backend, conforme architecture §23) e mostra um snackbar (`MatSnackBar`). Códigos desconhecidos usam mensagem genérica.
+* Dinheiro: `formatCents` (centavos → R$, sem cálculo de domínio). Datas: `formatDate`/`formatMonth` tratam `YYYY-MM-DD`/`YYYY-MM` como texto, sem fuso horário. Labels dos enums em `shared/labels/labels.ts`.
+* Orçamento de bundle inicial: aviso elevado de 500kB para 700kB (o inicial ficou com ~590kB raw / ~133kB transferidos, por causa de Angular Material + CDK).
+* Infra compartilhada das telas (T-36 em diante): `core/api/models.ts` (tipos dos DTOs), `core/data/catalog.service.ts` e `ledger.service.ts` (chamadas da API), `core/clock.ts` ("hoje" injetável), `shared/ui` (`LoadState`, `ConfirmDialog`, `PayDialog`, `dialogConfig`), `shared/forms/validators.ts` e `parseCents` (texto → centavos sem ponto flutuante). Formulários em `MatDialog` com largura total no mobile.

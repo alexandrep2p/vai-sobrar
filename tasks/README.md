@@ -21,6 +21,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 
 | Task | Título | Fase | Depende de | Status |
 |---|---|---|---|---|
+<<<<<<< Updated upstream
 | [T-01](T-01-backend-base.md) | Completar a estrutura do backend | 0 | — | A fazer |
 | [T-02](T-02-database-setup.md) | Ambiente PostgreSQL e Prisma | 0 | T-01 | A fazer |
 | [T-03](T-03-frontend-base.md) | Revisar a estrutura do frontend | 0 | — | A fazer |
@@ -67,6 +68,54 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-44](T-44-ui-recurrences.md) | Telas de recorrências e ações em ocorrências | 4 | T-28, T-31, T-39 | A fazer |
 | [T-45](T-45-ui-close-month.md) | Fluxo de fechamento do mês | 4 | T-33, T-39 | A fazer |
 | [T-46](T-46-integration-scenarios.md) | Cenários de integração ponta a ponta | 5 | T-34 | A fazer |
+=======
+| [T-01](T-01-backend-base.md) | Completar a estrutura do backend | 0 | — | Concluída |
+| [T-02](T-02-database-setup.md) | Ambiente PostgreSQL e Prisma | 0 | T-01 | Concluída |
+| [T-03](T-03-frontend-base.md) | Revisar a estrutura do frontend | 0 | — | Concluída |
+| [T-04](T-04-shared-infra.md) | Infraestrutura compartilhada do backend | 0 | T-01 | Concluída |
+| [T-05](T-05-domain-card-dates.md) | Domínio: ajuste de dias, fechamento e vencimento | 1 | T-04 | Concluída |
+| [T-06](T-06-domain-posting-invoice.md) | Domínio: ciclo da compra e fatura de postagem | 1 | T-05 | Concluída |
+| [T-07](T-07-domain-split-cents.md) | Domínio: distribuição de centavos | 1 | T-04 | Concluída |
+| [T-08](T-08-domain-financial-month.md) | Domínio: mês financeiro | 1 | T-05 | Concluída |
+| [T-09](T-09-domain-invoice-totals.md) | Domínio: totais da fatura e saldo credor | 1 | T-04 | Concluída |
+| [T-10](T-10-domain-allocate-refund.md) | Domínio: distribuição de estornos | 1 | T-07 | Concluída |
+| [T-11](T-11-domain-recognition-invoice.md) | Domínio: fatura de reconhecimento do estorno | 1 | T-06 | Concluída |
+| [T-12](T-12-domain-recurrence-eligibility.md) | Domínio: elegibilidade e data de ocorrência | 1 | T-05 | Concluída |
+| [T-13](T-13-domain-can-close.md) | Domínio: pré-condições de fechamento do mês | 1 | T-08 | Concluída |
+| [T-14](T-14-domain-edit-guards.md) | Domínio: regras de edição e imutabilidade | 1 | T-08 | Concluída |
+| [T-15](T-15-prisma-schema.md) | Schema Prisma completo | 2 | T-02 | Concluída |
+| [T-16](T-16-seed-system-methods.md) | Seed dos métodos do sistema | 2 | T-15 | Concluída |
+| [T-17](T-17-api-categories.md) | API de categorias | 3 | T-15 | Concluída |
+| [T-18](T-18-api-payment-methods.md) | API de métodos de pagamento | 3 | T-16 | Concluída |
+| [T-19](T-19-api-credit-cards.md) | API de cartões | 3 | T-18 | Concluída |
+| [T-20](T-20-period-guard.md) | Serviço de meses e guarda de mês fechado | 3 | T-08, T-15 | Concluída |
+| [T-21](T-21-api-manual-transactions.md) | Lançamentos manuais | 3 | T-14, T-17, T-18, T-20 | Concluída |
+| [T-22](T-22-api-card-purchase.md) | Compra à vista no cartão | 3 | T-06, T-19, T-21 | Concluída |
+| [T-23](T-23-invoice-status-transition.md) | Transição automática de fatura e de pausa | 3 | T-22 | Concluída |
+| [T-24](T-24-api-invoices-read.md) | Leitura de faturas | 3 | T-09, T-23 | Concluída |
+| [T-25](T-25-api-invoice-payment.md) | Pagar fatura | 3 | T-24 | Concluída |
+| [T-26](T-26-api-installments.md) | Compra parcelada | 3 | T-07, T-22 | Concluída |
+| [T-27](T-27-api-refunds.md) | Estornos | 3 | T-10, T-11, T-25, T-26 | Concluída |
+| [T-28](T-28-api-recurrences.md) | Cadastro de recorrências | 3 | T-17, T-18, T-23 | Concluída |
+| [T-29](T-29-recurrence-projection.md) | Projeção de ocorrências | 3 | T-12, T-28 | Concluída |
+| [T-30](T-30-recurrence-generation.md) | Geração de ocorrências na data | 3 | T-29, T-22 | Concluída |
+| [T-31](T-31-recurrence-occurrence-actions.md) | Ações em ocorrências | 3 | T-30 | Concluída |
+| [T-32](T-32-api-monthly-statement.md) | Extrato mensal | 3 | T-21, T-24, T-27, T-29 | Concluída |
+| [T-33](T-33-api-close-month.md) | Fechamento do mês | 3 | T-13, T-25, T-31 | Concluída |
+| [T-34](T-34-concurrency.md) | Proteção contra concorrência | 3 | T-25, T-27, T-30, T-33 | Concluída |
+| [T-35](T-35-frontend-core.md) | Base do frontend | 4 | T-03 | Concluída |
+| [T-36](T-36-ui-categories.md) | Tela de categorias | 4 | T-17, T-35 | Concluída |
+| [T-37](T-37-ui-payment-methods.md) | Tela de métodos de pagamento | 4 | T-18, T-35 | Concluída |
+| [T-38](T-38-ui-credit-cards.md) | Tela de cartões | 4 | T-19, T-35 | Concluída |
+| [T-39](T-39-ui-home.md) | Home: navegação, resumo e extrato | 4 | T-32, T-35 | Concluída |
+| [T-40](T-40-ui-transaction-form.md) | Formulário de lançamento | 4 | T-21, T-22, T-26, T-39 | Concluída |
+| [T-41](T-41-ui-transaction-actions.md) | Ações do lançamento na Home | 4 | T-40 | Concluída |
+| [T-42](T-42-ui-invoices.md) | Telas de faturas | 4 | T-24, T-25, T-38 | Concluída |
+| [T-43](T-43-ui-refunds.md) | Fluxo de estorno | 4 | T-27, T-42 | Concluída |
+| [T-44](T-44-ui-recurrences.md) | Telas de recorrências e ações em ocorrências | 4 | T-28, T-31, T-39 | Concluída |
+| [T-45](T-45-ui-close-month.md) | Fluxo de fechamento do mês | 4 | T-33, T-39 | Concluída |
+| [T-46](T-46-integration-scenarios.md) | Cenários de integração ponta a ponta | 5 | T-34 | Concluída |
+>>>>>>> Stashed changes
 
 ## Como usar
 

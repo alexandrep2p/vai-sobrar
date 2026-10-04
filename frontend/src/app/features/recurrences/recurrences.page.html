@@ -1,0 +1,70 @@
+<div class="page-header">
+  <h1>Recorrências</h1>
+  <button mat-flat-button (click)="create()" data-testid="new">
+    <mat-icon>add</mat-icon>
+    Nova recorrência
+  </button>
+</div>
+
+<app-load-state
+  [status]="status()"
+  [empty]="recurrences().length === 0"
+  emptyMessage="Nenhuma recorrência cadastrada."
+  (retry)="load()"
+>
+  <div class="list-card">
+    @for (r of recurrences(); track r.id) {
+      <div class="list-row wrap" data-testid="recurrence-row">
+        <div class="grow">
+          <div>{{ r.description }}</div>
+          <div class="sub">
+            {{ r.category.name }} · {{ r.payment_method.name }} · todo dia {{ r.due_day }}
+          </div>
+          <div class="sub">
+            Desde {{ date(r.start_date) }}
+            @if (r.end_date) {
+              · até {{ date(r.end_date) }}
+            }
+            @if (r.status === 'PAUSED' && r.paused_from) {
+              · pausada desde {{ date(r.paused_from) }}
+              @if (r.paused_until) {
+                até {{ date(r.paused_until) }}
+              }
+            }
+            @if (r.status === 'CANCELLED' && r.cancelled_at) {
+              · cancelada em {{ date(r.cancelled_at) }}
+            }
+          </div>
+        </div>
+        <div [class]="r.type === 'INCOME' ? 'income' : 'expense'">{{ money(r.amount) }}</div>
+        <span
+          class="chip"
+          [class.positive]="r.status === 'ACTIVE'"
+          [class.warn]="r.status === 'CANCELLED'"
+          data-testid="status"
+        >
+          {{ statusLabel(r.status) }}
+        </span>
+        @if (canEdit(r) || canPause(r) || canResume(r) || canCancel(r)) {
+          <button mat-icon-button aria-label="Ações" [matMenuTriggerFor]="menu" data-testid="menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            @if (canEdit(r)) {
+              <button mat-menu-item (click)="edit(r)" data-testid="act-edit">Editar</button>
+            }
+            @if (canPause(r)) {
+              <button mat-menu-item (click)="pause(r)" data-testid="act-pause">Pausar</button>
+            }
+            @if (canResume(r)) {
+              <button mat-menu-item (click)="resume(r)" data-testid="act-resume">Retomar</button>
+            }
+            @if (canCancel(r)) {
+              <button mat-menu-item (click)="cancel(r)" data-testid="act-cancel">Cancelar</button>
+            }
+          </mat-menu>
+        }
+      </div>
+    }
+  </div>
+</app-load-state>

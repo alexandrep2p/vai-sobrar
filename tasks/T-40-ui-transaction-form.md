@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-21, T-22, T-26, T-39
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -49,3 +49,7 @@ Implementar o modal "+ Lançamento".
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Diálogo "Novo lançamento" (`transaction-form-dialog.ts`): categorias ativas filtradas pelo tipo, métodos ativos. Método comum envia `due_date`; cartão envia `purchase_date` e, com parcelas ≥ 2, `installment_count` (1 = à vista, omitido). O tipo não é enviado (deriva da categoria).

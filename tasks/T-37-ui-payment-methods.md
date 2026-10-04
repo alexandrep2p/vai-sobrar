@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-18, T-35
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -44,3 +44,7 @@ Implementar a tela de métodos de pagamento.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Tela em `features/payment-methods`. Ações conforme payment-methods §10: sistema só (des)ativa; personalizado comum edita e (des)ativa; cartão não edita aqui (link "Editar no cartão" para `/cartoes`) mas pode ser (des)ativado.

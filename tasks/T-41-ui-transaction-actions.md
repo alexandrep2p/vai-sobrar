@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-40
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,9 @@ Permitir editar, pagar/desfazer e excluir lançamentos a partir do extrato.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Ações por item em `features/home/item-actions.ts` (função pura `itemActions`) conforme transactions §9, §12, §13, recurrences §9–§10 e invoices §9.3: manual edita/paga/desfaz/exclui; ocorrência com método comum edita/paga/pula; itens de cartão editam (enquanto a fatura não estiver `PAID`) e estornam, com o aviso "Liquidação pelo pagamento da fatura". Mês fechado e créditos de estorno não têm ações.
+* Edição: `TransactionEditDialog` mostra só os campos permitidos (`editableFields`). Parcela é editada pelo plano (`PUT /installment-plans/:id`); ocorrência pelo endpoint da ocorrência; demais por `PUT /transactions/:id`. Só os campos alterados são enviados.
+* Condições que dependem de dados que o frontend não tem (ex.: todas as parcelas em meses abertos) são validadas pelo backend e o erro é exibido.

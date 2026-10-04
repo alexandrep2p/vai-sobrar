@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-28, T-31, T-39
-* **Status:** A fazer
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -45,3 +45,8 @@ Implementar o cadastro de recorrências e as ações nas ocorrências.
 * Build sem erros (`npm run build`).
 * Nenhuma regra de negócio nova ou divergente da documentação.
 * Se uma decisão técnica foi tomada nesta task, ela está registrada na seção "Decisões técnicas registradas" deste arquivo.
+
+## Decisões técnicas registradas
+
+* Recorrências em `features/recurrences`: lista com status e vigência/pausa; criar/editar (a edição avisa que só vale para ocorrências não geradas); pausar (início e retorno opcional), retomar e cancelar (com confirmação). Cancelada não tem ações.
+* Na Home: editar, pagar e pular ocorrência (gerada ou projetada) pelos endpoints de ocorrência; categoria nunca é editável na ocorrência.
