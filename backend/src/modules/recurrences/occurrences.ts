@@ -84,14 +84,19 @@ export interface ProjectedOccurrence {
  * recurrences.md §6: ocorrências elegíveis, com data futura, ainda não geradas, cujo mês
  * financeiro é `financialMonth`. Não persiste nada. Uma ocorrência de cartão cai no mês da
  * ocorrência ou no seguinte (fatura do ciclo), por isso os meses candidatos são M-1 e M.
+ * Com `cardId`, considera só recorrências pagas com aquele cartão (previsão na fatura, PD-35).
  */
 export const projectOccurrences = async (
   db: Db,
   today: LocalDate,
   financialMonth: YearMonth,
+  options: { cardId?: string } = {},
 ): Promise<ProjectedOccurrence[]> => {
   const recurrences = await db.recurrence.findMany({
-    where: { status: { not: 'CANCELLED' } },
+    where: {
+      status: { not: 'CANCELLED' },
+      ...(options.cardId && { paymentMethod: { creditCard: { id: options.cardId } } }),
+    },
     include: recurrenceInclude,
     orderBy: { createdAt: 'asc' },
   });

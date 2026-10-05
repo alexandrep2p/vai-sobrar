@@ -556,9 +556,8 @@ describe('ações em ocorrências (T-31)', () => {
     const res = await api.post(`/api/recurrences/${rec.body.id}/occurrences/2027-10/skip`);
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('RECURRENCE_OCCURRENCE_NOT_SKIPPABLE');
-    expect((await api.delete(`/api/transactions/${tx?.id}`)).body.error.code).toBe(
-      'TRANSACTION_NOT_DELETABLE',
-    );
+    // PD-38: pode ser apagada (não pode ser pulada)
+    expect((await api.delete(`/api/transactions/${tx?.id}`)).status).toBe(204);
   });
 
   it('mês fechado: não pula, não edita e não paga a ocorrência (CA-REC-16)', async () => {
@@ -591,7 +590,7 @@ describe('ações em ocorrências (T-31)', () => {
       cardMethod = card.methodId;
     });
 
-    it('CA-REC-10B: ocorrência gerada de cartão não pode ser pulada; não é excluída', async () => {
+    it('CA-REC-10B: ocorrência gerada de cartão não pode ser pulada (pode ser apagada, PD-38)', async () => {
       const rec = await createRec({
         payment_method_id: cardMethod,
         due_day: 5,
@@ -603,9 +602,7 @@ describe('ações em ocorrências (T-31)', () => {
       expect(tx).toBeTruthy();
       const res = await api.post(`/api/recurrences/${rec.body.id}/occurrences/2027-10/skip`);
       expect(res.body.error.code).toBe('RECURRENCE_OCCURRENCE_NOT_SKIPPABLE');
-      expect((await api.delete(`/api/transactions/${tx?.id}`)).body.error.code).toBe(
-        'TRANSACTION_NOT_DELETABLE',
-      );
+      expect((await api.delete(`/api/transactions/${tx?.id}`)).status).toBe(204);
     });
 
     it('a projetada de cartão pode ser pulada', async () => {

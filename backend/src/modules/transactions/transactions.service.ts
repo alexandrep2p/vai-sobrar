@@ -15,11 +15,13 @@ import {
   type LocalDate,
   type YearMonth,
 } from '../../shared/dates.js';
+import { deleteRefundsOf } from '../refunds/refund-cleanup.js';
 import {
   fromDbDate,
   fromDbDateOrNull,
   lockCard,
   lockPeriodsShared,
+  lockRecurrence,
   toDbDate,
   TRANSACTION_OPTIONS,
   type Db,
@@ -28,7 +30,7 @@ import {
 import type { AppContext } from '../../shared/context.js';
 import { BusinessError } from '../../shared/errors.js';
 import { loadClosedMonths } from '../financial-periods/periods.service.js';
-import { postingInvoiceFor } from '../invoices/invoice-store.js';
+import { postingInvoiceFor, pruneEmptyInvoices } from '../invoices/invoice-store.js';
 import { createInstallmentPurchase } from '../installments/installments.service.js';
 import {
   findTransactionOrThrow,
@@ -75,7 +77,7 @@ export const getTransaction = async ({ prisma }: AppContext, id: string): Promis
 const firstDayOfMonth = (date: LocalDate): LocalDate => `${yearMonthOf(date)}-01` as LocalDate;
 
 /** transactions.md §10: retroativo somente dentro do mês corrente (do dia 1 até hoje); futuro livre. */
-const assertWithinRetroactiveWindow = (
+export const assertWithinRetroactiveWindow = (
   date: LocalDate,
   today: LocalDate,
   code: 'INVALID_DUE_DATE' | 'INVALID_PURCHASE_DATE',
@@ -485,17 +487,47 @@ export const unpayTransaction = async (ctx: AppContext, id: string): Promise<Tra
   return toTransactionDto(row);
 };
 
+/**
+ * Apagar (PD-38, provisório): remove o lançamento fisicamente. Compra de cartão leva os estornos
+ * junto e a fatura que ficar vazia deixa de existir; ocorrência de recorrência registra a exceção
+ * do mês para não ser gerada de novo.
+ */
 export const deleteTransaction = async (ctx: AppContext, id: string): Promise<void> => {
   await ctx.prisma.$transaction(async (tx) => {
+    // Ordem de locks da geração de ocorrências: recorrência → cartão.
+    const head = await findTransactionOrThrow(tx, id);
+    if (head.recurrenceId) await lockRecurrence(tx, head.recurrenceId);
+    if (head.invoice) await lockCard(tx, head.invoice.creditCardId);
     await lockPeriodsShared(tx);
+
     const row = await findTransactionOrThrow(tx, id);
     const closed = await loadClosedMonths(tx);
     assertAllowed(
       canDeleteTransaction({
         origin: row.origin,
         monthClosed: closed.has(row.financialMonth as YearMonth),
+        invoicePaid: row.invoice?.status === 'PAID',
       }),
     );
+
+    const touchedInvoices: string[] = [];
+    if (row.invoiceId) {
+      touchedInvoices.push(row.invoiceId);
+      touchedInvoices.push(...(await deleteRefundsOf(tx, closed, { transactionIds: [id] })));
+    }
     await tx.transaction.delete({ where: { id } });
+    if (row.recurrenceId && row.occurrenceMonth) {
+      await tx.recurrenceException.upsert({
+        where: {
+          recurrenceId_occurrenceMonth: {
+            recurrenceId: row.recurrenceId,
+            occurrenceMonth: row.occurrenceMonth,
+          },
+        },
+        create: { recurrenceId: row.recurrenceId, occurrenceMonth: row.occurrenceMonth },
+        update: {},
+      });
+    }
+    await pruneEmptyInvoices(tx, touchedInvoices);
   }, TRANSACTION_OPTIONS);
 };

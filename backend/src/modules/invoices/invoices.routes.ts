@@ -8,12 +8,19 @@ import {
   uuidSchema,
   yearMonthSchema,
 } from '../../shared/http.js';
-import { getInvoice, listCardInvoices, payInvoice } from './invoices.service.js';
+import {
+  getCycleDetail,
+  getInvoice,
+  listCardInvoices,
+  payInvoice,
+  previewPostingInvoice,
+} from './invoices.service.js';
 
 const rangeQuery = z.object({
   from: yearMonthSchema.optional(),
   to: yearMonthSchema.optional(),
 });
+const previewQuery = z.object({ purchase_date: localDateSchema });
 const payBody = z.object({ paid_at: localDateSchema, payment_method_id: uuidSchema }).strict();
 
 /** Rotas de fatura: `GET /credit-cards/:id/invoices`, `GET /invoices/:id`, `POST /invoices/:id/pay`. */
@@ -26,6 +33,24 @@ export const invoicesRouter = (ctx: AppContext): Router => {
       const { id } = idParams.parse(req.params);
       const range = rangeQuery.parse(req.query);
       res.json({ data: await listCardInvoices(ctx, id, range) });
+    }),
+  );
+
+  router.get(
+    '/credit-cards/:id/posting-preview',
+    asyncHandler(async (req, res) => {
+      const { id } = idParams.parse(req.params);
+      const { purchase_date } = previewQuery.parse(req.query);
+      res.json(await previewPostingInvoice(ctx, id, purchase_date));
+    }),
+  );
+
+  router.get(
+    '/credit-cards/:id/invoices/:month',
+    asyncHandler(async (req, res) => {
+      const { id } = idParams.parse(req.params);
+      const month = yearMonthSchema.parse(req.params['month']);
+      res.json(await getCycleDetail(ctx, id, month));
     }),
   );
 

@@ -146,6 +146,20 @@ export const canEditField = (ctx: TransactionEditContext, field: EditableField):
   }
 };
 
+/**
+ * installments.md §8 (PD-36): valor total, quantidade e data da compra só mudam pelo plano
+ * inteiro, sem parcela em mês fechado ou em fatura `PAID` e sem estorno vinculado.
+ */
+export const canEditPlanStructure = (plan: {
+  installments: readonly PlanInstallmentState[];
+  hasRefunds: boolean;
+}): Verdict => {
+  if (plan.installments.some((i) => i.monthClosed)) return deny('PERIOD_CLOSED');
+  if (plan.installments.some((i) => i.invoicePaid)) return deny('INVOICE_ALREADY_PAID');
+  if (plan.hasRefunds) return deny('INVALID_INSTALLMENT_OPERATION');
+  return ALLOWED;
+};
+
 /** transactions.md §7: método comum só é trocado por outro método comum. */
 export const paymentMethodChangeVerdict = (currentIsCard: boolean, nextIsCard: boolean): Verdict =>
   currentIsCard || nextIsCard ? deny('TRANSACTION_NOT_EDITABLE') : ALLOWED;
@@ -160,10 +174,23 @@ export const dueDateMoveVerdict = (
   return origin.allowed ? monthOperationVerdict(yearMonthOf(to), closedMonths) : origin;
 };
 
-/** transactions.md §13: exclusão física somente de `MANUAL` com o mês aberto. */
+/**
+ * transactions.md §13 (PD-38, provisório): lançamento, ocorrência e compra à vista no cartão são
+ * apagados com o mês aberto e, no cartão, fatura não `PAID`. Parcela isolada não é apagada: apaga-se
+ * a compra parcelada inteira (`canDeletePlan`).
+ */
 export const canDeleteTransaction = (
-  ctx: Pick<TransactionEditContext, 'origin' | 'monthClosed'>,
+  ctx: Pick<TransactionEditContext, 'origin' | 'monthClosed' | 'invoicePaid'>,
 ): Verdict => {
-  if (ctx.origin !== 'MANUAL') return deny('TRANSACTION_NOT_DELETABLE');
-  return ctx.monthClosed ? deny('PERIOD_CLOSED') : ALLOWED;
+  if (ctx.origin === 'INSTALLMENT') return deny('TRANSACTION_NOT_DELETABLE');
+  if (ctx.monthClosed) return deny('PERIOD_CLOSED');
+  if (ctx.invoicePaid) return deny('INVOICE_ALREADY_PAID');
+  return ALLOWED;
+};
+
+/** installments.md §11 (PD-38): a compra parcelada só é apagada sem parcela em mês fechado ou fatura `PAID`. */
+export const canDeletePlan = (installments: readonly PlanInstallmentState[]): Verdict => {
+  if (installments.some((i) => i.monthClosed)) return deny('PERIOD_CLOSED');
+  if (installments.some((i) => i.invoicePaid)) return deny('INVOICE_ALREADY_PAID');
+  return ALLOWED;
 };

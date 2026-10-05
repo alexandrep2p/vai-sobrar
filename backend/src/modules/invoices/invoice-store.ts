@@ -89,6 +89,24 @@ export const ensureInvoice = async (
   return invoice;
 };
 
+/**
+ * invoices.md §4: ciclo sem lançamentos, créditos de estorno nem crédito recebido não fica
+ * persistido. Remove as faturas informadas que ficaram nessa situação (nunca uma `PAID`).
+ */
+export const pruneEmptyInvoices = async (tx: Tx, invoiceIds: Iterable<string>): Promise<void> => {
+  for (const invoiceId of new Set(invoiceIds)) {
+    const [invoice, transactions, allocations, received] = await Promise.all([
+      tx.invoice.findUnique({ where: { id: invoiceId }, select: { status: true } }),
+      tx.transaction.count({ where: { invoiceId } }),
+      tx.refundAllocation.count({ where: { invoiceId } }),
+      tx.invoice.count({ where: { creditTransferredToInvoiceId: invoiceId } }),
+    ]);
+    if (invoice && invoice.status !== 'PAID' && !transactions && !allocations && !received) {
+      await tx.invoice.delete({ where: { id: invoiceId } });
+    }
+  }
+};
+
 export interface PostingResult {
   invoice: Invoice;
 }
