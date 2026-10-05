@@ -1,0 +1,19 @@
+meta {
+  name: Detalhar ciclo da fatura
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}/invoices/{{currentMonth}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Detalhe do ciclo do mês: a fatura persistida ou, se ainda não existe, o ciclo projetado. Inclui projected_items (recorrências de cartão previstas) e projected_total, já somado em totals (PD-35).
+}

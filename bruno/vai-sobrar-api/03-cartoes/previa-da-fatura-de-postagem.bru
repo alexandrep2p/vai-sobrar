@@ -1,0 +1,19 @@
+meta {
+  name: Previa da fatura de postagem
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/credit-cards/{{cardId}}/posting-preview?purchase_date={{today}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Em qual fatura uma compra desta data seria postada (mesma regra da postagem real, sem criar nada).
+}

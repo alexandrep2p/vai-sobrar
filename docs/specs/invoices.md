@@ -70,6 +70,16 @@ Sem lançamentos
 Total: R$ 0,00
 ```
 
+* **Previsão de recorrências (PD-35):** o ciclo projetado, persistido ou não, inclui as ocorrências **projetadas** (`recurrences.md` §6) de recorrências ativas do cartão cuja fatura de postagem seja a do ciclo. Elas aparecem com o selo "Previsto" e o ciclo passa a ter "Detalhes" mesmo sem fatura persistida. Fatura `PAID` não recebe previsão.
+
+```text
+Cartão Nubank — Fatura novembro/2026
+Vencimento: 15/11/2026
+Compra mercado          R$ 500,00
+Netflix (previsto)      R$  40,00
+Total: R$ 540,00  (R$ 500,00 + R$ 40,00 previsto)
+```
+
 ---
 
 ## 5. Estados (normativo)
@@ -128,10 +138,10 @@ Situação: Atrasada
 
 ## 7. Totais
 
-Valores em centavos, calculados a partir do que está vinculado à fatura:
+Valores em centavos, calculados a partir do que está vinculado à fatura. Para fatura não `PAID`, os débitos incluem as ocorrências projetadas de recorrência do ciclo (§4, PD-35), exibidas separadamente como "previsto":
 
 ```text
-débitos          = Σ amount dos lançamentos postados na fatura
+débitos          = Σ amount dos lançamentos postados na fatura + Σ amount das ocorrências projetadas do ciclo
 créditos         = Σ amount das alocações de estorno reconhecidas na fatura   (refunds.md)
 crédito_recebido = Σ credit_balance das faturas PAID transferidas para esta   (§8)
 
@@ -193,7 +203,8 @@ Qualquer outro método ativo é aceito, inclusive PIX, Dinheiro, Débito e méto
 
 ### 9.2 Efeitos (atômicos)
 
-1. todos os lançamentos da fatura (todos `PENDING`, ver §9.3) passam a `PAID` com `paid_at` igual à data do pagamento;
+0. as ocorrências projetadas de recorrência do ciclo (§4, PD-35) são geradas como compras de cartão `RECURRENCE` (`purchase_date` = data da ocorrência, que pode ser posterior ao `paid_at`) e postadas na fatura; a geração posterior na data não as duplica;
+1. todos os lançamentos da fatura (todos `PENDING`, ver §9.3), inclusive os gerados no passo 0, passam a `PAID` com `paid_at` igual à data do pagamento;
 2. a fatura passa a `PAID` e registra `paid_at` e `payment_method_id`;
 3. o saldo credor é apurado e transferido (§8).
 
@@ -269,7 +280,8 @@ Faturas persistidas preservam cartão, `reference_month`, `closing_date`, `due_d
 * **RN-FAT-08A** — Lançamentos de cartão são liquidados somente pela ação "Pagar fatura"; não há pagamento individual (PD-24).
 * **RN-FAT-08B** — Fatura `CLOSED` aceita compras do ciclo e compras tardias, mas não recebe créditos de estorno (PD-23).
 * **RN-FAT-09** — `PAID` é estado final; fatura paga nunca é reaberta nem modificada, inclusive descrição, categoria, valor e status dos seus lançamentos.
-* **RN-FAT-10** — Só faturas `CLOSED` podem ser pagas.
+* **RN-FAT-10** — Faturas `OPEN` ou `CLOSED` podem ser pagas (PD-32).
+* **RN-FAT-10A** — O total da fatura inclui as ocorrências projetadas de recorrência do ciclo, exibidas como "Previsto"; "Pagar fatura" gera e liquida essas ocorrências junto (PD-35).
 * **RN-FAT-11** — O pagamento exige data (não futura e fora de mês fechado) e método ativo diferente do próprio cartão.
 * **RN-FAT-12** — O pagamento liquida atomicamente todos os lançamentos da fatura com a data do pagamento.
 * **RN-FAT-13** — O pagamento não cria lançamento financeiro.
@@ -303,7 +315,9 @@ Faturas persistidas preservam cartão, `reference_month`, `closing_date`, `due_d
 * **CA-FAT-13** — Fatura `CLOSED` com vencimento 15/09 e hoje 20/09 é exibida como atrasada; continua sendo a fatura de setembro.
 * **CA-FAT-14** — Tentativa de alterar ou reabrir fatura `PAID` é rejeitada.
 * **CA-FAT-15** — Alteração de `due_day` do cartão não altera o `due_date` de faturas persistidas.
-* **CA-FAT-16** — Ciclo futuro sem lançamentos é exibido como "Sem lançamentos", total R$ 0,00, sem fatura persistida.
+* **CA-FAT-16** — Ciclo futuro sem lançamentos e sem ocorrências projetadas é exibido como "Sem lançamentos", total R$ 0,00, sem fatura persistida.
+* **CA-FAT-16A** — Recorrência ativa no cartão (R$ 40, dia 10) aparece na fatura de novembro como "Previsto" e soma ao total (R$ 500 + R$ 40 = R$ 540); pagar a fatura quita R$ 540 e gera a ocorrência.
+* **CA-FAT-16B** — Recorrência pulada, pausada ou cancelada na data não aparece como previsto; fatura `PAID` não recebe previsão.
 * **CA-FAT-17** — Cartão desativado com parcelas até julho: faturas de abril a julho continuam exibidas e pagáveis.
 * **CA-FAT-18** — Estorno com alvo em fatura `CLOSED` não paga é reconhecido na fatura do estorno, não na fatura `CLOSED`.
 * **CA-FAT-20** — Fatura `CLOSED` com R$ 0,00 a pagar e vencimento passado é exibida como atrasada até ser paga.

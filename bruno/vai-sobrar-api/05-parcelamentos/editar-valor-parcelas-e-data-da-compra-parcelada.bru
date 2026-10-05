@@ -1,0 +1,26 @@
+meta {
+  name: Editar valor, parcelas e data da compra parcelada
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/installment-plans/{{planId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "total_amount": 66000,
+    "installment_count": 6
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  PD-36: regenera as parcelas (mesmo id de plano). Só é permitido sem parcela em fatura paga, sem mês fechado e sem estorno; também aceita purchase_date. O cartão não muda.
+}

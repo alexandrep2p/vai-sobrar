@@ -334,7 +334,7 @@ Não existem: `REFUND` como origem, tipo de estorno `TOTAL`/`PARCIAL` persistido
 10. **Recorrência** altera somente ocorrências ainda não geradas.
 11. **Mês fechado** é imutável; o fechamento é irreversível, cronológico em relação aos meses anteriores com lançamentos e não se aplica a meses futuros.
 12. **Configuração futura** (categoria, método, cartão, recorrência) nunca reescreve histórico.
-13. **Nada é excluído** se comprometer o histórico: categorias, métodos, cartões, faturas, planos, parcelas, compras de cartão e meses fechados não têm exclusão. Exclusão física existe somente para lançamentos `MANUAL` em mês aberto e para ocorrências de recorrência com método comum e `PENDING` quando são puladas (substituídas por `RecurrenceException`).
+13. **Nada é excluído** se comprometer o histórico: categorias, métodos, cartões, faturas e meses fechados não têm exclusão. Exclusão física existe, de forma provisória (PD-38), para lançamentos, compras de cartão e compras parceladas inteiras em mês aberto e fatura não `PAID` (com seus estornos), e para ocorrências de recorrência (substituídas por `RecurrenceException`). No futuro será privilégio de super admin.
 14. **Valores monetários** em centavos inteiros.
 
 ---

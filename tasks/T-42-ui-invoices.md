@@ -49,5 +49,5 @@ Implementar a lista de faturas por cartão, o detalhe e o pagamento.
 
 ## Decisões técnicas registradas
 
-* Faturas em `features/invoices`: seleção de cartão (aceita `?cartao=`) e período (padrão: 3 meses atrás a 8 à frente = 12 meses, dentro do limite de 60 do backend). Ciclos sem fatura aparecem como "Sem lançamentos", sem detalhe.
+* Faturas em `features/invoices`: seleção de cartão (aceita `?cartao=`) e período (padrão: mês atual e 11 à frente = 12 meses, PD-33/T-51, dentro do limite de 60 do backend). Ciclos sem fatura aparecem como "Sem lançamentos", sem detalhe.
 * Detalhe em diálogo: status, atraso, fechamento, vencimento, lançamentos, créditos, crédito recebido, totais e saldo credor. "Pagar fatura" com status `OPEN` ou `CLOSED` (PD-32), nunca `PAID`; data e método (ativos, exceto o método do próprio cartão); R$ 0,00 permitido.
