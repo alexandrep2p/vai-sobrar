@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import type { CreditCard } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, one, text, type } from '../../../testing/helpers';
+import { all, click, dialogRefMock, one, submitButton, text, type } from '../../../testing/helpers';
 import { CardDialog } from './card-dialog';
 import { CreditCardsPage } from './credit-cards.page';
 
@@ -89,6 +89,18 @@ describe('CardDialog', () => {
 
   const submit = (f: ReturnType<typeof setup>) =>
     one<HTMLFormElement>(f, 'form').dispatchEvent(new Event('submit'));
+
+  it('mantém o botão desabilitado até o cartão ser válido', async () => {
+    const fixture = setup(null);
+    const [name, best, due] = all<HTMLInputElement>(fixture, 'input');
+    expect(submitButton(fixture).disabled).toBe(true);
+    await type(fixture, name, 'Inter');
+    await type(fixture, best, '6');
+    await type(fixture, due, '15');
+    expect(submitButton(fixture).disabled).toBe(false);
+    await type(fixture, due, '45');
+    expect(submitButton(fixture).disabled).toBe(true);
+  });
 
   it('cadastra o cartão com os dias informados', async () => {
     const fixture = setup(null);

@@ -15,14 +15,15 @@ import {
   invoiceStatusLabel,
   NO_ENTRIES_CYCLE_LABEL,
   OVERDUE_INVOICE_LABEL,
+  PROJECTED_ITEM_LABEL,
 } from '../../shared/labels/labels';
 import { dialogConfig } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { InvoiceDetailDialog } from './invoice-detail-dialog';
 
-/** Faturas por cartão, num período de meses (12 meses a partir de 3 meses atrás). */
-const MONTHS_BEFORE = 3;
-const MONTHS_AFTER = 8;
+/** Faturas por cartão, num período de meses (12 meses a partir do mês atual). */
+const MONTHS_BEFORE = 0;
+const MONTHS_AFTER = 11;
 
 @Component({
   selector: 'app-invoices-page',
@@ -51,6 +52,7 @@ export class InvoicesPage implements OnInit {
   protected readonly month = formatMonth;
   protected readonly statusLabel = invoiceStatusLabel;
   protected readonly overdueLabel = OVERDUE_INVOICE_LABEL;
+  protected readonly projectedLabel = PROJECTED_ITEM_LABEL;
   protected readonly emptyCycleLabel = NO_ENTRIES_CYCLE_LABEL;
 
   ngOnInit(): void {
@@ -101,9 +103,12 @@ export class InvoicesPage implements OnInit {
 
   protected open(invoice: InvoiceSummary): void {
     const card = this.card();
-    if (!invoice.id || !card) return;
+    if (!card || (!invoice.id && invoice.projected_total === 0)) return;
     this.dialog
-      .open(InvoiceDetailDialog, dialogConfig({ invoiceId: invoice.id, card }))
+      .open(
+        InvoiceDetailDialog,
+        dialogConfig({ invoiceId: invoice.id, month: invoice.reference_month, card }),
+      )
       .afterClosed()
       .subscribe((changed) => changed && this.loadInvoices());
   }

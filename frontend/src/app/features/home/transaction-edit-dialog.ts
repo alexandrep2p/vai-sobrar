@@ -1,7 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,8 +14,11 @@ import { forkJoin, Observable } from 'rxjs';
 import type { Category, PaymentMethod, StatementItem } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
-import { centsToInput, parseCents } from '../../shared/format/money';
+import { formatDate } from '../../shared/format/dates';
+import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
+import { MoneyInput } from '../../shared/forms/money-input';
+import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog';
 import { editableFields } from './item-actions';
 
 /**
@@ -24,6 +32,7 @@ import { editableFields } from './item-actions';
     MatDialogModule,
     MatFormFieldModule,
     MatInput,
+    MoneyInput,
     MatSelectModule,
     MatButton,
   ],
@@ -46,7 +55,7 @@ import { editableFields } from './item-actions';
         @if (fields.amount) {
           <mat-form-field class="full-width">
             <mat-label>Valor (R$)</mat-label>
-            <input matInput formControlName="amount" inputmode="decimal" />
+            <input matInput appMoneyInput formControlName="amount" />
             @if (form.controls.amount.invalid) {
               <mat-error>Informe um valor maior que zero.</mat-error>
             }
@@ -81,7 +90,7 @@ import { editableFields } from './item-actions';
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting()">Salvar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
       </mat-dialog-actions>
     </form>
   `,
@@ -90,6 +99,7 @@ export class TransactionEditDialog implements OnInit {
   protected readonly item = inject<StatementItem>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<TransactionEditDialog, boolean>);
   private readonly catalog = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly fields = editableFields(this.item);
@@ -158,11 +168,51 @@ export class TransactionEditDialog implements OnInit {
       this.ref.close(false);
       return;
     }
+    confirmSummary(this.dialog, {
+      title: 'Confirmar alterações',
+      rows: this.summaryRows(changes),
+      confirmLabel: 'Confirmar',
+    }).subscribe((confirmed) => {
+      if (confirmed) this.send(changes);
+    });
+  }
+
+  private send(changes: Record<string, string | number>): void {
     this.submitting.set(true);
     this.request(changes).subscribe({
       next: () => this.ref.close(true),
       error: () => this.submitting.set(false),
     });
+  }
+
+  /** Cada campo alterado como "antes → depois". */
+  private summaryRows(changes: Record<string, string | number>): SummaryRow[] {
+    const item = this.item;
+    const name = (list: { id: string; name: string }[], id: string) =>
+      list.find((x) => x.id === id)?.name ?? '';
+    const rows: SummaryRow[] = [{ label: 'Lançamento', value: item.description }];
+    const change = (label: string, before: string, after: string) =>
+      rows.push({ label, value: `${before} → ${after}` });
+    if ('description' in changes) change('Descrição', item.description, String(changes['description']));
+    if ('amount' in changes) change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
+    if ('due_date' in changes) {
+      change(
+        'Vencimento',
+        formatDate(item.due_date ?? item.display_date),
+        formatDate(String(changes['due_date'])),
+      );
+    }
+    if ('category_id' in changes) {
+      change('Categoria', item.category.name, name(this.categories(), String(changes['category_id'])));
+    }
+    if ('payment_method_id' in changes) {
+      change(
+        'Método',
+        item.payment_method.name,
+        name(this.methods(), String(changes['payment_method_id'])),
+      );
+    }
+    return rows;
   }
 
   private request(changes: Record<string, string | number>): Observable<unknown> {

@@ -49,11 +49,24 @@ export function itemActions(item: StatementItem, monthOpen: boolean): ItemAction
       return { ...NONE, edit: true, pay: pending, unpay: !pending, delete: true };
     case 'RECURRENCE':
       return card
-        ? { ...NONE, edit: !invoicePaid, refund: true, settledByInvoice: true }
-        : { ...NONE, edit: true, pay: pending, unpay: !pending, skip: pending };
+        ? {
+            ...NONE,
+            edit: !invoicePaid,
+            refund: true,
+            delete: !invoicePaid,
+            settledByInvoice: true,
+          }
+        : { ...NONE, edit: true, pay: pending, unpay: !pending, skip: pending, delete: true };
     case 'CREDIT_CARD':
     case 'INSTALLMENT':
-      return { ...NONE, edit: !invoicePaid, refund: true, settledByInvoice: true };
+      // PD-38: apaga a compra (à vista) ou o plano inteiro (parcela), enquanto a fatura não está paga.
+      return {
+        ...NONE,
+        edit: !invoicePaid,
+        refund: true,
+        delete: !invoicePaid,
+        settledByInvoice: true,
+      };
     default:
       return NONE;
   }

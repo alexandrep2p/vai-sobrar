@@ -1,11 +1,18 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import type { InstallmentPlan, Transaction } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate, formatMonth } from '../../shared/format/dates';
 import { formatCents } from '../../shared/format/money';
 import { invoiceStatusLabel, transactionStatusLabel } from '../../shared/labels/labels';
+import { dialogConfig } from '../../shared/ui/dialog';
+import { PlanEditDialog } from './plan-edit-dialog';
 
 export interface PurchaseDetailData {
   /** Compra à vista ou lançamento original de um estorno. */
@@ -43,6 +50,11 @@ export interface PurchaseDetailData {
             </div>
           }
         </div>
+        @if (!editable()) {
+          <p class="hint-text" data-testid="edit-blocked">
+            Há parcela em fatura paga: para desfazer a compra, use o estorno.
+          </p>
+        }
       } @else if (transaction(); as t) {
         <p>
           <strong>{{ t.description }}</strong> · {{ t.category.name }}<br />
@@ -63,11 +75,23 @@ export interface PurchaseDetailData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Fechar</button>
+      @if (plan()) {
+        <button
+          mat-stroked-button
+          [disabled]="!editable()"
+          (click)="editPlan()"
+          data-testid="edit-plan"
+        >
+          Editar compra
+        </button>
+      }
     </mat-dialog-actions>
   `,
 })
 export class PurchaseDetailDialog implements OnInit {
   private readonly data = inject<PurchaseDetailData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<PurchaseDetailDialog, boolean>);
+  private readonly dialog = inject(MatDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly plan = signal<InstallmentPlan | null>(null);
@@ -77,6 +101,20 @@ export class PurchaseDetailDialog implements OnInit {
   protected readonly month = formatMonth;
   protected readonly invoiceLabel = invoiceStatusLabel;
   protected readonly statusLabel = transactionStatusLabel;
+
+  /** Sem parcela em fatura paga (o backend ainda valida mês fechado e estorno). */
+  protected readonly editable = computed(
+    () => this.plan()?.installments.every((i) => i.invoice?.status !== 'PAID') ?? false,
+  );
+
+  protected editPlan(): void {
+    const plan = this.plan();
+    if (!plan) return;
+    this.dialog
+      .open(PlanEditDialog, dialogConfig(plan))
+      .afterClosed()
+      .subscribe((changed) => changed && this.ref.close(true));
+  }
 
   ngOnInit(): void {
     if (this.data.planId) {

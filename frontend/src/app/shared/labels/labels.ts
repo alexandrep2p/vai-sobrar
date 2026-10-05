@@ -46,6 +46,7 @@ export const activeLabel = (active: boolean, gender: 'f' | 'm' = 'f'): string =>
 
 // Situações derivadas (não persistidas).
 export const OVERDUE_INVOICE_LABEL = 'Atrasada';
+export const PROJECTED_ITEM_LABEL = 'Previsto';
 export const NO_ENTRIES_CYCLE_LABEL = 'Sem lançamentos';
 export const REFUNDED_LABEL = 'Estornada';
 export const PARTIALLY_REFUNDED_LABEL = 'Parcialmente estornada';

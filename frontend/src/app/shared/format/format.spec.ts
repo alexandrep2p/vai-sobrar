@@ -1,5 +1,5 @@
-import { formatDate, formatMonth } from './dates';
-import { formatCents } from './money';
+import { formatDate, formatMonth, nextOccurrenceDate } from './dates';
+import { formatCents, formatMoneyInput } from './money';
 
 const nbsp = (s: string) => s.replace(/\s/g, ' ');
 
@@ -41,5 +41,32 @@ describe('formatMonth', () => {
   it('rejeita mês inválido', () => {
     expect(() => formatMonth('2026-13')).toThrow(RangeError);
     expect(() => formatMonth('2026-3')).toThrow(RangeError);
+  });
+});
+
+describe('nextOccurrenceDate', () => {
+  it('usa o dia no mês corrente quando ainda não passou (inclusive hoje)', () => {
+    expect(nextOccurrenceDate(10, '2027-01-10')).toBe('2027-01-10');
+    expect(nextOccurrenceDate(20, '2027-01-10')).toBe('2027-01-20');
+  });
+
+  it('passa para o mês seguinte quando o dia já passou', () => {
+    expect(nextOccurrenceDate(5, '2027-01-10')).toBe('2027-02-05');
+    expect(nextOccurrenceDate(5, '2027-12-10')).toBe('2028-01-05');
+  });
+
+  it('ajusta meses curtos ao último dia', () => {
+    expect(nextOccurrenceDate(31, '2027-02-10')).toBe('2027-02-28');
+    expect(nextOccurrenceDate(31, '2028-02-10')).toBe('2028-02-29');
+    expect(nextOccurrenceDate(30, '2027-01-31')).toBe('2027-02-28');
+  });
+});
+
+describe('formatMoneyInput', () => {
+  it('formata centavos com separador de milhar e vírgula', () => {
+    expect(formatMoneyInput(0)).toBe('0,00');
+    expect(formatMoneyInput(5)).toBe('0,05');
+    expect(formatMoneyInput(123456)).toBe('1.234,56');
+    expect(formatMoneyInput(123456789)).toBe('1.234.567,89');
   });
 });

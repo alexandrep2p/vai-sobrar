@@ -5,6 +5,7 @@ import type {
   InstallmentPlan,
   InvoiceDetail,
   InvoiceSummary,
+  PostingPreview,
   ListResponse,
   MonthlyStatement,
   OccurrenceUpdate,
@@ -51,12 +52,23 @@ export class LedgerService {
     return this.api.delete(`/transactions/${id}`);
   }
 
+  /** Apaga a compra parcelada inteira (PD-38, provisório). */
+  deletePlan(id: string): Observable<void> {
+    return this.api.delete(`/installment-plans/${id}`);
+  }
+
   getPlan(id: string): Observable<InstallmentPlan> {
     return this.api.get(`/installment-plans/${id}`);
   }
   updatePlan(
     id: string,
-    body: { description?: string; category_id?: string },
+    body: {
+      description?: string;
+      category_id?: string;
+      total_amount?: number;
+      installment_count?: number;
+      purchase_date?: string;
+    },
   ): Observable<unknown> {
     return this.api.put(`/installment-plans/${id}`, body);
   }
@@ -65,6 +77,14 @@ export class LedgerService {
     return this.api
       .get<ListResponse<InvoiceSummary>>(`/credit-cards/${cardId}/invoices`, { from, to })
       .pipe(map((r) => r.data));
+  }
+  /** Fatura em que uma compra de `purchaseDate` seria postada (somente leitura). */
+  postingPreview(cardId: string, purchaseDate: string): Observable<PostingPreview> {
+    return this.api.get(`/credit-cards/${cardId}/posting-preview`, { purchase_date: purchaseDate });
+  }
+  /** Detalhe do ciclo: a fatura persistida ou o ciclo projetado com a previsão de recorrências. */
+  invoiceCycle(cardId: string, month: string): Observable<InvoiceDetail> {
+    return this.api.get(`/credit-cards/${cardId}/invoices/${month}`);
   }
   invoice(id: string): Observable<InvoiceDetail> {
     return this.api.get(`/invoices/${id}`);

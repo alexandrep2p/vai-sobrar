@@ -1,18 +1,33 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { forkJoin } from 'rxjs';
-import type { Category, PaymentMethod, Recurrence, RecurrenceInput } from '../../core/api/models';
+import { catchError, distinctUntilChanged, forkJoin, map, of, startWith, switchMap } from 'rxjs';
+import type {
+  Category,
+  CreditCard,
+  PaymentMethod,
+  Recurrence,
+  RecurrenceInput,
+} from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
-import { centsToInput, parseCents } from '../../shared/format/money';
+import { formatDate, formatMonthShort, nextOccurrenceDate } from '../../shared/format/dates';
+import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
+import { MoneyInput } from '../../shared/forms/money-input';
 import { categoryTypeLabel } from '../../shared/labels/labels';
+import { confirmSummary } from '../../shared/ui/summary-dialog';
 
 /** Criação e edição de recorrência. A edição só vale para ocorrências ainda não geradas. */
 @Component({
@@ -22,6 +37,7 @@ import { categoryTypeLabel } from '../../shared/labels/labels';
     MatDialogModule,
     MatFormFieldModule,
     MatInput,
+    MoneyInput,
     MatSelectModule,
     MatButton,
   ],
@@ -43,7 +59,7 @@ import { categoryTypeLabel } from '../../shared/labels/labels';
         </mat-form-field>
         <mat-form-field class="full-width">
           <mat-label>Valor (R$)</mat-label>
-          <input matInput formControlName="amount" inputmode="decimal" placeholder="0,00" />
+          <input matInput appMoneyInput formControlName="amount" placeholder="0,00" />
           @if (form.controls.amount.invalid) {
             <mat-error>Informe um valor maior que zero.</mat-error>
           }
@@ -74,7 +90,7 @@ import { categoryTypeLabel } from '../../shared/labels/labels';
         </mat-form-field>
         <div class="form-grid two">
           <mat-form-field>
-            <mat-label>Dia do vencimento</mat-label>
+            <mat-label>{{ dayLabel() }}</mat-label>
             <input
               matInput
               type="number"
@@ -101,10 +117,13 @@ import { categoryTypeLabel } from '../../shared/labels/labels';
             <input matInput type="date" formControlName="end_date" />
           </mat-form-field>
         </div>
+        @if (cardHint(); as hint) {
+          <p class="hint-text" data-testid="card-hint">{{ hint }}</p>
+        }
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="loading() || submitting()">Salvar</button>
+        <button mat-flat-button type="submit" [disabled]="loading() || submitting() || form.invalid">Salvar</button>
       </mat-dialog-actions>
     </form>
   `,
@@ -113,13 +132,17 @@ export class RecurrenceDialog implements OnInit {
   protected readonly recurrence = inject<Recurrence | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly ref = inject(MatDialogRef<RecurrenceDialog, boolean>);
   private readonly catalog = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly typeLabel = categoryTypeLabel;
+  private readonly today = inject(Clock).today();
   protected readonly loading = signal(true);
   protected readonly submitting = signal(false);
   private readonly categories = signal<Category[]>([]);
   private readonly methods = signal<PaymentMethod[]>([]);
+  private readonly cards = signal<CreditCard[]>([]);
+  protected readonly cardHint = signal<string | null>(null);
 
   /** Categorias e métodos devem estar ativos; a escolha atual da recorrência também é listada. */
   protected readonly categoryOptions = computed(() =>
@@ -138,19 +161,80 @@ export class RecurrenceDialog implements OnInit {
       this.recurrence?.due_day ?? (null as number | null),
       [Validators.required, Validators.min(1), Validators.max(31)],
     ],
-    start_date: [inject(Clock).today(), this.recurrence ? [] : Validators.required],
+    start_date: [this.today, this.recurrence ? [] : Validators.required],
     end_date: [this.recurrence?.end_date ?? ''],
   });
 
+  private readonly categoryId = toSignal(this.form.controls.category_id.valueChanges, {
+    initialValue: this.form.controls.category_id.value,
+  });
+  private readonly methodId = toSignal(this.form.controls.payment_method_id.valueChanges, {
+    initialValue: this.form.controls.payment_method_id.value,
+  });
+
+  /** Cartão da recorrência, quando o método escolhido é um cartão. */
+  private readonly card = computed(() => {
+    const method = this.methods().find((m) => m.id === this.methodId());
+    return method?.kind === 'CREDIT_CARD'
+      ? (this.cards().find((c) => c.payment_method_id === method.id) ?? null)
+      : null;
+  });
+
+  /** PD-34: o mesmo campo (`due_day`) tem rótulo conforme o contexto. */
+  protected readonly dayLabel = computed(() => {
+    if (this.card()) return 'Dia da cobrança';
+    const category = this.categories().find((c) => c.id === this.categoryId());
+    return category?.type === 'INCOME' ? 'Dia do recebimento' : 'Dia do vencimento';
+  });
+
   ngOnInit(): void {
-    forkJoin([this.catalog.categories(), this.catalog.paymentMethods()]).subscribe({
-      next: ([categories, methods]) => {
+    forkJoin([
+      this.catalog.categories(),
+      this.catalog.paymentMethods(),
+      this.catalog.creditCards(),
+    ]).subscribe({
+      next: ([categories, methods, cards]) => {
         this.categories.set(categories);
         this.methods.set(methods);
+        this.cards.set(cards);
         this.loading.set(false);
+        this.form.updateValueAndValidity(); // reavalia a dica da fatura com os dados carregados
       },
       error: () => this.ref.close(false),
     });
+    this.watchCardHint();
+  }
+
+  /**
+   * No cartão, a ocorrência é uma compra na data da cobrança (PD-09): mostra em qual fatura ela
+   * cairá. A fatura vem do backend (mesma regra da postagem real); aqui só se escolhe a data.
+   */
+  private watchCardHint(): void {
+    const today = this.today;
+    this.form.valueChanges
+      .pipe(
+        startWith(null),
+        map(() => {
+          const card = this.card();
+          const day = Number(this.form.controls.due_day.value);
+          if (!card || !Number.isInteger(day) || day < 1 || day > 31) return null;
+          const start = this.recurrence ? today : this.form.controls.start_date.value || today;
+          return { cardId: card.id, date: nextOccurrenceDate(day, start > today ? start : today) };
+        }),
+        distinctUntilChanged((a, b) => a?.cardId === b?.cardId && a?.date === b?.date),
+        switchMap((key) =>
+          key
+            ? this.ledger.postingPreview(key.cardId, key.date).pipe(
+                map(
+                  (p) =>
+                    `Cobrança em ${formatDate(key.date)}: cairá na fatura de ${formatMonthShort(p.reference_month)} (vence ${formatDate(p.due_date)}).`,
+                ),
+                catchError(() => of(null)),
+              )
+            : of(null),
+        ),
+      )
+      .subscribe((hint) => this.cardHint.set(hint));
   }
 
   protected save(): void {
@@ -166,6 +250,26 @@ export class RecurrenceDialog implements OnInit {
       payment_method_id: v.payment_method_id,
       due_day: Number(v.due_day),
     };
+    const name = (list: { id: string; name: string }[], id: string) =>
+      list.find((x) => x.id === id)?.name ?? '';
+    confirmSummary(this.dialog, {
+      title: this.recurrence ? 'Confirmar alterações da recorrência' : 'Confirmar recorrência',
+      rows: [
+        { label: 'Descrição', value: body.description },
+        { label: 'Valor', value: formatCents(body.amount) },
+        { label: 'Categoria', value: name(this.categories(), body.category_id) },
+        { label: 'Método', value: name(this.methods(), body.payment_method_id) },
+        { label: this.dayLabel(), value: String(body.due_day) },
+        ...(this.recurrence ? [] : [{ label: 'Início', value: formatDate(v.start_date) }]),
+        { label: 'Término', value: v.end_date ? formatDate(v.end_date) : 'Sem término' },
+      ],
+      confirmLabel: 'Confirmar',
+    }).subscribe((confirmed) => {
+      if (confirmed) this.send(body, v);
+    });
+  }
+
+  private send(body: RecurrenceInput, v: { start_date: string; end_date: string }): void {
     this.submitting.set(true);
     const request = this.recurrence
       ? this.ledger.updateRecurrence(this.recurrence.id, { ...body, end_date: v.end_date || null })

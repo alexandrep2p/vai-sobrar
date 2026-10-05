@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import type { PaymentMethod } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, one, text, type } from '../../../testing/helpers';
+import { all, click, dialogRefMock, one, submitButton, text, type } from '../../../testing/helpers';
 import { MethodDialog } from './method-dialog';
 import { PaymentMethodsPage } from './payment-methods.page';
 
@@ -120,6 +120,13 @@ describe('MethodDialog', () => {
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.createPaymentMethod).toHaveBeenCalledWith({ name: 'Vale-refeição' });
     expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalledWith(true);
+  });
+
+  it('mantém o botão desabilitado enquanto o nome estiver vazio', async () => {
+    const fixture = setup(null);
+    expect(submitButton(fixture).disabled).toBe(true);
+    await type(fixture, one(fixture, 'input'), 'Vale');
+    expect(submitButton(fixture).disabled).toBe(false);
   });
 
   it('edita o nome do método personalizado', async () => {

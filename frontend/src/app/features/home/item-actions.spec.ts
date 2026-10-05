@@ -17,17 +17,17 @@ const granted = (item: Parameters<typeof itemActions>[0], open = true) => {
 };
 
 describe('itemActions — ações por origem e estado', () => {
-  it('manual pendente: editar, pagar, excluir', () => {
+  it('manual pendente: editar, pagar, apagar', () => {
     expect(granted(statementItem())).toEqual(['delete', 'edit', 'pay']);
   });
 
-  it('manual pago: editar, desfazer, excluir', () => {
+  it('manual pago: editar, desfazer, apagar', () => {
     expect(granted(statementItem({ status: 'PAID' }))).toEqual(['delete', 'edit', 'unpay']);
   });
 
   it('ocorrência gerada com método comum: editar, pagar e pular (somente pendente)', () => {
-    expect(granted(recurrenceItem())).toEqual(['edit', 'pay', 'skip']);
-    expect(granted(recurrenceItem({ status: 'PAID' }))).toEqual(['edit', 'unpay']);
+    expect(granted(recurrenceItem())).toEqual(['delete', 'edit', 'pay', 'skip']);
+    expect(granted(recurrenceItem({ status: 'PAID' }))).toEqual(['delete', 'edit', 'unpay']);
   });
 
   it('ocorrência projetada: editar, pular e pagar (método comum)', () => {
@@ -42,12 +42,25 @@ describe('itemActions — ações por origem e estado', () => {
     expect(granted(item)).toEqual(['edit', 'settledByInvoice', 'skip']);
   });
 
-  it('compra à vista no cartão: editar, estornar; nunca pagar, desfazer ou excluir', () => {
-    expect(granted(cardItem())).toEqual(['edit', 'refund', 'settledByInvoice']);
+  it('compra à vista no cartão: editar, estornar, apagar; nunca pagar ou desfazer', () => {
+    expect(granted(cardItem())).toEqual(['delete', 'edit', 'refund', 'settledByInvoice']);
   });
 
-  it('parcela: editar (plano), estornar; nunca excluir', () => {
-    expect(granted(installmentItem())).toEqual(['edit', 'refund', 'settledByInvoice']);
+  it('parcela: editar (plano), estornar e apagar a compra parcelada inteira', () => {
+    expect(granted(installmentItem())).toEqual(['delete', 'edit', 'refund', 'settledByInvoice']);
+  });
+
+  it('fatura paga: compra de cartão e parcela não são editadas nem apagadas, só estornadas', () => {
+    const paid = {
+      invoice: {
+        id: 'i',
+        reference_month: '2027-01',
+        due_date: '2027-01-15',
+        status: 'PAID' as const,
+      },
+    };
+    expect(granted(cardItem(paid))).toEqual(['refund', 'settledByInvoice']);
+    expect(granted(installmentItem(paid))).toEqual(['refund', 'settledByInvoice']);
   });
 
   it('ocorrência de cartão gerada: editar e estornar; sem pular nem pagar', () => {
@@ -55,7 +68,7 @@ describe('itemActions — ações por origem e estado', () => {
       credit_card: { id: 'c', name: 'Nubank' },
       invoice: { id: 'i', reference_month: '2027-01', due_date: '2027-01-15', status: 'OPEN' },
     });
-    expect(granted(item)).toEqual(['edit', 'refund', 'settledByInvoice']);
+    expect(granted(item)).toEqual(['delete', 'edit', 'refund', 'settledByInvoice']);
   });
 
   it('fatura paga: item de cartão deixa de ser editável, mas continua estornável', () => {

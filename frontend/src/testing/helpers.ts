@@ -43,6 +43,39 @@ export async function type(
 export const text = (fixture: ComponentFixture<unknown>): string =>
   (root(fixture).textContent ?? '').replace(/\s+/g, ' ').trim();
 
+/** Botão de confirmação (submit) do formulário do diálogo. */
+export const submitButton = (fixture: ComponentFixture<unknown>): HTMLButtonElement =>
+  one<HTMLButtonElement>(fixture, 'button[type="submit"]');
+
+/** Valor da linha de um resumo de confirmação aberto (overlay do diálogo). */
+export function summaryRow(label: string): string | undefined {
+  const rows = Array.from(document.querySelectorAll('[data-testid="summary"] .summary-row'));
+  const row = rows.find((r) => r.querySelector('dt')?.textContent?.trim() === label);
+  return row?.querySelector('dd')?.textContent?.trim();
+}
+
+/** Há resumo de confirmação aberto? */
+export const summaryOpen = (): boolean => document.querySelector('[data-testid="summary"]') !== null;
+
+/** Clica em "Confirmar" (true) ou "Voltar" (false) no resumo aberto; retorna se havia resumo. */
+export async function answerSummary(
+  fixture: ComponentFixture<unknown>,
+  confirm: boolean,
+): Promise<boolean> {
+  const button = document.querySelector<HTMLButtonElement>(
+    confirm ? '[data-testid="summary-confirm"]' : '[data-testid="summary-back"]',
+  );
+  if (!button) return false;
+  button.click();
+  // O fechamento do diálogo é animado: espera o resumo sair do DOM.
+  await vi.waitFor(() => {
+    fixture.detectChanges();
+    expect(summaryOpen()).toBe(false);
+  });
+  await fixture.whenStable();
+  return true;
+}
+
 export const dialogRefMock = () => ({ provide: MatDialogRef, useValue: { close: vi.fn() } });
 
 export const ok = <T>(value: T) => of(value);

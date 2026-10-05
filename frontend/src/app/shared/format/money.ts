@@ -44,3 +44,9 @@ export function formatSignedCents(signedCents: number): string {
   const sign = signedCents < 0 ? '−' : '+';
   return `${sign} ${formatCents(Math.abs(signedCents))}`;
 }
+
+/** Centavos como texto de campo com máscara ("123456" -> "1.234,56"), sem símbolo de moeda. */
+export function formatMoneyInput(cents: number): string {
+  const reais = String(Math.trunc(Math.abs(cents) / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${reais},${String(Math.abs(cents) % 100).padStart(2, '0')}`;
+}

@@ -3,18 +3,28 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { forkJoin } from 'rxjs';
-import type { Category, PaymentMethod, TransactionInput } from '../../core/api/models';
+import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
+import type {
+  Category,
+  CreditCard,
+  PaymentMethod,
+  PostingPreview,
+  TransactionInput,
+} from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { Clock } from '../../core/clock';
-import { parseCents } from '../../shared/format/money';
+import { formatDate, formatMonthShort } from '../../shared/format/dates';
+import { describeInstallments } from '../../shared/format/installments';
+import { formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
+import { MoneyInput } from '../../shared/forms/money-input';
 import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels';
+import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog';
 
 /**
  * Modal "+ Lançamento" (home.md §7): entrada/saída, descrição, valor, data, categoria e método.
@@ -27,6 +37,7 @@ import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels
     MatDialogModule,
     MatFormFieldModule,
     MatInput,
+    MoneyInput,
     MatSelectModule,
     MatButtonToggleModule,
     MatButton,
@@ -52,7 +63,7 @@ import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels
           </mat-form-field>
           <mat-form-field class="full-width">
             <mat-label>Valor (R$)</mat-label>
-            <input matInput formControlName="amount" inputmode="decimal" placeholder="0,00" />
+            <input matInput appMoneyInput formControlName="amount" placeholder="0,00" />
             @if (form.controls.amount.invalid) {
               <mat-error>Informe um valor maior que zero.</mat-error>
             }
@@ -109,7 +120,13 @@ import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="loading() || submitting()">Salvar</button>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="loading() || submitting() || form.invalid"
+        >
+          Salvar
+        </button>
       </mat-dialog-actions>
     </form>
   `,
@@ -117,6 +134,7 @@ import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels
 export class TransactionFormDialog implements OnInit {
   private readonly ref = inject(MatDialogRef<TransactionFormDialog, boolean>);
   private readonly catalog = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly types: CategoryType[] = ['EXPENSE', 'INCOME'];
@@ -125,6 +143,7 @@ export class TransactionFormDialog implements OnInit {
   protected readonly submitting = signal(false);
   protected readonly categories = signal<Category[]>([]);
   protected readonly methods = signal<PaymentMethod[]>([]);
+  private readonly cards = signal<CreditCard[]>([]);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     type: ['EXPENSE' as CategoryType],
@@ -151,10 +170,15 @@ export class TransactionFormDialog implements OnInit {
   );
 
   ngOnInit(): void {
-    forkJoin([this.catalog.categories(), this.catalog.paymentMethods()]).subscribe({
-      next: ([categories, methods]) => {
+    forkJoin([
+      this.catalog.categories(),
+      this.catalog.paymentMethods(),
+      this.catalog.creditCards(),
+    ]).subscribe({
+      next: ([categories, methods, cards]) => {
         this.categories.set(categories);
         this.methods.set(methods.filter((m) => m.active));
+        this.cards.set(cards);
         this.loading.set(false);
       },
       error: () => this.ref.close(false),
@@ -181,10 +205,74 @@ export class TransactionFormDialog implements OnInit {
     } else {
       body.due_date = v.date;
     }
+    this.previewInvoice(v.payment_method_id, v.date)
+      .pipe(
+        switchMap((preview) =>
+          confirmSummary(this.dialog, {
+            title: 'Confirmar lançamento',
+            rows: this.summaryRows(v, body, preview),
+            confirmLabel: 'Confirmar',
+          }),
+        ),
+      )
+      .subscribe((confirmed) => {
+        if (confirmed) this.send(body);
+      });
+  }
+
+  /** Fatura em que a compra de cartão cairá (mesma regra da postagem real); `null` se indisponível. */
+  private previewInvoice(methodId: string, date: string): Observable<PostingPreview | null> {
+    const card = this.isCard()
+      ? this.cards().find((c) => c.payment_method_id === methodId)
+      : undefined;
+    if (!card) return of(null);
+    return this.ledger.postingPreview(card.id, date).pipe(
+      map((preview): PostingPreview | null => preview),
+      catchError(() => of(null)),
+    );
+  }
+
+  private send(body: TransactionInput): void {
     this.submitting.set(true);
     this.ledger.createTransaction(body).subscribe({
       next: () => this.ref.close(true),
       error: () => this.submitting.set(false),
     });
+  }
+
+  private summaryRows(
+    v: { type: CategoryType; category_id: string; payment_method_id: string; date: string },
+    body: TransactionInput,
+    preview: PostingPreview | null,
+  ): SummaryRow[] {
+    const isCard = this.isCard();
+    const rows: SummaryRow[] = [
+      { label: 'Tipo', value: this.typeLabel(v.type) },
+      { label: 'Descrição', value: body.description },
+      { label: 'Valor', value: formatCents(body.amount) },
+      {
+        label: 'Categoria',
+        value: this.categories().find((c) => c.id === v.category_id)?.name ?? '',
+      },
+      {
+        label: 'Método',
+        value: this.methods().find((m) => m.id === v.payment_method_id)?.name ?? '',
+      },
+      { label: isCard ? 'Data da compra' : 'Vencimento', value: formatDate(v.date) },
+    ];
+    if (isCard) {
+      const count = body.installment_count ?? 1;
+      rows.push({
+        label: 'Parcelas',
+        value: count >= 2 ? describeInstallments(body.amount, count) : 'À vista',
+      });
+      if (preview) {
+        rows.push({
+          label: count >= 2 ? 'Primeira fatura' : 'Fatura',
+          value: `${formatMonthShort(preview.reference_month)} (vence ${formatDate(preview.due_date)})`,
+        });
+      }
+    }
+    return rows;
   }
 }

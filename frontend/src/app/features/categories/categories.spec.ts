@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { of } from 'rxjs';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, fail, one, text, type } from '../../../testing/helpers';
+import { all, click, dialogRefMock, fail, one, submitButton, text, type } from '../../../testing/helpers';
 import { CategoriesPage } from './categories.page';
 import { CategoryDialog } from './category-dialog';
 
@@ -126,6 +126,13 @@ describe('CategoryDialog', () => {
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.createCategory).toHaveBeenCalledWith({ name: 'Mercado', type: 'EXPENSE' });
     expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalledWith(true);
+  });
+
+  it('mantém o botão desabilitado enquanto o nome estiver vazio', async () => {
+    const fixture = setup(null);
+    expect(submitButton(fixture).disabled).toBe(true);
+    await type(fixture, one(fixture, 'input'), 'Mercado');
+    expect(submitButton(fixture).disabled).toBe(false);
   });
 
   it('não envia nome vazio', async () => {

@@ -2,11 +2,20 @@ import { Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
-import type { Category, PaymentMethod, Recurrence } from '../../core/api/models';
+import type { Category, CreditCard, PaymentMethod, Recurrence } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
-import { all, click, one, text } from '../../../testing/helpers';
+import {
+  all,
+  answerSummary,
+  root,
+  click,
+  one,
+  submitButton,
+  summaryRow,
+  text,
+} from '../../../testing/helpers';
 import { PauseDialog } from './pause-dialog';
 import { RecurrenceDialog } from './recurrence-dialog';
 import { RecurrencesPage } from './recurrences.page';
@@ -200,28 +209,52 @@ function create<T>(component: Type<T>, data: unknown, providers: unknown[]): Com
 }
 const form = (f: ComponentFixture<unknown>) =>
   (f.componentInstance as unknown as { form: import('@angular/forms').FormGroup }).form;
-const submit = async (f: ComponentFixture<unknown>) => {
+/** Envia o formulário; se abrir o resumo, responde (`null` deixa o resumo aberto). */
+const submit = async (f: ComponentFixture<unknown>, answer: boolean | null = true) => {
   one<HTMLFormElement>(f, 'form').dispatchEvent(new Event('submit'));
   f.detectChanges();
   await f.whenStable();
+  if (answer !== null) await answerSummary(f, answer);
 };
 
 describe('RecurrenceDialog', () => {
   const categories: Category[] = [
     { id: 'c1', name: 'Lazer', type: 'EXPENSE', active: true, in_use: false },
+    { id: 'c-in', name: 'Salário', type: 'INCOME', active: true, in_use: false },
     { id: 'c2', name: 'Velha', type: 'EXPENSE', active: false, in_use: false },
   ];
   const methods: PaymentMethod[] = [
     { id: 'pm1', name: 'PIX', source: 'SYSTEM', kind: 'STANDARD', active: true },
     { id: 'pm2', name: 'Nubank', source: 'USER', kind: 'CREDIT_CARD', active: true },
   ];
-  const catalog = { categories: vi.fn(), paymentMethods: vi.fn() };
-  const ledger = { createRecurrence: vi.fn(), updateRecurrence: vi.fn() };
+  const nubank: CreditCard = {
+    id: 'k1',
+    payment_method_id: 'pm2',
+    name: 'Nubank',
+    active: true,
+    best_purchase_day: 6,
+    due_day: 15,
+  };
+  const catalog = { categories: vi.fn(), paymentMethods: vi.fn(), creditCards: vi.fn() };
+  const ledger = {
+    createRecurrence: vi.fn(),
+    updateRecurrence: vi.fn(),
+    postingPreview: vi.fn(),
+  };
 
   async function setup(data: Recurrence | null) {
     vi.resetAllMocks();
     catalog.categories.mockReturnValue(of(categories));
     catalog.paymentMethods.mockReturnValue(of(methods));
+    catalog.creditCards.mockReturnValue(of([nubank]));
+    ledger.postingPreview.mockReturnValue(
+      of({
+        reference_month: '2027-02',
+        closing_date: '2027-02-06',
+        due_date: '2027-02-15',
+        persisted: false,
+      }),
+    );
     ledger.createRecurrence.mockReturnValue(of({}));
     ledger.updateRecurrence.mockReturnValue(of({}));
     const f = create(RecurrenceDialog, data, [
@@ -231,6 +264,77 @@ describe('RecurrenceDialog', () => {
     await f.whenStable();
     return f;
   }
+
+  it('mantém o botão desabilitado até a recorrência ser válida', async () => {
+    const f = await setup(null);
+    expect(submitButton(f).disabled).toBe(true);
+    form(f).patchValue({
+      description: 'Aluguel',
+      amount: '1.500,00',
+      category_id: 'c1',
+      payment_method_id: 'pm1',
+      due_day: 8,
+    });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(false);
+    form(f).patchValue({ due_day: 40 });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(true);
+  });
+
+  const dayLabel = (f: ComponentFixture<unknown>) =>
+    all(f, 'mat-label')
+      .map((l) => l.textContent?.trim())
+      .find((t) => t?.startsWith('Dia do') || t?.startsWith('Dia da'));
+
+  it('rótulo do dia: vencimento (conta), recebimento (entrada) e cobrança (cartão)', async () => {
+    const f = await setup(null);
+    f.detectChanges();
+    expect(dayLabel(f)).toBe('Dia do vencimento');
+    form(f).patchValue({ category_id: 'c-in' });
+    f.detectChanges();
+    expect(dayLabel(f)).toBe('Dia do recebimento');
+    form(f).patchValue({ payment_method_id: 'pm2' });
+    f.detectChanges();
+    expect(dayLabel(f)).toBe('Dia da cobrança');
+  });
+
+  it('no cartão, a dica mostra a fatura em que a cobrança cairá', async () => {
+    const f = await setup(null);
+    expect(root(f).querySelector('[data-testid="card-hint"]')).toBeNull();
+    form(f).patchValue({ payment_method_id: 'pm2', due_day: 10 });
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+    // hoje = 10/01/2027: a próxima cobrança no dia 10 é hoje
+    expect(ledger.postingPreview).toHaveBeenCalledWith('k1', '2027-01-10');
+    expect(one(f, '[data-testid="card-hint"]').textContent).toContain(
+      'cairá na fatura de fevereiro/2027 (vence 15/02/2027)',
+    );
+    form(f).patchValue({ due_day: 5 });
+    f.detectChanges();
+    await f.whenStable();
+    expect(ledger.postingPreview).toHaveBeenLastCalledWith('k1', '2027-02-05');
+  });
+
+  it('mostra o resumo e só grava ao confirmar', async () => {
+    const f = await setup(null);
+    form(f).patchValue({
+      description: 'Aluguel',
+      amount: '1.500,00',
+      category_id: 'c1',
+      payment_method_id: 'pm1',
+      due_day: 8,
+    });
+    await submit(f, null);
+    expect(summaryRow('Descrição')).toBe('Aluguel');
+    expect(summaryRow('Categoria')).toBe('Lazer');
+    expect(summaryRow('Término')).toBe('Sem término');
+    await answerSummary(f, false);
+    expect(ledger.createRecurrence).not.toHaveBeenCalled();
+    await submit(f);
+    expect(ledger.createRecurrence).toHaveBeenCalledTimes(1);
+  });
 
   it('cria recorrência com início hoje e sem término', async () => {
     const f = await setup(null);
@@ -301,7 +405,7 @@ describe('RecurrenceDialog', () => {
   it('só lista categorias ativas na criação', async () => {
     const f = await setup(null);
     const c = f.componentInstance as unknown as { categoryOptions: () => Category[] };
-    expect(c.categoryOptions().map((x) => x.id)).toEqual(['c1']);
+    expect(c.categoryOptions().map((x) => x.id)).toEqual(['c1', 'c-in']);
   });
 });
 
@@ -312,6 +416,14 @@ describe('PauseDialog', () => {
     ledger.pauseRecurrence.mockReturnValue(of({}));
     return create(PauseDialog, recurrence(), [{ provide: LedgerService, useValue: ledger }]);
   };
+
+  it('desabilita o botão sem a data de início', () => {
+    const f = setup();
+    expect(submitButton(f).disabled).toBe(false);
+    form(f).patchValue({ paused_from: '' });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(true);
+  });
 
   it('pausa a partir de hoje, sem retorno', async () => {
     const f = setup();
