@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   assertAllowed,
+  canDeletePlan,
   canDeleteTransaction,
   canEditField,
+  canEditPlanStructure,
   dueDateMoveVerdict,
   invoiceAcceptsPurchase,
   invoiceAcceptsRefundCredit,
@@ -186,13 +188,55 @@ describe('canDeleteTransaction (CA-TRA-15)', () => {
     });
   });
 
-  it('demais origens nunca são excluídas diretamente', () => {
-    for (const origin of ['CREDIT_CARD', 'INSTALLMENT', 'RECURRENCE'] as const) {
-      expect(canDeleteTransaction({ origin, monthClosed: false })).toEqual({
+  it('PD-38: compra de cartão e ocorrência podem ser apagadas com mês aberto e fatura não paga', () => {
+    for (const origin of ['CREDIT_CARD', 'RECURRENCE'] as const) {
+      expect(canDeleteTransaction({ origin, monthClosed: false, invoicePaid: false })).toEqual(YES);
+      expect(canDeleteTransaction({ origin, monthClosed: false })).toEqual(YES);
+    }
+  });
+
+  it('fatura paga bloqueia a exclusão de compra de cartão', () => {
+    for (const origin of ['CREDIT_CARD', 'RECURRENCE'] as const) {
+      expect(canDeleteTransaction({ origin, monthClosed: false, invoicePaid: true })).toEqual({
         allowed: false,
-        code: 'TRANSACTION_NOT_DELETABLE',
+        code: 'INVOICE_ALREADY_PAID',
       });
     }
+  });
+
+  it('mês fechado bloqueia qualquer origem (antes da fatura paga)', () => {
+    for (const origin of ['MANUAL', 'CREDIT_CARD', 'RECURRENCE'] as const) {
+      expect(canDeleteTransaction({ origin, monthClosed: true, invoicePaid: true })).toEqual({
+        allowed: false,
+        code: 'PERIOD_CLOSED',
+      });
+    }
+  });
+
+  it('parcela isolada nunca é apagada; apaga-se o plano inteiro', () => {
+    expect(canDeleteTransaction({ origin: 'INSTALLMENT', monthClosed: false })).toEqual({
+      allowed: false,
+      code: 'TRANSACTION_NOT_DELETABLE',
+    });
+  });
+});
+
+describe('canDeletePlan (PD-38)', () => {
+  const free = { monthClosed: false, invoicePaid: false };
+
+  it('permite plano inteiro em meses abertos e faturas não pagas', () => {
+    expect(canDeletePlan([free, free])).toEqual(YES);
+  });
+
+  it('rejeita parcela em mês fechado ou em fatura PAID', () => {
+    expect(canDeletePlan([free, { monthClosed: true, invoicePaid: false }])).toEqual({
+      allowed: false,
+      code: 'PERIOD_CLOSED',
+    });
+    expect(canDeletePlan([{ monthClosed: false, invoicePaid: true }, free])).toEqual({
+      allowed: false,
+      code: 'INVOICE_ALREADY_PAID',
+    });
   });
 });
 
@@ -262,5 +306,40 @@ describe('barreira de fatura e de mês', () => {
     const denied = monthOperationVerdict(m('2027-10'), closed('2027-10'));
     expect(() => assertAllowed(denied)).toThrow(BusinessError);
     expect(() => assertAllowed(YES)).not.toThrow();
+  });
+});
+
+describe('canEditPlanStructure (PD-36)', () => {
+  const free = { monthClosed: false, invoicePaid: false };
+
+  it('permite plano inteiro em meses abertos, faturas não pagas e sem estorno', () => {
+    expect(canEditPlanStructure({ installments: [free, free], hasRefunds: false })).toEqual({
+      allowed: true,
+    });
+  });
+
+  it('rejeita parcela em mês fechado', () => {
+    expect(
+      canEditPlanStructure({
+        installments: [free, { monthClosed: true, invoicePaid: false }],
+        hasRefunds: false,
+      }),
+    ).toEqual({ allowed: false, code: 'PERIOD_CLOSED' });
+  });
+
+  it('rejeita parcela em fatura PAID', () => {
+    expect(
+      canEditPlanStructure({
+        installments: [{ monthClosed: false, invoicePaid: true }, free],
+        hasRefunds: false,
+      }),
+    ).toEqual({ allowed: false, code: 'INVOICE_ALREADY_PAID' });
+  });
+
+  it('rejeita plano com estorno vinculado', () => {
+    expect(canEditPlanStructure({ installments: [free], hasRefunds: true })).toEqual({
+      allowed: false,
+      code: 'INVALID_INSTALLMENT_OPERATION',
+    });
   });
 });

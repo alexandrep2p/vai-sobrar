@@ -156,6 +156,14 @@ export interface InstallmentPlan {
 
 export type InvoiceSituation = 'OVERDUE' | null;
 
+/** Fatura em que uma compra seria postada (GET /credit-cards/:id/posting-preview). */
+export interface PostingPreview {
+  reference_month: string;
+  closing_date: string;
+  due_date: string;
+  persisted: boolean;
+}
+
 export interface InvoiceSummary {
   id: string | null;
   credit_card_id: string;
@@ -168,6 +176,8 @@ export interface InvoiceSummary {
   paid_at: string | null;
   payment_method_id: string | null;
   credit_balance: number;
+  /** Previsão de recorrências de cartão não geradas; já inclusa em `totals` (PD-35). */
+  projected_total: number;
   totals: {
     debits: number;
     credits: number;
@@ -177,9 +187,20 @@ export interface InvoiceSummary {
   };
 }
 
+/** Ocorrência de recorrência de cartão prevista na fatura, ainda não gerada. */
+export interface ProjectedInvoiceItem {
+  recurrence_id: string;
+  occurrence_month: string;
+  description: string;
+  amount: number;
+  purchase_date: string;
+  category: { id: string; name: string };
+}
+
 export interface InvoiceDetail extends InvoiceSummary {
   card_name: string;
   transactions: Transaction[];
+  projected_items: ProjectedInvoiceItem[];
   credits: {
     allocation_id: string;
     refund_id: string;

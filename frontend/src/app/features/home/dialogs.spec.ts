@@ -15,7 +15,15 @@ import {
   recurrenceItem,
   statementItem,
 } from '../../../testing/fixtures';
-import { all, one, text } from '../../../testing/helpers';
+import {
+  all,
+  answerSummary,
+  one,
+  submitButton,
+  summaryRow,
+  text,
+  type,
+} from '../../../testing/helpers';
 import { CloseMonthDialog } from './close-month-dialog';
 import { RefundDialog } from './refund-dialog';
 import { TransactionEditDialog } from './transaction-edit-dialog';
@@ -44,10 +52,12 @@ function create<T>(component: Type<T>, data: unknown, providers: unknown[]): Com
 const form = (fixture: ComponentFixture<unknown>) =>
   (fixture.componentInstance as unknown as { form: import('@angular/forms').FormGroup }).form;
 
-const submit = async (fixture: ComponentFixture<unknown>) => {
+/** Envia o formulário; se abrir o resumo, responde (`null` deixa o resumo aberto). */
+const submit = async (fixture: ComponentFixture<unknown>, answer: boolean | null = true) => {
   one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
   fixture.detectChanges();
   await fixture.whenStable();
+  if (answer !== null) await answerSummary(fixture, answer);
 };
 
 beforeEach(() => vi.resetAllMocks());
@@ -63,12 +73,32 @@ describe('TransactionFormDialog (T-40)', () => {
     { id: 'm-card', name: 'Nubank', source: 'USER', kind: 'CREDIT_CARD', active: true },
     { id: 'm-off', name: 'Vale', source: 'USER', kind: 'STANDARD', active: false },
   ];
-  const catalog = { categories: vi.fn(), paymentMethods: vi.fn() };
-  const ledger = { createTransaction: vi.fn() };
+  const catalog = { categories: vi.fn(), paymentMethods: vi.fn(), creditCards: vi.fn() };
+  const ledger = { createTransaction: vi.fn(), postingPreview: vi.fn() };
 
   async function setup() {
     catalog.categories.mockReturnValue(of(categories));
     catalog.paymentMethods.mockReturnValue(of(methods));
+    catalog.creditCards.mockReturnValue(
+      of([
+        {
+          id: 'k1',
+          payment_method_id: 'm-card',
+          name: 'Nubank',
+          active: true,
+          best_purchase_day: 6,
+          due_day: 15,
+        },
+      ]),
+    );
+    ledger.postingPreview.mockReturnValue(
+      of({
+        reference_month: '2026-12',
+        closing_date: '2026-12-06',
+        due_date: '2026-12-15',
+        persisted: false,
+      }),
+    );
     ledger.createTransaction.mockReturnValue(of({}));
     const fixture = create(TransactionFormDialog, null, [
       { provide: CatalogService, useValue: catalog },
@@ -103,6 +133,31 @@ describe('TransactionFormDialog (T-40)', () => {
       due_date: '2027-01-20',
     });
     expect(ref.close).toHaveBeenCalledWith(true);
+  });
+
+  it('mostra o resumo antes de gravar e só grava ao confirmar', async () => {
+    const f = await setup();
+    await fill(f, {
+      description: 'Coxim',
+      amount: '590,00',
+      category_id: 'c-out',
+      payment_method_id: 'm-card',
+      date: '2026-11-28',
+      installments: 10,
+    });
+    await submit(f, null);
+    expect(summaryRow('Descrição')).toBe('Coxim');
+    expect(summaryRow('Categoria')).toBe('Mercado');
+    expect(summaryRow('Método')).toBe('Nubank');
+    expect(summaryRow('Data da compra')).toBe('28/11/2026');
+    expect(summaryRow('Parcelas')?.replace(/\s/g, ' ')).toBe('10x de R$ 59,00');
+    expect(ledger.postingPreview).toHaveBeenCalledWith('k1', '2026-11-28');
+    expect(summaryRow('Primeira fatura')).toBe('dezembro/2026 (vence 15/12/2026)');
+    await answerSummary(f, false);
+    expect(ledger.createTransaction).not.toHaveBeenCalled();
+    expect(ref.close).not.toHaveBeenCalled();
+    await submit(f);
+    expect(ledger.createTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('compra à vista no cartão envia a data da compra e não envia parcelas', async () => {
@@ -173,6 +228,28 @@ describe('TransactionFormDialog (T-40)', () => {
     expect(form(f).value.category_id).toBe('');
   });
 
+  it('mantém o botão desabilitado até o formulário ficar válido', async () => {
+    const f = await setup();
+    expect(submitButton(f).disabled).toBe(true);
+    await fill(f, {
+      description: 'Luz',
+      amount: '10,00',
+      category_id: 'c-out',
+      payment_method_id: 'm-pix',
+    });
+    expect(submitButton(f).disabled).toBe(false);
+    await fill(f, { amount: '' });
+    expect(submitButton(f).disabled).toBe(true);
+  });
+
+  it('aplica a máscara ao digitar o valor', async () => {
+    const f = await setup();
+    const input = one<HTMLInputElement>(f, 'input[formControlName="amount"]');
+    await type(f, input, '123456');
+    expect(input.value).toBe('1.234,56');
+    expect(form(f).value.amount).toBe('1234,56');
+  });
+
   it('não envia valor inválido', async () => {
     const f = await setup();
     await fill(f, {
@@ -229,6 +306,27 @@ describe('TransactionEditDialog (T-41)', () => {
   it('parcela: avisa que vale para o plano inteiro', () => {
     const f = setup(installmentItem());
     expect(one(f, '[data-testid="plan-hint"]').textContent).toContain('todas as parcelas');
+  });
+
+  it('mantém o botão desabilitado com valor vazio', async () => {
+    const f = setup();
+    expect(submitButton(f).disabled).toBe(false);
+    form(f).patchValue({ amount: '' });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(true);
+  });
+
+  it('resume as alterações (antes → depois) e não grava se voltar', async () => {
+    const item = statementItem();
+    const f = setup(item);
+    form(f).patchValue({ description: 'Novo nome', amount: '12,34' });
+    await submit(f, null);
+    expect(summaryRow('Descrição')).toBe(`${item.description} → Novo nome`);
+    expect(summaryRow('Valor')).toContain('→');
+    await answerSummary(f, false);
+    expect(ledger.updateTransaction).not.toHaveBeenCalled();
+    await submit(f);
+    expect(ledger.updateTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('envia só os campos alterados do lançamento manual', async () => {
@@ -345,6 +443,26 @@ describe('RefundDialog (T-43)', () => {
     expect(one(f, '[data-testid="refund-status"]').textContent).toContain('Parcialmente estornada');
   });
 
+  it('mantém o botão desabilitado com valor vazio', () => {
+    const f = setup({ description: 'x', transactionId: 't' });
+    expect(submitButton(f).disabled).toBe(false);
+    form(f).patchValue({ amount: '' });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(true);
+  });
+
+  it('mostra o resumo do estorno e só grava ao confirmar', async () => {
+    const f = setup({ description: 'Supermercado', transactionId: 't-card' });
+    form(f).patchValue({ amount: '100,00', refund_date: '2027-01-08' });
+    await submit(f, null);
+    expect(summaryRow('Compra')).toBe('Supermercado');
+    expect(summaryRow('Data do estorno')).toBe('08/01/2027');
+    await answerSummary(f, false);
+    expect(ledger.createRefund).not.toHaveBeenCalled();
+    await submit(f);
+    expect(ledger.createRefund).toHaveBeenCalledTimes(1);
+  });
+
   it('não envia valor zero', async () => {
     const f = setup({ description: 'x', transactionId: 't' });
     form(f).patchValue({ amount: '0' });
@@ -389,6 +507,21 @@ describe('CloseMonthDialog (T-45)', () => {
 });
 
 describe('PayDialog', () => {
+  it('mantém o botão desabilitado sem data (e sem método quando é exigido)', () => {
+    const f = create(
+      PayDialog,
+      { title: 'Pagar fatura', confirmLabel: 'Pagar', methods: [{ id: 'm1', name: 'PIX' }] },
+      [],
+    );
+    expect(submitButton(f).disabled).toBe(true);
+    form(f).patchValue({ payment_method_id: 'm1' });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(false);
+    form(f).patchValue({ paid_at: '' });
+    f.detectChanges();
+    expect(submitButton(f).disabled).toBe(true);
+  });
+
   it('devolve a data escolhida', async () => {
     const f = create(PayDialog, { title: 'Pagar', confirmLabel: 'Pagar' }, []);
     form(f).patchValue({ paid_at: '2027-01-08' });

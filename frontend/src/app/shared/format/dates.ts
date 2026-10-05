@@ -40,6 +40,22 @@ export function addMonths(month: string, delta: number): string {
   return `${year}-${String((total % 12) + 1).padStart(2, '0')}`;
 }
 
+/**
+ * Próxima data de uma recorrência com `dueDay` em ou depois de `from` (ajusta meses curtos).
+ * Só para exibir dicas; a regra de elegibilidade das ocorrências é a do backend.
+ */
+export function nextOccurrenceDate(dueDay: number, from: string): string {
+  const month = monthOf(from);
+  const candidate = dateInMonth(dueDay, month);
+  return candidate >= from ? candidate : dateInMonth(dueDay, addMonths(month, 1));
+}
+
+function dateInMonth(day: number, month: string): string {
+  const [year, mon] = month.split('-').map(Number) as [number, number];
+  const lastDay = new Date(Date.UTC(year, mon, 0)).getUTCDate();
+  return `${month}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+}
+
 /** Formata "2027-01-05" como "05/01" (data curta do extrato). */
 export function formatShortDate(date: string): string {
   return formatDate(date).slice(0, 5);

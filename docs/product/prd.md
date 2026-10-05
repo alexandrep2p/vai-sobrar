@@ -75,7 +75,7 @@ O usuário cria entradas e saídas com descrição, valor, data, categoria e mé
 * O pagamento pode ser antecipado ou atrasado sem mudar o mês financeiro.
 * Lançamentos futuros são permitidos; retroativos, somente no mês corrente até hoje.
 * Com o mês aberto, o vencimento de lançamentos comuns pode ser movido para frente ou para trás, desde que o mês de destino esteja aberto.
-* Lançamentos manuais podem ser excluídos com o mês aberto. Compras de cartão nunca são excluídas: usa-se estorno.
+* Lançamentos podem ser apagados com o mês aberto; compras de cartão e compras parceladas (inteiras), enquanto a fatura não estiver paga (PD-38, provisório: no futuro, privilégio de super admin).
 
 Detalhes: `docs/specs/transactions.md`.
 
@@ -196,7 +196,7 @@ Detalhes: `docs/specs/financial-periods.md`.
 
 ## 14. Preservação histórica
 
-Não há exclusão comum de categorias, métodos, cartões, faturas, planos de parcelamento, parcelas, compras de cartão nem meses fechados. Alterações de configuração valem para o futuro e não reescrevem fatos históricos.
+Não há exclusão de categorias, métodos, cartões, faturas nem meses fechados; lançamentos e compras parceladas só são apagados nas condições da PD-38. Alterações de configuração valem para o futuro e não reescrevem fatos históricos.
 
 ---
 

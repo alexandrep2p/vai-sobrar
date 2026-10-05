@@ -185,15 +185,16 @@ Lançamentos de cartão não têm `due_date` editável: ele deriva da fatura.
 | Campo | `MANUAL` | `RECURRENCE` (método comum) | `RECURRENCE` (cartão) | `CREDIT_CARD` | `INSTALLMENT` |
 |---|---|---|---|---|---|
 | Descrição | sim | sim | sim ¹ | sim ¹ | sim, no plano inteiro ² |
-| Valor | sim | sim | sim ¹ | não | não |
+| Valor | sim | sim | sim ¹ | não | sim, pelo plano inteiro ³ |
 | `due_date` | sim (§11) | sim (§11) | não | não | não |
-| `purchase_date` | — | — | não | não | não |
+| `purchase_date` | — | — | não | não | sim, pelo plano inteiro ³ |
 | Categoria | sim (mesmo tipo) | não (pertence à recorrência) | não | sim (mesmo tipo) ¹ | sim, no plano inteiro ² |
 | Método | sim (só métodos comuns) | sim (só métodos comuns) | não | não | não |
 | Status | sim | sim | não (somente via "Pagar fatura") | não (somente via "Pagar fatura") | não (somente via "Pagar fatura") |
 
 ¹ Somente enquanto a fatura de postagem não estiver `PAID` (PD-27).
 ² Somente quando todas as parcelas estiverem em meses abertos e nenhuma estiver em fatura `PAID` (`installments.md` §9).
+³ Valor total, quantidade de parcelas e data da compra, regenerando as parcelas, somente sem parcela em fatura `PAID`, sem mês afetado fechado e sem estorno vinculado (`installments.md` §8, PD-36).
 
 Em mês fechado, nada é editável (`financial-periods.md` §5).
 
@@ -204,10 +205,11 @@ Em mês fechado, nada é editável (`financial-periods.md` §5).
 | Origem | Regra |
 |---|---|
 | `MANUAL` | Exclusão física permitida com o mês aberto (DEC-09). |
-| `RECURRENCE` | Não é excluída diretamente. Com método comum e `PENDING`, pode ser pulada, o que remove o lançamento e registra a exceção (`recurrences.md` §10). |
-| `CREDIT_CARD`, `INSTALLMENT` | Nunca excluídas; usa-se estorno (`refunds.md`). |
+| `RECURRENCE` | Pode ser apagada (PD-38): remove o lançamento e registra a exceção do mês, como em "pular" (`recurrences.md` §10). Ocorrência de cartão segue as travas de fatura. |
+| `CREDIT_CARD` | Pode ser apagada (PD-38) enquanto a fatura não estiver `PAID`; os estornos dela são apagados junto. |
+| `INSTALLMENT` | Parcela isolada não é apagada; apaga-se a compra parcelada inteira (`installments.md` §11). |
 
-Em mês fechado, nenhuma exclusão é permitida.
+Em mês fechado, nenhuma exclusão é permitida. Em fatura `PAID`, nenhuma compra de cartão é apagada. Exclusão é provisória: no futuro será privilégio de super admin (PD-38).
 
 ---
 
@@ -232,8 +234,8 @@ Transferências entre contas não fazem parte do MVP. Não existe tipo de lança
 * **RN-TRA-11** — `due_date` de lançamento com método comum pode ir para frente ou para trás entre meses abertos.
 * **RN-TRA-12** — Edição conforme a matriz da §12; categoria sempre do mesmo tipo.
 * **RN-TRA-13** — Método comum só é trocado por outro método comum.
-* **RN-TRA-14** — Exclusão física somente de `MANUAL` com o mês aberto, ou de ocorrência de recorrência com método comum e `PENDING` ao ser pulada.
-* **RN-TRA-15** — Compras e parcelas de cartão não são excluídas; usam estorno.
+* **RN-TRA-14** — Exclusão física de lançamento (`MANUAL`, ocorrência de recorrência e compra à vista no cartão) com o mês aberto e, no cartão, fatura não `PAID` (PD-38).
+* **RN-TRA-15** — Parcela de cartão não é apagada isoladamente: apaga-se a compra parcelada inteira; apagar uma compra de cartão apaga também os estornos dela (PD-38).
 * **RN-TRA-16** — Mês fechado é imutável.
 * **RN-TRA-17** — Estornos não são lançamentos.
 * **RN-TRA-18** — Transferências estão fora do MVP.
@@ -256,7 +258,8 @@ Transferências entre contas não fazem parte do MVP. Não existe tipo de lança
 * **CA-TRA-12** — Mover para mês fechado → rejeitado.
 * **CA-TRA-13** — Editar lançamento de mês fechado → rejeitado.
 * **CA-TRA-14** — Excluir `MANUAL` em mês aberto → removido fisicamente.
-* **CA-TRA-15** — Excluir compra de cartão ou parcela → rejeitado.
+* **CA-TRA-15** — Excluir compra à vista no cartão com fatura aberta → removida (e seus estornos); com fatura `PAID` ou mês fechado → rejeitado. Excluir parcela isolada → rejeitado.
+* **CA-TRA-15A** — Apagar ocorrência de recorrência remove o lançamento e ela não é gerada de novo.
 * **CA-TRA-16** — Alterar valor ou cartão de compra de cartão → rejeitado.
 * **CA-TRA-17** — Trocar PIX por cartão em lançamento manual → rejeitado.
 * **CA-TRA-18** — `paid_at` futuro → rejeitado.

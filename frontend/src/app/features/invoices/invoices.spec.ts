@@ -38,6 +38,7 @@ const summary = (over: Partial<InvoiceSummary> = {}): InvoiceSummary => ({
   paid_at: null,
   payment_method_id: null,
   credit_balance: 0,
+  projected_total: 0,
   totals: { debits: 64000, credits: 0, received_credit: 0, amount_due: 64000, credit_balance: 0 },
   ...over,
 });
@@ -88,7 +89,7 @@ describe('InvoicesPage', () => {
 
   it('carrega as faturas do primeiro cartão ativo no período padrão', async () => {
     await render([card({ id: 'old', active: false }), card({ id: 'k1' })]);
-    expect(ledger.invoices).toHaveBeenCalledWith('k1', '2026-10', '2027-09');
+    expect(ledger.invoices).toHaveBeenCalledWith('k1', '2027-01', '2027-12');
   });
 
   it('usa o cartão indicado na URL', async () => {
@@ -134,12 +135,66 @@ describe('InvoicesPage', () => {
     expect(row.querySelector('[data-testid="open"]')).toBeNull();
   });
 
+  it('ciclo sem fatura mas com previsão de recorrência mostra o total previsto e abre o detalhe', async () => {
+    const fixture = await render(
+      [card()],
+      [
+        summary({
+          id: null,
+          persisted: false,
+          reference_month: '2027-02',
+          projected_total: 4000,
+          totals: {
+            debits: 4000,
+            credits: 0,
+            received_credit: 0,
+            amount_due: 4000,
+            credit_balance: 0,
+          },
+        }),
+      ],
+    );
+    const [row] = all(fixture, '[data-testid="invoice-row"]');
+    expect(row.querySelector('[data-testid="no-entries"]')).toBeNull();
+    expect(row.querySelector('[data-testid="amount-due"]')?.textContent).toContain('40,00');
+    expect(row.querySelector('[data-testid="projected-chip"]')?.textContent).toContain('Previsto');
+    await click(fixture, one(fixture, '[data-testid="open"]'));
+    expect(dialog.open).toHaveBeenCalledWith(
+      InvoiceDetailDialog,
+      expect.objectContaining({ data: { invoiceId: null, month: '2027-02', card: card() } }),
+    );
+  });
+
+  it('fatura persistida com previsão mostra o total somado e a parte prevista', async () => {
+    const fixture = await render(
+      [card()],
+      [
+        summary({
+          projected_total: 4000,
+          totals: {
+            debits: 54000,
+            credits: 0,
+            received_credit: 0,
+            amount_due: 54000,
+            credit_balance: 0,
+          },
+        }),
+      ],
+    );
+    const [row] = all(fixture, '[data-testid="invoice-row"]');
+    expect(row.querySelector('[data-testid="amount-due"]')?.textContent).toContain('540,00');
+    expect(row.querySelector('[data-testid="projected-total"]')?.textContent).toContain('40,00');
+    expect(row.querySelector('[data-testid="status"]')?.textContent).toContain('Aberta');
+  });
+
   it('abre o detalhe da fatura', async () => {
     const fixture = await render([card()], [summary()]);
     await click(fixture, one(fixture, '[data-testid="open"]'));
     expect(dialog.open).toHaveBeenCalledWith(
       InvoiceDetailDialog,
-      expect.objectContaining({ data: { invoiceId: 'inv1', card: card() } }),
+      expect.objectContaining({
+        data: { invoiceId: 'inv1', month: '2027-01', card: card() },
+      }),
     );
   });
 
@@ -151,7 +206,7 @@ describe('InvoicesPage', () => {
 });
 
 describe('InvoiceDetailDialog', () => {
-  const ledger = { invoice: vi.fn(), payInvoice: vi.fn() };
+  const ledger = { invoice: vi.fn(), invoiceCycle: vi.fn(), payInvoice: vi.fn() };
   const catalog = { paymentMethods: vi.fn() };
   const dialog = { open: vi.fn() };
   const ref = { close: vi.fn() };
@@ -164,6 +219,7 @@ describe('InvoiceDetailDialog', () => {
   const detail = (over: Partial<InvoiceDetail> = {}): InvoiceDetail => ({
     ...summary({ status: 'CLOSED' }),
     card_name: 'Nubank',
+    projected_items: [],
     transactions: [
       {
         id: 't1',
@@ -199,16 +255,17 @@ describe('InvoiceDetailDialog', () => {
     ...over,
   });
 
-  function setup(d: InvoiceDetail) {
+  function setup(d: InvoiceDetail, data: object = { invoiceId: 'inv1', month: '2027-01' }) {
     vi.resetAllMocks();
     ledger.invoice.mockReturnValue(of(d));
+    ledger.invoiceCycle.mockReturnValue(of(d));
     ledger.payInvoice.mockReturnValue(of({ ...d, status: 'PAID' }));
     catalog.paymentMethods.mockReturnValue(of(methods));
     TestBed.configureTestingModule({
       providers: [
         clock,
         { provide: MatDialogRef, useValue: ref },
-        { provide: MAT_DIALOG_DATA, useValue: { invoiceId: 'inv1', card: card() } },
+        { provide: MAT_DIALOG_DATA, useValue: { ...data, card: card() } },
         { provide: LedgerService, useValue: ledger },
         { provide: CatalogService, useValue: catalog },
       ],
@@ -240,6 +297,62 @@ describe('InvoiceDetailDialog', () => {
     expect(one(f, '[data-testid="amount-due"]').textContent).toContain('535,00');
     expect(text(f)).toContain('Saldo credor');
     expect(text(f)).toContain('Fechamento: 06/01/2027');
+  });
+
+  const projectedItem = {
+    recurrence_id: 'r1',
+    occurrence_month: '2027-01',
+    description: 'Netflix',
+    amount: 4000,
+    purchase_date: '2027-01-20',
+    category: { id: 'c', name: 'Lazer' },
+  };
+
+  it('lista as recorrências previstas com o selo "Previsto" e a parte prevista do total', () => {
+    const f = setup(
+      detail({
+        status: 'OPEN',
+        projected_items: [projectedItem],
+        projected_total: 4000,
+        totals: {
+          debits: 68000,
+          credits: 0,
+          received_credit: 0,
+          amount_due: 68000,
+          credit_balance: 0,
+        },
+      }),
+    );
+    const [item] = all(f, '[data-testid="projected-item"]');
+    expect(item.textContent).toContain('Netflix');
+    expect(item.querySelector('[data-testid="projected-chip"]')?.textContent).toContain('Previsto');
+    expect(one(f, '[data-testid="projected-total"]').textContent).toContain('40,00');
+    expect(one(f, '[data-testid="amount-due"]').textContent).toContain('680,00');
+  });
+
+  it('ciclo sem fatura persistida carrega pelo mês e não oferece pagamento', () => {
+    const f = setup(
+      detail({
+        id: null,
+        persisted: false,
+        status: 'OPEN',
+        transactions: [],
+        projected_total: 4000,
+        projected_items: [projectedItem],
+      }),
+      { invoiceId: null, month: '2027-02' },
+    );
+    expect(ledger.invoiceCycle).toHaveBeenCalledWith('k1', '2027-02');
+    expect(ledger.invoice).not.toHaveBeenCalled();
+    expect(all(f, '[data-testid="projected-item"]')).toHaveLength(1);
+    expect(root(f).querySelector('[data-testid="pay-invoice"]')).toBeNull();
+  });
+
+  it('avisa, ao pagar, que as recorrências previstas serão geradas e pagas', async () => {
+    const f = setup(detail({ projected_total: 4000, projected_items: [projectedItem] }));
+    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    await click(f, one(f, '[data-testid="pay-invoice"]'));
+    expect(dialog.open.mock.calls[0][1].data.message).toContain('40,00 de recorrências previstas');
   });
 
   it('fatura atrasada é sinalizada', () => {

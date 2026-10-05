@@ -30,6 +30,7 @@ describe('HomePage', () => {
     unpayTransaction: vi.fn(),
     deleteTransaction: vi.fn(),
     skipOccurrence: vi.fn(),
+    deletePlan: vi.fn(),
   };
   const dialog = { open: vi.fn() };
   const noRefund = {
@@ -49,6 +50,7 @@ describe('HomePage', () => {
       'unpayTransaction',
       'deleteTransaction',
       'skipOccurrence',
+      'deletePlan',
     ] as const) {
       ledger[method].mockReturnValue(of({}));
     }
@@ -284,7 +286,7 @@ describe('HomePage', () => {
       expect(ledger.unpayTransaction).toHaveBeenCalledWith('t1');
     });
 
-    it('exclui após confirmar e não exclui se cancelar', async () => {
+    it('apaga após confirmar e não apaga se cancelar', async () => {
       const fixture = await render();
       dialog.open.mockReturnValue({ afterClosed: () => of(false) });
       let buttons = await openMenu(fixture, rows(fixture)[0]);
@@ -313,10 +315,43 @@ describe('HomePage', () => {
       expect(ledger.skipOccurrence).toHaveBeenCalledWith('rec1', '2027-01');
     });
 
-    it('compra de cartão: editar e estornar, sem pagar nem excluir', async () => {
+    it('compra de cartão: editar, estornar e apagar, sem pagar', async () => {
       const fixture = await render(statement([cardItem()]));
       const buttons = await openMenu(fixture, rows(fixture)[0]);
-      expect(buttons.map((b) => b.dataset['testid'])).toEqual(['act-edit', 'act-refund']);
+      expect(buttons.map((b) => b.dataset['testid'])).toEqual([
+        'act-edit',
+        'act-refund',
+        'act-delete',
+      ]);
+    });
+
+    it('apaga a compra de cartão avisando que os estornos vão junto', async () => {
+      const fixture = await render(statement([cardItem()]));
+      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      const buttons = await openMenu(fixture, rows(fixture)[0]);
+      await click(
+        fixture,
+        buttons.find((b) => b.dataset['testid'] === 'act-delete')!,
+      );
+      const [, config] = dialog.open.mock.calls.at(-1)!;
+      expect(config.data.title).toBe('Apagar lançamento?');
+      expect(config.data.message).toContain('estornos');
+      expect(ledger.deleteTransaction).toHaveBeenCalledWith('t-card');
+    });
+
+    it('apagar parcela apaga a compra parcelada inteira pelo plano', async () => {
+      const fixture = await render(statement([installmentItem()]));
+      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      const buttons = await openMenu(fixture, rows(fixture)[0]);
+      await click(
+        fixture,
+        buttons.find((b) => b.dataset['testid'] === 'act-delete')!,
+      );
+      const [, config] = dialog.open.mock.calls.at(-1)!;
+      expect(config.data.title).toBe('Apagar compra parcelada?');
+      expect(config.data.message).toContain('10 parcelas');
+      expect(ledger.deletePlan).toHaveBeenCalledWith('plan1');
+      expect(ledger.deleteTransaction).not.toHaveBeenCalled();
     });
 
     it('estorno de compra à vista usa o lançamento', async () => {

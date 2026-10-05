@@ -116,6 +116,7 @@ Uma ocorrência gerada é um lançamento independente: mudanças posteriores na 
 Para o planejamento:
 
 * ocorrências projetadas aparecem na Home dos meses futuros como lançamentos previstos `PENDING` (`home.md`);
+* ocorrências projetadas de cartão aparecem também no detalhe e no total da fatura do ciclo, como "Previsto" (`invoices.md` §4 e §7, PD-35); pagar a fatura gera e liquida essas ocorrências (`invoices.md` §9.2);
 * a geração na data da ocorrência é garantida pelo sistema, independentemente de acesso do usuário (`architecture.md`).
 
 ---
@@ -180,8 +181,9 @@ O usuário pode pular a ocorrência de um mês sem cancelar a recorrência.
 * A ocorrência pulada não aparece no planejamento e não volta a ser gerada.
 * Uma ocorrência **projetada** (futura) pode ser pulada.
 * Uma ocorrência **gerada**, com método comum e ainda `PENDING`, pode ser pulada (PD-28): o lançamento é removido fisicamente e substituído pela exceção na mesma operação.
-* Uma ocorrência já `PAID` não pode ser pulada nem excluída.
-* Uma ocorrência gerada com cartão é uma compra de cartão: não pode ser pulada nem excluída; usa-se o estorno (`refunds.md`).
+* Uma ocorrência já `PAID` não pode ser **pulada**.
+* Uma ocorrência gerada com cartão é uma compra de cartão: não pode ser **pulada**; usa-se o estorno (`refunds.md`).
+* Uma ocorrência gerada pode ser **apagada** (PD-38, provisório) com o mês aberto e, no cartão, fatura não `PAID`: o lançamento é removido e a exceção do mês é registrada, como em pular.
 * Só é possível pular ocorrências de meses abertos.
 
 Exemplo:
@@ -232,7 +234,8 @@ Atingir a `end_date` não muda o status; a recorrência apenas deixa de produzir
 * Cada ocorrência é uma nova compra no cartão; **não** é parcela.
 * A data da ocorrência (dia `due_day`) é a data da cobrança e funciona como `purchase_date` para determinar a fatura (`credit-cards.md` §8).
 * O mês financeiro da ocorrência é o `reference_month` da fatura de postagem, como em qualquer lançamento de cartão.
-* Projeções de ocorrências de cartão usam o ciclo projetado do cartão.
+* Projeções de ocorrências de cartão usam o ciclo projetado do cartão e entram na previsão da fatura (PD-35).
+* No formulário, o campo `due_day` se chama "Dia da cobrança" quando o método é cartão e mostra a fatura prevista (PD-34).
 * Alterar o cartão da recorrência afeta somente ocorrências ainda não geradas; as geradas permanecem no cartão original.
 
 Exemplo — melhor dia 6, vencimento 15, Netflix todo dia 10:
@@ -296,7 +299,7 @@ Ocorrências de meses fechados são imutáveis. Nenhuma alteração da recorrên
 * **RN-REC-09** — A categoria pertence à recorrência e não pode ser alterada em uma ocorrência isolada.
 * **RN-REC-10** — Edição individual não altera a recorrência.
 * **RN-REC-11** — Pular uma ocorrência cria uma exceção explícita para o mês e não altera a recorrência.
-* **RN-REC-12** — Ocorrência paga não pode ser pulada nem excluída; ocorrência gerada com método comum e `PENDING` pode ser pulada (remoção do lançamento + exceção); ocorrência gerada com cartão não pode ser pulada.
+* **RN-REC-12** — Ocorrência paga ou de cartão não pode ser pulada; ocorrência gerada com método comum e `PENDING` pode ser pulada (remoção do lançamento + exceção); qualquer ocorrência gerada pode ser apagada com as travas de mês fechado e fatura `PAID` (PD-38, provisório), registrando a exceção.
 * **RN-REC-13** — Pausa impede ocorrências no intervalo; a retomada não cria ocorrências retroativas.
 * **RN-REC-14** — Cancelamento é definitivo e preserva as ocorrências geradas.
 * **RN-REC-15** — Método, categoria ou cartão inativo bloqueia ocorrências sem mudar o status da recorrência; a reativação não gera retroativamente.

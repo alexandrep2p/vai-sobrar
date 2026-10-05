@@ -157,12 +157,27 @@ export class HomePage implements OnInit {
     this.ledger.unpayTransaction(item.transaction_id as string).subscribe(() => this.load());
   }
 
+  /** Apagar (PD-38, provisório): exclusão definitiva; parcela apaga a compra parcelada inteira. */
   protected remove(item: StatementItem): void {
+    if (item.installment) {
+      const plan = item.installment;
+      this.confirm(
+        {
+          title: 'Apagar compra parcelada?',
+          message: `"${item.description}" será apagada por inteiro (${plan.installment_count} parcelas), junto com os estornos dela. Não é possível desfazer.`,
+          confirmLabel: 'Apagar',
+          destructive: true,
+        },
+        () => this.ledger.deletePlan(plan.installment_plan_id),
+      );
+      return;
+    }
+    const withRefunds = item.credit_card !== null ? ', junto com os estornos dele' : '';
     this.confirm(
       {
-        title: 'Excluir lançamento?',
-        message: `"${item.description}" será excluído definitivamente.`,
-        confirmLabel: 'Excluir',
+        title: 'Apagar lançamento?',
+        message: `"${item.description}" será apagado definitivamente${withRefunds}. Não é possível desfazer.`,
+        confirmLabel: 'Apagar',
         destructive: true,
       },
       () => this.ledger.deleteTransaction(item.transaction_id as string),
@@ -192,7 +207,7 @@ export class HomePage implements OnInit {
     const data = item.installment
       ? { planId: item.installment.installment_plan_id }
       : { transactionId: item.refund?.original_transaction_id };
-    this.dialog.open(PurchaseDetailDialog, dialogConfig(data));
+    this.afterSaved(this.dialog.open(PurchaseDetailDialog, dialogConfig(data)).afterClosed());
   }
 
   // --- internos ---

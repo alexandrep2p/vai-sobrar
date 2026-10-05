@@ -14,13 +14,16 @@ import { formatCents } from '../../shared/format/money';
 import {
   invoiceStatusLabel,
   OVERDUE_INVOICE_LABEL,
+  PROJECTED_ITEM_LABEL,
   transactionStatusLabel,
 } from '../../shared/labels/labels';
 import { dialogConfig } from '../../shared/ui/dialog';
 import { PayDialog, type PayDialogData, type PayDialogResult } from '../../shared/ui/pay-dialog';
 
 export interface InvoiceDetailData {
-  invoiceId: string;
+  /** `null` para ciclo ainda sem fatura persistida (só com a previsão de recorrências). */
+  invoiceId: string | null;
+  month: string;
   card: CreditCard;
 }
 
@@ -77,6 +80,22 @@ export interface InvoiceDetailData {
           </div>
         }
 
+        @if (i.projected_items.length > 0) {
+          <h3 class="group-title">Recorrências previstas</h3>
+          <div class="list-card">
+            @for (p of i.projected_items; track p.recurrence_id + p.occurrence_month) {
+              <div class="list-row" data-testid="projected-item">
+                <div class="grow">
+                  {{ p.description }}
+                  <div class="sub">{{ date(p.purchase_date) }} · {{ p.category.name }}</div>
+                </div>
+                <span class="expense">{{ money(p.amount) }}</span>
+                <span class="chip" data-testid="projected-chip">{{ projectedLabel }}</span>
+              </div>
+            }
+          </div>
+        }
+
         @if (i.credits.length > 0) {
           <h3 class="group-title">Créditos de estorno</h3>
           <div class="list-card">
@@ -108,6 +127,10 @@ export interface InvoiceDetailData {
         <dl class="totals">
           <dt>Débitos</dt>
           <dd>{{ money(i.totals.debits) }}</dd>
+          @if (i.projected_total > 0) {
+            <dt class="sub">Destes, previstos (recorrências)</dt>
+            <dd class="sub" data-testid="projected-total">{{ money(i.projected_total) }}</dd>
+          }
           <dt>Créditos de estorno</dt>
           <dd>{{ money(i.totals.credits) }}</dd>
           <dt>Crédito recebido</dt>
@@ -125,7 +148,7 @@ export interface InvoiceDetailData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Fechar</button>
-      @if (invoice() && invoice()?.status !== 'PAID') {
+      @if (invoice()?.id && invoice()?.status !== 'PAID') {
         <button mat-flat-button (click)="pay()" data-testid="pay-invoice">Pagar fatura</button>
       }
     </mat-dialog-actions>
@@ -157,9 +180,13 @@ export class InvoiceDetailDialog implements OnInit {
   protected readonly statusLabel = invoiceStatusLabel;
   protected readonly txStatusLabel = transactionStatusLabel;
   protected readonly overdueLabel = OVERDUE_INVOICE_LABEL;
+  protected readonly projectedLabel = PROJECTED_ITEM_LABEL;
 
   ngOnInit(): void {
-    this.ledger.invoice(this.data.invoiceId).subscribe((invoice) => this.invoice.set(invoice));
+    const request = this.data.invoiceId
+      ? this.ledger.invoice(this.data.invoiceId)
+      : this.ledger.invoiceCycle(this.data.card.id, this.data.month);
+    request.subscribe((invoice) => this.invoice.set(invoice));
   }
 
   /** Método de pagamento: qualquer ativo, exceto o próprio cartão da fatura (invoices.md §9.1). */
@@ -168,10 +195,16 @@ export class InvoiceDetailDialog implements OnInit {
       const options = methods
         .filter((m) => m.active && m.id !== this.data.card.payment_method_id)
         .map((m) => ({ id: m.id, name: m.name }));
+      const current = this.invoice();
+      const projected = current?.projected_total ?? 0;
       const payData: PayDialogData = {
         title: 'Pagar fatura',
         confirmLabel: 'Pagar',
-        message: `Valor a pagar: ${formatCents(this.invoice()?.totals.amount_due ?? 0)}`,
+        message:
+          `Valor a pagar: ${formatCents(current?.totals.amount_due ?? 0)}` +
+          (projected > 0
+            ? ` (inclui ${formatCents(projected)} de recorrências previstas, que serão geradas e pagas agora)`
+            : ''),
         methods: options,
       };
       this.dialog
@@ -180,7 +213,7 @@ export class InvoiceDetailDialog implements OnInit {
         .subscribe((result) => {
           if (!result) return;
           this.ledger
-            .payInvoice(this.data.invoiceId, {
+            .payInvoice(this.data.invoiceId as string, {
               paid_at: result.paid_at,
               payment_method_id: result.payment_method_id as string,
             })

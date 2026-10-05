@@ -138,7 +138,7 @@ Em mês fechado, as ações de alteração ficam indisponíveis e o mês fica cl
 
 ## 7. Ações
 
-* **+ Lançamento** — abre o formulário de lançamento (entrada ou saída, descrição, valor, data, categoria, método e, para cartão, parcelamento). Recorrências são criadas pelo fluxo de recorrências. As regras são as de `transactions.md` e das specs de cartão.
+* **+ Lançamento** — abre o formulário de lançamento (entrada ou saída, descrição, valor, data, categoria, método e, para cartão, parcelamento). Recorrências são criadas pelo fluxo de recorrências. As regras são as de `transactions.md` e das specs de cartão. O botão de salvar fica desabilitado enquanto o formulário for inválido, o valor usa máscara monetária e, antes de gravar, é exibido um resumo de confirmação (PD-37). A mesma regra de UX vale para os demais formulários que criam ou editam valor.
 * **Fechar mês** — disponível com o mês aberto; pede confirmação explícita com aviso de irreversibilidade e imutabilidade; segue as pré-condições de `financial-periods.md` §4.1. Se rejeitado, informa o motivo.
 
 Mensagem de confirmação:
@@ -161,6 +161,7 @@ O mês não poderá ser reaberto.
 * **RN-HOME-03** — O status de pagamento não altera o saldo previsto.
 * **RN-HOME-04** — Cada compra, parcela e ocorrência de cartão aparece individualmente no mês da sua fatura; não há linha agregada nem transação-mãe.
 * **RN-HOME-05** — A parcela mostra `n/N` e dá acesso à compra original.
+* **RN-HOME-05A** — Em "Ver compra original" de uma parcela, o plano pode ser editado (valor total, parcelas e data) quando `installments.md` §8 permitir (PD-36).
 * **RN-HOME-06** — Ocorrências projetadas aparecem como previstas `Em aberto`.
 * **RN-HOME-06A** — Data exibida: `due_date` para método comum, `purchase_date` para cartão, `refund_date` para créditos de estorno.
 * **RN-HOME-07** — Fechamento é manual, confirmado, irreversível e segue `financial-periods.md`.

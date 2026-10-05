@@ -1,21 +1,29 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import type { RefundInput, RefundSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
+import { formatDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney } from '../../shared/forms/validators';
+import { MoneyInput } from '../../shared/forms/money-input';
 import {
   PARTIALLY_REFUNDED_LABEL,
   REFUNDED_LABEL,
   refundStrategyLabel,
   type RefundStrategy,
 } from '../../shared/labels/labels';
+import { confirmSummary } from '../../shared/ui/summary-dialog';
 
 export interface RefundDialogData {
   description: string;
@@ -33,6 +41,7 @@ export interface RefundDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatInput,
+    MoneyInput,
     MatSelectModule,
     MatButton,
   ],
@@ -52,7 +61,7 @@ export interface RefundDialogData {
         }
         <mat-form-field class="full-width">
           <mat-label>Valor do estorno (R$)</mat-label>
-          <input matInput formControlName="amount" inputmode="decimal" />
+          <input matInput appMoneyInput formControlName="amount" />
           @if (form.controls.amount.invalid) {
             <mat-error>Informe um valor maior que zero.</mat-error>
           }
@@ -77,7 +86,7 @@ export interface RefundDialogData {
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting()">Estornar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Estornar</button>
       </mat-dialog-actions>
     </form>
   `,
@@ -85,6 +94,7 @@ export interface RefundDialogData {
 export class RefundDialog implements OnInit {
   protected readonly data = inject<RefundDialogData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<RefundDialog, boolean>);
+  private readonly dialog = inject(MatDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly strategies: RefundStrategy[] = [
@@ -133,6 +143,21 @@ export class RefundDialog implements OnInit {
         ? { installment_plan_id: this.data.planId, strategy: v.strategy }
         : { transaction_id: this.data.transactionId as string }),
     };
+    confirmSummary(this.dialog, {
+      title: 'Confirmar estorno',
+      rows: [
+        { label: 'Compra', value: this.data.description },
+        { label: 'Valor do estorno', value: formatCents(body.amount) },
+        { label: 'Data do estorno', value: formatDate(body.refund_date) },
+        ...(this.data.planId ? [{ label: 'Estratégia', value: refundStrategyLabel(v.strategy) }] : []),
+      ],
+      confirmLabel: 'Confirmar',
+    }).subscribe((confirmed) => {
+      if (confirmed) this.send(body);
+    });
+  }
+
+  private send(body: RefundInput): void {
     this.submitting.set(true);
     this.ledger.createRefund(body).subscribe({
       next: () => this.ref.close(true),

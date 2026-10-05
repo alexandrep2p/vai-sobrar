@@ -162,20 +162,21 @@ Alterações posteriores na configuração do cartão não movem parcelas nem al
 
 ---
 
-## 8. Imutabilidade
+## 8. Imutabilidade e edição do plano (PD-12, PD-36)
 
-Depois da criação são imutáveis:
+O **cartão** é sempre imutável. Não é permitido editar isoladamente o valor ou a estrutura de uma parcela.
 
-* valor total;
-* quantidade de parcelas;
-* cartão;
-* `purchase_date`;
-* valores originais das parcelas;
-* numeração;
-* faturas das parcelas;
-* estrutura do plano.
+Valor total, quantidade de parcelas e `purchase_date` só podem ser editados **pelo plano inteiro**, e apenas quando:
 
-Não é permitido editar isoladamente o valor ou a estrutura de uma parcela.
+* nenhuma parcela está em fatura `PAID`;
+* nenhum mês financeiro afetado (o atual e o recalculado) está fechado;
+* o plano não tem nenhum estorno vinculado.
+
+Nesse caso as parcelas são regeneradas conforme §6 e §7 com os novos dados (o plano mantém o mesmo id), em uma operação atômica. A quantidade respeita 2..120 e a data da compra, a janela de `transactions.md` §10. Fora dessas condições a edição é **rejeitada** e o caminho é o estorno (§11).
+
+Exemplo: compra de R$ 600 em 3x lançada por engano; antes de qualquer fatura ser paga, corrigir para R$ 660 em 6x.
+
+Quando as condições não são atendidas, valem as regras de §9 para descrição e categoria.
 
 ---
 
@@ -206,7 +207,7 @@ Nenhuma edição de descrição ou categoria recria, remove ou move parcelas.
 
 ## 11. Exclusão e estorno
 
-* Compra parcelada, plano e parcelas não são excluídos.
+* A compra parcelada pode ser **apagada inteira** (plano e todas as parcelas, de uma vez) enquanto nenhuma parcela estiver em fatura `PAID` ou mês fechado; os estornos do plano são apagados junto e as faturas que ficarem vazias deixam de existir (PD-38, provisório). Parcela isolada não é apagada.
 * Para desfazer financeiramente, total ou parcialmente, usa-se o estorno do plano (`refunds.md`). O estorno não cancela o plano nem altera os valores originais das parcelas.
 
 ---
@@ -235,11 +236,11 @@ Nenhuma edição de descrição ou categoria recria, remove ou move parcelas.
 * **RN-PAR-05** — Cada parcela é uma `Transaction` (`origin = INSTALLMENT`) ligada 1:1 a um `Installment`; não há transação-mãe.
 * **RN-PAR-06** — A parcela 1 segue a fatura da `purchase_date`; cada parcela seguinte vai para o ciclo seguinte.
 * **RN-PAR-07** — Vencimento e mês financeiro da parcela vêm da sua fatura.
-* **RN-PAR-08** — Valor total, quantidade, cartão, `purchase_date`, valores, numeração e faturas são imutáveis.
+* **RN-PAR-08** — O cartão é imutável. Valor total, quantidade e `purchase_date` só mudam pelo plano inteiro, sem parcela em fatura `PAID`, sem mês afetado fechado e sem estorno vinculado; as parcelas são regeneradas (PD-36).
 * **RN-PAR-09** — Descrição e categoria só mudam se todas as parcelas estiverem em meses abertos e nenhuma estiver em fatura `PAID`; a mudança vale para todas as parcelas.
-* **RN-PAR-10** — Não há edição isolada de valor ou estrutura de uma parcela.
+* **RN-PAR-10** — Não há edição isolada de valor ou estrutura de uma parcela; a edição é sempre do plano (RN-PAR-08).
 * **RN-PAR-11** — Parcelas são liquidadas somente pelo pagamento da sua fatura.
-* **RN-PAR-12** — Plano e parcelas não são excluídos; usa-se estorno.
+* **RN-PAR-12** — O plano só é apagado inteiro, sem parcela em fatura `PAID` ou mês fechado (PD-38, provisório); parcela isolada não é apagada; para fatura paga usa-se estorno.
 * **RN-PAR-13** — Desativação do cartão não cancela parcelas; reativação não cria parcelas.
 * **RN-PAR-14** — Limite técnico de 120 parcelas (restrição técnica, não de negócio).
 

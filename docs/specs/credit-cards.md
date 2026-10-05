@@ -301,7 +301,7 @@ Lançamentos de cartão são liquidados somente pelo pagamento da fatura (`invoi
 
 A descrição e a categoria seguem a matriz de edição de `transactions.md` §12. Nenhum campo de lançamento postado em fatura `PAID` pode ser editado.
 
-Compras de cartão **não são excluídas fisicamente**. Para desfazer financeiramente uma compra, usa-se o estorno (`refunds.md`).
+Compras de cartão podem ser **apagadas** (PD-38, provisório) enquanto a fatura não estiver `PAID` e o mês estiver aberto; os estornos da compra são apagados junto e a fatura que ficar vazia deixa de existir. Para desfazer financeiramente uma compra de fatura paga, usa-se o estorno (`refunds.md`).
 
 ---
 
@@ -371,7 +371,7 @@ Fora do MVP: limite total, limite disponível, bloqueio por limite e comprometim
 * **RN-CAR-12** — O mês financeiro de lançamento de cartão é o `reference_month` da fatura de postagem, nunca `mês(due_date)`.
 * **RN-CAR-13** — Compras futuras são permitidas; retroativas somente com `purchase_date` no mês corrente até hoje.
 * **RN-CAR-14** — Valor, cartão, número de parcelas e `purchase_date` de compra realizada são imutáveis.
-* **RN-CAR-15** — Compras de cartão não são excluídas; usam estorno.
+* **RN-CAR-15** — Compras de cartão podem ser apagadas com fatura não `PAID` e mês aberto (PD-38, provisório); caso contrário, usam estorno.
 * **RN-CAR-16** — Alterações de configuração não modificam faturas persistidas nem lançamentos postados.
 * **RN-CAR-17** — Desativação impede novas compras e novas ocorrências; preserva todo o histórico e as parcelas futuras.
 * **RN-CAR-18** — Reativação não cria lançamentos retroativos.
@@ -393,7 +393,7 @@ Fora do MVP: limite total, limite disponível, bloqueio por limite e comprometim
 * **CA-CAR-10** — Alteração do melhor dia não move compras existentes nem altera `closing_date`/`due_date` de faturas persistidas.
 * **CA-CAR-11** — Com fatura de outubro persistida (closing 06/10) e melhor dia alterado para 10, compra em 08/10 → ciclo de novembro.
 * **CA-CAR-12** — Tentativa de alterar valor ou cartão de compra realizada é rejeitada.
-* **CA-CAR-13** — Tentativa de excluir compra de cartão é rejeitada.
+* **CA-CAR-13** — Excluir compra de cartão em fatura `PAID` ou mês fechado é rejeitado; com fatura aberta, é removida.
 * **CA-CAR-14** — Cartão desativado: nova compra é rejeitada; parcelas futuras continuam existindo.
 * **CA-CAR-15** — Hoje 29/09: compra com `purchase_date` 10/08 é rejeitada; 10/09 e 05/10 são aceitas.
 * **CA-CAR-16** — Tentativa de alterar a `purchase_date` de compra à vista é rejeitada.

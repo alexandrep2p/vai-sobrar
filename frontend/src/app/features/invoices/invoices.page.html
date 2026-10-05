@@ -58,13 +58,22 @@
               Fecha em {{ date(invoice.closing_date) }} · Vence em {{ date(invoice.due_date) }}
             </div>
           </div>
-          @if (invoice.persisted) {
+          @if (invoice.persisted || invoice.projected_total > 0) {
             <div class="amount" data-testid="amount-due">
               {{ money(invoice.totals.amount_due) }}
+              @if (invoice.projected_total > 0) {
+                <div class="sub" data-testid="projected-total">
+                  inclui {{ money(invoice.projected_total) }} {{ projectedLabel.toLowerCase() }}
+                </div>
+              }
             </div>
-            <span class="chip" [class.positive]="invoice.status === 'PAID'" data-testid="status">
-              {{ statusLabel(invoice.status) }}
-            </span>
+            @if (invoice.persisted) {
+              <span class="chip" [class.positive]="invoice.status === 'PAID'" data-testid="status">
+                {{ statusLabel(invoice.status) }}
+              </span>
+            } @else {
+              <span class="chip" data-testid="projected-chip">{{ projectedLabel }}</span>
+            }
             @if (invoice.situation === 'OVERDUE') {
               <span class="chip warn" data-testid="overdue">{{ overdueLabel }}</span>
             }

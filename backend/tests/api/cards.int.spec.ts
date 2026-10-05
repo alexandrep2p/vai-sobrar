@@ -156,12 +156,13 @@ describe('compra à vista no cartão (T-22)', () => {
     }
   });
 
-  it('CA-CAR-13: compra de cartão não é excluída', async () => {
+  it('CA-CAR-13: compra de cartão em fatura paga não é excluída (PD-38)', async () => {
     const { methodId } = await setup('2027-10-01');
     const res = await buy(methodId, '2027-10-05');
+    await payInvoice(res.body.invoice.id, '2027-10-01');
     const del = await api.delete(`/api/transactions/${res.body.id}`);
     expect(del.status).toBe(409);
-    expect(del.body.error.code).toBe('TRANSACTION_NOT_DELETABLE');
+    expect(del.body.error.code).toBe('INVOICE_ALREADY_PAID');
   });
 
   it('CA-CAR-16: purchase_date é imutável', async () => {
@@ -568,15 +569,16 @@ describe('compra parcelada (T-26)', () => {
     expect(plan.body.description).toBe('Compra');
   });
 
-  it('CA-PAR-08: valor, quantidade, cartão e data não são editáveis', async () => {
+  it('CA-PAR-08: cartão e valores inválidos são rejeitados; parcela isolada não edita valor', async () => {
     const { methodId } = await setup('2027-10-01');
     const res = await buy(methodId, '2027-10-05', { installment_count: 2, amount: 20000 });
     const planId = res.body.installment_plan.id as string;
     for (const body of [
-      { total_amount: 1 },
-      { installment_count: 3 },
       { credit_card_id: methodId },
-      { purchase_date: '2027-10-06' },
+      { installment_count: 1 },
+      { installment_count: 121 },
+      { total_amount: 0 },
+      { purchase_date: 'ontem' },
     ]) {
       expect((await api.put(`/api/installment-plans/${planId}`, body)).status).toBe(400);
     }
@@ -667,5 +669,240 @@ describe('compra parcelada (T-26)', () => {
     expect(await prisma.transaction.count()).toBe(0);
     expect(await prisma.installment.count()).toBe(0);
     expect(await prisma.invoice.count()).toBe(0);
+  });
+});
+
+describe('prévia da fatura de postagem (T-52)', () => {
+  const preview = (cardId: string, date: string) =>
+    api.get(`/api/credit-cards/${cardId}/posting-preview?purchase_date=${date}`);
+
+  it('melhor dia 6: 05/10 cai em outubro e 07/10 em novembro, sem criar fatura', async () => {
+    const { cardId } = await setup('2027-10-01');
+    const first = await preview(cardId, '2027-10-05');
+    expect(first.status).toBe(200);
+    expect(first.body).toEqual({
+      reference_month: '2027-10',
+      closing_date: '2027-10-06',
+      due_date: '2027-10-15',
+      persisted: false,
+    });
+    const second = await preview(cardId, '2027-10-07');
+    expect(second.body).toMatchObject({ reference_month: '2027-11', due_date: '2027-11-15' });
+    expect(await prisma.invoice.count()).toBe(0);
+  });
+
+  it('segue a regra de compra tardia: fatura PAID empurra para a próxima', async () => {
+    const { cardId, methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05');
+    expect((await payInvoice(res.body.invoice.id, '2027-10-01')).status).toBe(200);
+    const late = await preview(cardId, '2027-10-05');
+    expect(late.body).toMatchObject({ reference_month: '2027-11', persisted: false });
+  });
+
+  it('rejeita data inválida e cartão inexistente', async () => {
+    const { cardId } = await setup('2027-10-01');
+    expect((await preview(cardId, 'ontem')).status).toBe(400);
+    expect((await preview('00000000-0000-4000-8000-000000000000', '2027-10-05')).status).toBe(404);
+  });
+});
+
+describe('edição da compra parcelada (T-55, PD-36)', () => {
+  interface PlanBody {
+    id: string;
+    total_amount: number;
+    installment_count: number;
+    purchase_date: string;
+    installments: {
+      number: number;
+      amount: number;
+      financial_month: string;
+      transaction_id: string;
+      invoice: { id: string } | null;
+    }[];
+  }
+  const plan = async (id: string) =>
+    (await api.get(`/api/installment-plans/${id}`)).body as PlanBody;
+  const edit = (id: string, body: Record<string, unknown>) =>
+    api.put(`/api/installment-plans/${id}`, body);
+  const months = (p: PlanBody) => p.installments.map((i) => i.financial_month);
+  const amounts = (p: PlanBody) => p.installments.map((i) => i.amount);
+  const transactionCount = () => prisma.transaction.count();
+
+  it('exemplo da PD-36: R$ 600 em 3x vira R$ 660 em 6x, mantendo o id do plano', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 60000 });
+    const planId = res.body.installment_plan.id as string;
+
+    const updated = await edit(planId, { total_amount: 66000, installment_count: 6 });
+    expect(updated.status).toBe(200);
+    const body = updated.body as PlanBody;
+    expect(body).toMatchObject({ id: planId, total_amount: 66000, installment_count: 6 });
+    expect(amounts(body)).toEqual([11000, 11000, 11000, 11000, 11000, 11000]);
+    expect(months(body)).toEqual([
+      '2027-10',
+      '2027-11',
+      '2027-12',
+      '2028-01',
+      '2028-02',
+      '2028-03',
+    ]);
+    expect(body.installments.map((i) => i.number)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(await transactionCount()).toBe(6);
+    expect(await prisma.installment.count()).toBe(6);
+  });
+
+  it('a soma das parcelas é sempre o total (centavos nas últimas parcelas)', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 2, amount: 20000 });
+    const updated = await edit(res.body.installment_plan.id, {
+      total_amount: 10000,
+      installment_count: 3,
+    });
+    expect(amounts(updated.body as PlanBody)).toEqual([3333, 3333, 3334]);
+  });
+
+  it('só o valor: mantém quantidade e data', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const updated = (await edit(res.body.installment_plan.id, { total_amount: 45000 }))
+      .body as PlanBody;
+    expect(updated).toMatchObject({ installment_count: 3, purchase_date: '2027-10-05' });
+    expect(amounts(updated)).toEqual([15000, 15000, 15000]);
+    expect(months(updated)).toEqual(['2027-10', '2027-11', '2027-12']);
+  });
+
+  it('mudar a data da compra move as parcelas de ciclo e descarta a fatura que ficou vazia', async () => {
+    const { methodId, cardId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const planId = res.body.installment_plan.id as string;
+    expect(await prisma.invoice.count({ where: { creditCardId: cardId } })).toBe(3);
+
+    // 07/10 já é depois do melhor dia (06): vai para o ciclo de novembro
+    const updated = (await edit(planId, { purchase_date: '2027-10-07' })).body as PlanBody;
+    expect(updated.purchase_date).toBe('2027-10-07');
+    expect(months(updated)).toEqual(['2027-11', '2027-12', '2028-01']);
+    const invoices = await prisma.invoice.findMany({
+      where: { creditCardId: cardId },
+      orderBy: { referenceMonth: 'asc' },
+    });
+    expect(invoices.map((i) => i.referenceMonth)).toEqual(['2027-11', '2027-12', '2028-01']);
+  });
+
+  it('mantém as faturas que ainda têm outros lançamentos', async () => {
+    const { methodId, cardId } = await setup('2027-10-01');
+    await buy(methodId, '2027-10-05'); // compra à vista na fatura de outubro
+    const res = await buy(methodId, '2027-10-05', { installment_count: 2, amount: 20000 });
+    await edit(res.body.installment_plan.id, { purchase_date: '2027-10-07' });
+    const invoices = await prisma.invoice.findMany({ where: { creditCardId: cardId } });
+    expect(invoices.map((i) => i.referenceMonth).sort()).toEqual(['2027-10', '2027-11', '2027-12']);
+  });
+
+  it('valores iguais aos atuais não regeneram nada', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const before = await plan(res.body.installment_plan.id);
+    const same = await edit(before.id, { total_amount: 30000, installment_count: 3 });
+    expect(same.status).toBe(200);
+    const after = await plan(before.id);
+    expect(after.installments.map((i) => i.transaction_id)).toEqual(
+      before.installments.map((i) => i.transaction_id),
+    );
+  });
+
+  it('combina com descrição e categoria na mesma chamada', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 2, amount: 20000 });
+    const other = await api.category('Eletrônicos', 'EXPENSE');
+    const updated = await edit(res.body.installment_plan.id, {
+      description: 'Notebook',
+      category_id: other,
+      total_amount: 40000,
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.body).toMatchObject({ description: 'Notebook', total_amount: 40000 });
+    expect(updated.body.category.id).toBe(other);
+    const txs = (await api.get('/api/transactions')).body.data as {
+      description: string;
+      amount: number;
+    }[];
+    expect(txs.map((t) => [t.description, t.amount])).toEqual([
+      ['Notebook', 20000],
+      ['Notebook', 20000],
+    ]);
+  });
+
+  it('bloqueia com parcela em fatura PAID e não altera nada', async () => {
+    const { methodId } = await setup('2027-10-20');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const planId = res.body.installment_plan.id as string;
+    const before = await plan(planId);
+    await payInvoice(before.installments[0]?.invoice?.id as string, '2027-10-14');
+
+    const blocked = await edit(planId, { total_amount: 90000 });
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.error.code).toBe('INVOICE_ALREADY_PAID');
+    expect(amounts(await plan(planId))).toEqual([10000, 10000, 10000]);
+  });
+
+  it('bloqueia com parcela em mês fechado', async () => {
+    const { methodId } = await setup('2027-10-20');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    await prisma.financialPeriod.create({
+      data: { referenceMonth: '2027-12', status: 'CLOSED', closedAt: new Date() },
+    });
+    const blocked = await edit(res.body.installment_plan.id, { installment_count: 4 });
+    expect(blocked.body.error.code).toBe('PERIOD_CLOSED');
+    expect(await transactionCount()).toBe(3);
+  });
+
+  it('bloqueia quando o plano já tem estorno', async () => {
+    const { methodId } = await setup('2027-10-20');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const planId = res.body.installment_plan.id as string;
+    const refund = await api.post('/api/refunds', {
+      installment_plan_id: planId,
+      amount: 5000,
+      refund_date: '2027-10-10',
+      strategy: 'FIRST_INSTALLMENTS',
+    });
+    expect(refund.status).toBe(201);
+    const blocked = await edit(planId, { total_amount: 60000 });
+    expect(blocked.status).toBe(422);
+    expect(blocked.body.error.code).toBe('INVALID_INSTALLMENT_OPERATION');
+    // descrição continua editável nas condições da PD-27
+    expect((await edit(planId, { description: 'Outro' })).status).toBe(200);
+  });
+
+  it('atômico: se um novo ciclo está em mês fechado, nada muda', async () => {
+    const { methodId } = await setup('2027-10-01');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
+    const planId = res.body.installment_plan.id as string;
+    const before = await plan(planId);
+    await prisma.financialPeriod.create({
+      data: { referenceMonth: '2028-02', status: 'CLOSED', closedAt: new Date() },
+    });
+    const failed = await edit(planId, { installment_count: 6 });
+    expect(failed.status).toBeGreaterThanOrEqual(400);
+    const after = await plan(planId);
+    expect(after.installment_count).toBe(3);
+    expect(after.installments.map((i) => i.transaction_id)).toEqual(
+      before.installments.map((i) => i.transaction_id),
+    );
+    expect(await transactionCount()).toBe(3);
+  });
+
+  it('data retroativa fora do mês corrente é rejeitada; futura é aceita', async () => {
+    const { methodId } = await setup('2027-10-15');
+    const res = await buy(methodId, '2027-10-05', { installment_count: 2, amount: 20000 });
+    const planId = res.body.installment_plan.id as string;
+    const old = await edit(planId, { purchase_date: '2027-09-20' });
+    expect(old.body.error.code).toBe('INVALID_PURCHASE_DATE');
+    expect((await edit(planId, { purchase_date: '2027-10-25' })).status).toBe(200);
+  });
+
+  it('plano inexistente → 404', async () => {
+    await setup('2027-10-01');
+    const res = await edit('00000000-0000-4000-8000-000000000000', { total_amount: 100 });
+    expect(res.status).toBe(404);
   });
 });

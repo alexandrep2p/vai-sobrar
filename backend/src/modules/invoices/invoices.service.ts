@@ -14,6 +14,7 @@ import {
   fromDbDateOrNull,
   lockCard,
   lockPeriodsShared,
+  lockRecurrence,
   toDbDate,
   TRANSACTION_OPTIONS,
   type Db,
@@ -29,7 +30,13 @@ import {
   transactionInclude,
   type TransactionDto,
 } from '../transactions/transaction-dto.js';
-import { cardConfigOf } from './invoice-store.js';
+import { loadCardInvoices, cardConfigOf, toSnapshot } from './invoice-store.js';
+import { postingInvoice } from '../../domain/posting.js';
+import {
+  generateOccurrenceInTx,
+  projectOccurrences,
+  type ProjectedOccurrence,
+} from '../recurrences/occurrences.js';
 
 export type InvoiceSituation = 'OVERDUE' | null;
 
@@ -48,6 +55,11 @@ export interface InvoiceSummaryDto {
   payment_method_id: string | null;
   credit_balance: number;
   credit_transferred_to_invoice_id: string | null;
+  /**
+   * Parte do total que é previsão de recorrências de cartão ainda não geradas (PD-35). Já está
+   * somada em `totals.debits` e `totals.amount_due`. Sempre 0 em fatura `PAID`.
+   */
+  projected_total: number;
   totals: {
     debits: number;
     credits: number;
@@ -57,9 +69,20 @@ export interface InvoiceSummaryDto {
   };
 }
 
+/** Ocorrência de recorrência de cartão prevista na fatura, ainda não gerada (PD-35). */
+export interface ProjectedItemDto {
+  recurrence_id: string;
+  occurrence_month: string;
+  description: string;
+  amount: number;
+  purchase_date: LocalDate;
+  category: { id: string; name: string };
+}
+
 export interface InvoiceDetailDto extends InvoiceSummaryDto {
   card_name: string;
   transactions: TransactionDto[];
+  projected_items: ProjectedItemDto[];
   credits: {
     allocation_id: string;
     refund_id: string;
@@ -131,11 +154,51 @@ export const computeInvoiceTotals = async (db: Db, invoiceId: string): Promise<I
   return map.get(invoiceId) as InvoiceTotals;
 };
 
+/** Soma a previsão aos débitos e reapura valor a pagar e saldo credor (invoices.md §7). */
+const withProjected = (totals: InvoiceTotals, projectedTotal: number): InvoiceTotals =>
+  projectedTotal === 0
+    ? totals
+    : invoiceTotals({
+        debits: [cents(totals.debits + projectedTotal)],
+        credits: [totals.credits],
+        receivedCredits: [totals.receivedCredit],
+      });
+
+const projectedTotalOf = (items: readonly ProjectedOccurrence[]): number =>
+  items.reduce((sum, p) => sum + p.recurrence.amount, 0);
+
+const toProjectedItem = (p: ProjectedOccurrence): ProjectedItemDto => ({
+  recurrence_id: p.recurrence.id,
+  occurrence_month: p.occurrenceMonth,
+  description: p.recurrence.description,
+  amount: p.recurrence.amount,
+  purchase_date: p.date,
+  category: { id: p.recurrence.category.id, name: p.recurrence.category.name },
+});
+
+/**
+ * Ocorrências projetadas de recorrências do cartão cuja fatura de postagem é a do ciclo `month`
+ * (PD-35). Fatura `PAID` não recebe previsão.
+ */
+const projectedForCycle = async (
+  db: Db,
+  today: LocalDate,
+  cardId: string,
+  month: YearMonth,
+  status: Invoice['status'] | null,
+): Promise<ProjectedOccurrence[]> => {
+  if (status === 'PAID') return [];
+  const projected = await projectOccurrences(db, today, month, { cardId });
+  return projected.filter((p) => p.invoice?.referenceMonth === month);
+};
+
 const toSummary = (
   invoice: Invoice,
-  totals: InvoiceTotals,
+  realTotals: InvoiceTotals,
   today: LocalDate,
+  projectedTotal = 0,
 ): InvoiceSummaryDto => {
+  const totals = withProjected(realTotals, projectedTotal);
   const due = fromDbDate(invoice.dueDate);
   return {
     id: invoice.id,
@@ -150,6 +213,7 @@ const toSummary = (
     payment_method_id: invoice.paymentMethodId,
     credit_balance: invoice.creditBalance,
     credit_transferred_to_invoice_id: invoice.creditTransferredToInvoiceId,
+    projected_total: projectedTotal,
     totals: totalsDto(totals),
   };
 };
@@ -200,9 +264,17 @@ export const listCardInvoices = async (
   const result: InvoiceSummaryDto[] = [];
   for (let month = from; compareYearMonths(month, to) <= 0; month = addMonths(month, 1)) {
     const existing = byMonth.get(month);
+    const projected = await projectedForCycle(
+      prisma,
+      today,
+      cardId,
+      month,
+      existing?.status ?? null,
+    );
+    const projectedTotal = projectedTotalOf(projected);
     if (existing) {
       const t = totals.get(existing.id) as InvoiceTotals;
-      result.push(toSummary(existing, t, today));
+      result.push(toSummary(existing, t, today, projectedTotal));
       continue;
     }
     // Cartão desativado deixa de aparecer na visão futura depois da última fatura (credit-cards §13).
@@ -214,24 +286,41 @@ export const listCardInvoices = async (
     }
     const closing = closingDate(config, month);
     const due = dueDate(config, closing);
-    result.push({
-      id: null,
-      credit_card_id: cardId,
-      reference_month: month,
-      closing_date: closing,
-      due_date: due,
-      status: compareLocalDates(closing, today) < 0 ? 'CLOSED' : 'OPEN',
-      situation: null,
-      persisted: false,
-      paid_at: null,
-      payment_method_id: null,
-      credit_balance: 0,
-      credit_transferred_to_invoice_id: null,
-      totals: { debits: 0, credits: 0, received_credit: 0, amount_due: 0, credit_balance: 0 },
-    });
+    result.push(projectedCycleSummary(cardId, month, closing, due, today, projectedTotal));
   }
   return result;
 };
+
+/** Ciclo sem fatura persistida: "Sem lançamentos" ou só com a previsão de recorrências (PD-35). */
+const projectedCycleSummary = (
+  cardId: string,
+  month: YearMonth,
+  closing: LocalDate,
+  due: LocalDate,
+  today: LocalDate,
+  projectedTotal: number,
+): InvoiceSummaryDto => ({
+  id: null,
+  credit_card_id: cardId,
+  reference_month: month,
+  closing_date: closing,
+  due_date: due,
+  status: compareLocalDates(closing, today) < 0 ? 'CLOSED' : 'OPEN',
+  situation: null,
+  persisted: false,
+  paid_at: null,
+  payment_method_id: null,
+  credit_balance: 0,
+  credit_transferred_to_invoice_id: null,
+  projected_total: projectedTotal,
+  totals: {
+    debits: projectedTotal,
+    credits: 0,
+    received_credit: 0,
+    amount_due: projectedTotal,
+    credit_balance: 0,
+  },
+});
 
 // ---------- Detalhe ----------
 
@@ -240,7 +329,7 @@ export const buildInvoiceDetail = async (
   invoice: Invoice,
   today: LocalDate,
 ): Promise<InvoiceDetailDto> => {
-  const [card, transactions, allocations, receivedFrom, totals] = await Promise.all([
+  const [card, transactions, allocations, receivedFrom, totals, projected] = await Promise.all([
     findCardOrThrow(db, invoice.creditCardId),
     db.transaction.findMany({
       where: { invoiceId: invoice.id },
@@ -257,11 +346,19 @@ export const buildInvoiceDetail = async (
       orderBy: { referenceMonth: 'asc' },
     }),
     computeInvoiceTotals(db, invoice.id),
+    projectedForCycle(
+      db,
+      today,
+      invoice.creditCardId,
+      invoice.referenceMonth as YearMonth,
+      invoice.status,
+    ),
   ]);
   return {
-    ...toSummary(invoice, totals, today),
+    ...toSummary(invoice, totals, today, projectedTotalOf(projected)),
     card_name: card.paymentMethod.name,
     transactions: transactions.map(toTransactionDto),
+    projected_items: projected.map(toProjectedItem),
     credits: allocations.map((a) => ({
       allocation_id: a.id,
       refund_id: a.refundId,
@@ -275,6 +372,42 @@ export const buildInvoiceDetail = async (
       reference_month: i.referenceMonth,
       amount: i.creditBalance,
     })),
+  };
+};
+
+/**
+ * Detalhe do ciclo `month` do cartão: a fatura persistida, ou, se ainda não existe, um ciclo
+ * projetado com a previsão de recorrências (PD-35).
+ */
+export const getCycleDetail = async (
+  { prisma, clock }: AppContext,
+  cardId: string,
+  month: YearMonth,
+): Promise<InvoiceDetailDto> => {
+  const card = await findCardOrThrow(prisma, cardId);
+  const today = clock.today();
+  const existing = await prisma.invoice.findUnique({
+    where: { creditCardId_referenceMonth: { creditCardId: cardId, referenceMonth: month } },
+  });
+  if (existing) return buildInvoiceDetail(prisma, existing, today);
+
+  const config = cardConfigOf(card);
+  const closing = closingDate(config, month);
+  const projected = await projectedForCycle(prisma, today, cardId, month, null);
+  return {
+    ...projectedCycleSummary(
+      cardId,
+      month,
+      closing,
+      dueDate(config, closing),
+      today,
+      projectedTotalOf(projected),
+    ),
+    card_name: card.paymentMethod.name,
+    transactions: [],
+    projected_items: projected.map(toProjectedItem),
+    credits: [],
+    received_credits: [],
   };
 };
 
@@ -298,6 +431,16 @@ export const payInvoice = async (
   const today = ctx.clock.today();
   return ctx.prisma.$transaction(async (tx) => {
     const head = await findInvoiceOrThrow(tx, id);
+    // Ordem de locks da geração de ocorrências (recorrência → cartão), para não gerar impasse.
+    const recurrences = await tx.recurrence.findMany({
+      where: {
+        status: { not: 'CANCELLED' },
+        paymentMethod: { creditCard: { id: head.creditCardId } },
+      },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    for (const { id: recurrenceId } of recurrences) await lockRecurrence(tx, recurrenceId);
     await lockCard(tx, head.creditCardId);
     await lockPeriodsShared(tx);
     const invoice = await findInvoiceOrThrow(tx, id);
@@ -319,6 +462,20 @@ export const payInvoice = async (
       );
     }
     await loadActiveMethod(tx, input.paymentMethodId);
+
+    // PD-35: as ocorrências previstas da fatura são geradas e liquidadas junto com ela.
+    const projected = await projectedForCycle(
+      tx,
+      today,
+      invoice.creditCardId,
+      invoice.referenceMonth as YearMonth,
+      invoice.status,
+    );
+    for (const p of projected) {
+      await generateOccurrenceInTx(tx, today, p.recurrence.id, p.occurrenceMonth, {
+        allowFuture: true,
+      });
+    }
 
     const paidAt = toDbDate(input.paidAt);
     await tx.transaction.updateMany({
@@ -351,4 +508,41 @@ export const payInvoice = async (
     });
     return buildInvoiceDetail(tx, paid, today);
   }, TRANSACTION_OPTIONS);
+};
+
+// ---------- Prévia da fatura de postagem (somente leitura, credit-cards.md §8) ----------
+
+export interface PostingPreviewDto {
+  reference_month: string;
+  closing_date: LocalDate;
+  due_date: LocalDate;
+  /** `true` se a fatura já existe; `false` se seria criada na postagem. */
+  persisted: boolean;
+}
+
+/**
+ * Em qual fatura uma compra de `purchaseDate` seria postada, com a mesma regra da postagem real
+ * (ciclo, compra tardia e meses fechados), sem criar nada. Usada para informar o usuário.
+ */
+export const previewPostingInvoice = async (
+  { prisma, clock }: AppContext,
+  cardId: string,
+  purchaseDate: LocalDate,
+): Promise<PostingPreviewDto> => {
+  const card = await findCardOrThrow(prisma, cardId);
+  const invoices = await loadCardInvoices(prisma, cardId);
+  const closed = await loadClosedMonths(prisma);
+  const choice = postingInvoice(
+    cardConfigOf(card),
+    purchaseDate,
+    invoices.map(toSnapshot),
+    closed,
+    clock.today(),
+  );
+  return {
+    reference_month: choice.invoice.referenceMonth,
+    closing_date: choice.invoice.closingDate,
+    due_date: choice.invoice.dueDate,
+    persisted: !choice.needsCreation,
+  };
 };

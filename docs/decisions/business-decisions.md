@@ -157,6 +157,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Fonte:** `recurrences.md` §6, §8 e §9.
 
 ### PD-12 — Edição de compra parcelada
+* **Status:** Ampliada. Valor total, quantidade e data passam a ser editáveis em plano não pago e sem estorno (PD-36); o cartão continua imutável.
 * **Decisão:** valor total, quantidade, cartão e data da compra são imutáveis. A descrição é editável com o mês aberto. A categoria só muda se todas as parcelas afetadas estiverem em meses abertos. Não há edição isolada de valor ou estrutura de parcela.
 * **Impacto:** descrição e categoria seguem a mesma regra de bloqueio (PD-27); ver CD-15 e CD-21.
 * **Fonte:** `installments.md` §8–§9.
@@ -291,6 +292,64 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
   * o código de erro `INVOICE_NOT_CLOSED` deixa de existir.
 * **Impacto:** o mês pode ser fechado assim que todos os lançamentos e faturas do mês estiverem pagos, inclusive antes do `closing_date` das faturas do cartão.
 * **Fonte:** `invoices.md` §5 e §9.1; `credit-cards.md` §8.2; `financial-periods.md` §4.3.
+
+### PD-33 — Janela padrão da lista de faturas
+* **Status:** Vigente. Substitui o padrão "3 meses antes a 8 à frente" definido na T-42, que não tinha decisão de produto.
+* **Decisão:** a lista de faturas de um cartão abre com o mês atual e os 11 meses seguintes (12 meses), alinhada ao padrão do backend (T-24). O usuário continua podendo alterar "De" e "Até" (limite de 60 meses do backend).
+* **Exemplo:** hoje em 04/10/2026 → de 10/2026 a 09/2027.
+* **Fonte:** `invoices.md` §4.
+
+### PD-34 — Rótulo e dica do dia na recorrência
+* **Decisão:** o campo `due_day` não muda de modelo nem de regra (PD-09 continua valendo). Só o rótulo e a dica mudam conforme o contexto do formulário:
+  * método comum, saída: "Dia do vencimento";
+  * método comum, entrada (categoria de entrada, ex.: salário): "Dia do recebimento";
+  * cartão: "Dia da cobrança", com a dica "Cairá na fatura de <mês> (vence <data>)", calculada pela mesma regra da fatura de postagem (`credit-cards.md` §8).
+* **Motivo:** no cartão o dia é a data da compra, não o vencimento da fatura; na receita é o dia em que o dinheiro entra.
+* **Fonte:** `recurrences.md` §3 e §13.
+
+### PD-35 — Recorrência de cartão prevista na fatura
+* **Status:** Vigente. Altera `recurrences.md` §6 e §13 e `invoices.md` §4 e §7, que diziam que a ocorrência só entra na fatura depois de gerada.
+* **Decisão:** o detalhe e o total de uma fatura de cartão passam a incluir as ocorrências projetadas (ainda não geradas) de recorrências ativas daquele cartão cuja fatura de postagem seja a do ciclo.
+* **Regra:**
+  * o item projetado aparece com o selo "Previsto"; o total mostra o real e o previsto somados, com a parte prevista discriminada;
+  * ciclo futuro sem fatura persistida passa a ter "Detalhes" quando houver projeção;
+  * **"Pagar fatura" quita o total real + previsto:** na mesma transação do pagamento, as ocorrências projetadas da fatura são geradas (como compras de cartão `RECURRENCE`, `purchase_date` = data da ocorrência) e liquidadas junto. Exceção registrada: a `purchase_date` pode ser posterior ao `paid_at`;
+  * ocorrência pulada (exceção), de recorrência pausada ou cancelada na data não é projetada;
+  * a geração posterior na data não duplica (unicidade `recurrence_id + occurrence_month`);
+  * fatura `PAID` não recebe projeção.
+* **Impacto:** fechamento do mês e extrato mensal já consideram a projeção; o pagamento antecipado passa a gerar ocorrências futuras.
+* **Fonte:** `invoices.md` §4, §7 e §9; `recurrences.md` §6 e §13.
+
+### PD-36 — Edição de compra parcelada não paga
+* **Status:** Vigente. Substitui parcialmente a PD-12.
+* **Decisão:** valor total, quantidade de parcelas e data da compra passam a ser editáveis, pelo plano ("Ver compra original"), enquanto o plano estiver inteiro em situação editável. O cartão continua imutável.
+* **Regra:**
+  * só edita se nenhuma parcela estiver em fatura `PAID`, nenhum mês afetado (atual ou recalculado) estiver fechado e o plano não tiver nenhum estorno vinculado; caso contrário só estorno (como antes) e edição de descrição/categoria nas condições da PD-27;
+  * as parcelas são regeneradas pela regra de `installments.md` §6 e §7 (distribuição de centavos e ciclos) com os novos dados; o plano mantém o mesmo id;
+  * quantidade mínima 2 e máxima 120 (CD-16); a data da compra respeita a janela de `transactions.md` §10;
+  * a operação é atômica e protegida contra concorrência.
+* **Exemplo:** compra de R$ 600 em 3x lançada por engano; corrigir para R$ 660 em 6x antes de pagar qualquer fatura.
+* **Fonte:** `installments.md` §8, §9 e §11; `transactions.md` §12; `home.md` RN-HOME-05.
+
+### PD-37 — Comportamento dos formulários
+* **Decisão (UX, sem mudança de regra de negócio):**
+  * o botão de confirmação de todo formulário fica desabilitado enquanto o formulário for inválido (além de enquanto envia);
+  * campos de valor monetário usam máscara em tempo real (digitação da direita para a esquerda: 1 → 0,01 → 0,12 → 1,23);
+  * formulários que criam ou editam valor mostram um resumo de confirmação antes de gravar (lançamento novo e edição, recorrência nova e edição, estorno, edição de compra parcelada), com "Voltar" e "Confirmar".
+* **Fonte:** `home.md` §7.
+
+### PD-38 — Apagar lançamentos e compras parceladas (provisório)
+* **Status:** Vigente, **provisório**. Substitui, para lançamentos e compra parcelada, as regras de não exclusão (RN-TRA-14/15, RN-CAR-15, RN-PAR-12, RN-REC-12 e a decisão 13 do modelo de domínio).
+* **Decisão:** enquanto o sistema não tem usuários, o usuário pode **apagar** (exclusão física, sem rastro) lançamentos e compras parceladas. Quando existirem usuários e papéis, apagar passa a ser privilégio de **super admin**, com auditoria; isso não faz parte desta decisão.
+* **Regra:**
+  * **o que se apaga:** lançamento `MANUAL`; ocorrência gerada de recorrência (método comum ou cartão, `PENDING` ou `PAID`); compra à vista no cartão; compra parcelada **somente inteira** (todas as parcelas de uma vez). Parcela isolada não é apagada;
+  * **travas:** mês financeiro fechado (do lançamento, de qualquer parcela ou de crédito de estorno afetado) → `PERIOD_CLOSED`; fatura `PAID` (do lançamento, de qualquer parcela ou que recebeu crédito de estorno) → `INVOICE_ALREADY_PAID`;
+  * **estornos:** apagar uma compra apaga junto os estornos dela e as alocações de crédito; só é permitido se nenhuma fatura que recebeu o crédito estiver `PAID` ou em mês fechado;
+  * **ocorrência de recorrência:** o lançamento é removido e é registrada a exceção do mês (como em "pular"), para que não seja gerada de novo;
+  * **faturas:** a fatura que ficar sem lançamentos, créditos de estorno e crédito recebido deixa de existir (`invoices.md` §4);
+  * **continuam sem exclusão:** categorias, métodos, cartões, recorrências (cancelam), faturas e meses.
+* **Exemplo:** compra de R$ 600 em 3x lançada errada, com faturas abertas → "Apagar" remove as 3 parcelas e as faturas que ficarem vazias; se a fatura de outubro já estiver paga, é rejeitado.
+* **Fonte:** `transactions.md` §13; `installments.md` §11; `credit-cards.md` §9; `recurrences.md` §10.
 
 ---
 
