@@ -1,17 +1,11 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { TuiButton } from '@taiga-ui/core';
 import type { InstallmentPlan, Transaction } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate, formatMonth } from '../../shared/format/dates';
 import { formatCents } from '../../shared/format/money';
 import { invoiceStatusLabel, transactionStatusLabel } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { PlanEditDialog } from './plan-edit-dialog';
 
 export interface PurchaseDetailData {
@@ -24,10 +18,10 @@ export interface PurchaseDetailData {
 /** Acesso à compra original: dados da compra e, se parcelada, o plano com todas as parcelas. */
 @Component({
   selector: 'app-purchase-detail-dialog',
-  imports: [MatDialogModule, MatButton],
+  imports: [TuiButton],
   template: `
-    <h2 mat-dialog-title>Compra original</h2>
-    <mat-dialog-content>
+    <h2 class="dialog-title">Compra original</h2>
+    <div class="dialog-content">
       @if (plan(); as p) {
         <p>
           <strong>{{ p.description }}</strong> · {{ p.category.name }}<br />
@@ -72,12 +66,13 @@ export interface PurchaseDetailData {
       } @else {
         <p>Carregando…</p>
       }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Fechar</button>
+    </div>
+    <footer class="dialog-actions">
+      <button tuiButton appearance="flat" (click)="ref.close()">Fechar</button>
       @if (plan()) {
         <button
-          mat-stroked-button
+          tuiButton
+          appearance="outline"
           [disabled]="!editable()"
           (click)="editPlan()"
           data-testid="edit-plan"
@@ -85,13 +80,13 @@ export interface PurchaseDetailData {
           Editar compra
         </button>
       }
-    </mat-dialog-actions>
+    </footer>
   `,
 })
 export class PurchaseDetailDialog implements OnInit {
-  private readonly data = inject<PurchaseDetailData>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PurchaseDetailDialog, boolean>);
-  private readonly dialog = inject(MatDialog);
+  protected readonly ref = injectDialog<PurchaseDetailData, boolean>();
+  private readonly data = this.ref.data;
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly plan = signal<InstallmentPlan | null>(null);
@@ -110,10 +105,7 @@ export class PurchaseDetailDialog implements OnInit {
   protected editPlan(): void {
     const plan = this.plan();
     if (!plan) return;
-    this.dialog
-      .open(PlanEditDialog, dialogConfig(plan))
-      .afterClosed()
-      .subscribe((changed) => changed && this.ref.close(true));
+    this.dialog.open(PlanEditDialog, plan).subscribe((changed) => changed && this.ref.close(true));
   }
 
   ngOnInit(): void {

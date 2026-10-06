@@ -1,21 +1,21 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
+import { TuiButton } from '@taiga-ui/core';
 import type { Recurrence } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
+import { injectDialog } from '../../shared/ui/dialog';
 
 /** Pausa de recorrência ativa: início (hoje ou futuro) e retorno opcional (recurrences.md §11). */
 @Component({
   selector: 'app-pause-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInput, MatButton],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, TuiButton],
   template: `
-    <h2 mat-dialog-title>Pausar {{ recurrence.description }}</h2>
+    <h2 class="dialog-title">Pausar {{ recurrence.description }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         <mat-form-field class="full-width">
           <mat-label>Início da pausa</mat-label>
           <input matInput type="date" formControlName="paused_from" />
@@ -28,17 +28,17 @@ import { LedgerService } from '../../core/data/ledger.service';
           <input matInput type="date" formControlName="paused_until" />
           <mat-hint>Sem retorno, a pausa dura até você retomar.</mat-hint>
         </mat-form-field>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Pausar</button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Pausar</button>
+      </footer>
     </form>
   `,
 })
 export class PauseDialog {
-  protected readonly recurrence = inject<Recurrence>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PauseDialog, boolean>);
+  protected readonly ref = injectDialog<Recurrence, boolean>();
+  protected readonly recurrence = this.ref.data;
   private readonly ledger = inject(LedgerService);
   protected readonly submitting = signal(false);
 

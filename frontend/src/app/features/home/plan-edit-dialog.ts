@@ -1,14 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
+import { TuiButton } from '@taiga-ui/core';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
@@ -16,6 +10,7 @@ import { describeInstallments } from '../../shared/format/installments';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
 import { MoneyInput } from '../../shared/forms/money-input';
 import { positiveMoney } from '../../shared/forms/validators';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary } from '../../shared/ui/summary-dialog';
 
 /**
@@ -25,18 +20,11 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
  */
 @Component({
   selector: 'app-plan-edit-dialog',
-  imports: [
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
-    MoneyInput,
-    MatButton,
-  ],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MoneyInput, TuiButton],
   template: `
-    <h2 mat-dialog-title>Editar compra parcelada</h2>
+    <h2 class="dialog-title">Editar compra parcelada</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         <p class="hint-text">
           <strong>{{ plan.description }}</strong
           ><br />
@@ -74,20 +62,18 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
             }
           </mat-form-field>
         </div>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
-          Salvar
-        </button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+      </footer>
     </form>
   `,
 })
 export class PlanEditDialog {
-  protected readonly plan = inject<InstallmentPlan>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PlanEditDialog, boolean>);
-  private readonly dialog = inject(MatDialog);
+  protected readonly ref = injectDialog<InstallmentPlan, boolean>();
+  protected readonly plan = this.ref.data;
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly submitting = signal(false);

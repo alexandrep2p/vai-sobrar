@@ -1,12 +1,11 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TuiButton } from '@taiga-ui/core';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 import type {
   Category,
@@ -24,6 +23,7 @@ import { formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
 import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog';
 
 /**
@@ -34,18 +34,17 @@ import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog'
   selector: 'app-transaction-form-dialog',
   imports: [
     ReactiveFormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInput,
     MoneyInput,
     MatSelectModule,
     MatButtonToggleModule,
-    MatButton,
+    TuiButton,
   ],
   template: `
-    <h2 mat-dialog-title>Novo lançamento</h2>
+    <h2 class="dialog-title">Novo lançamento</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (loading()) {
           <p class="hint-text">Carregando…</p>
         } @else {
@@ -117,24 +116,20 @@ import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog'
             }
           </div>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button
-          mat-flat-button
-          type="submit"
-          [disabled]="loading() || submitting() || form.invalid"
-        >
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="loading() || submitting() || form.invalid">
           Salvar
         </button>
-      </mat-dialog-actions>
+      </footer>
     </form>
   `,
 })
 export class TransactionFormDialog implements OnInit {
-  private readonly ref = inject(MatDialogRef<TransactionFormDialog, boolean>);
+  protected readonly ref = injectDialog<undefined, boolean>();
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly types: CategoryType[] = ['EXPENSE', 'INCOME'];

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
@@ -12,6 +11,7 @@ import {
   statement,
   statementItem,
 } from '../../../testing/fixtures';
+import { AppDialog } from '../../shared/ui/dialog';
 import { all, click, fail, one, text } from '../../../testing/helpers';
 import { CloseMonthDialog } from './close-month-dialog';
 import { HomePage } from './home.page';
@@ -54,11 +54,11 @@ describe('HomePage', () => {
     ] as const) {
       ledger[method].mockReturnValue(of({}));
     }
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     TestBed.configureTestingModule({
       providers: [
         { provide: LedgerService, useValue: ledger },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
         { provide: Clock, useValue: { today: () => '2027-01-10', currentMonth: () => '2027-01' } },
       ],
     });
@@ -226,7 +226,7 @@ describe('HomePage', () => {
 
     it('as ações do item funcionam dentro do painel', async () => {
       const f = await render(statement(items()));
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      dialog.open.mockReturnValue(of(true));
       const buttons = await openMenu(f, itemsIn(panels(f)[0]!)[0]!);
       await click(
         f,
@@ -313,10 +313,7 @@ describe('HomePage', () => {
       expect(testid(fixture, 'installment')).toContain('2/10');
       expect(one(fixture, '[data-testid="amount"]').textContent).toContain('59,00');
       await click(fixture, one(fixture, '[data-testid="purchase-link"]'));
-      expect(dialog.open).toHaveBeenCalledWith(
-        PurchaseDetailDialog,
-        expect.objectContaining({ data: { planId: 'plan1' } }),
-      );
+      expect(dialog.open).toHaveBeenCalledWith(PurchaseDetailDialog, { planId: 'plan1' });
     });
 
     it('crédito de estorno: sem status de pagamento, com link para a compra original', async () => {
@@ -328,10 +325,7 @@ describe('HomePage', () => {
       ).toContain('+ R$ 100,00');
       expect(row.querySelector('[data-testid="menu"]')).toBeNull();
       await click(fixture, one(fixture, '[data-testid="purchase-link"]'));
-      expect(dialog.open).toHaveBeenCalledWith(
-        PurchaseDetailDialog,
-        expect.objectContaining({ data: { transactionId: 't-orig' } }),
-      );
+      expect(dialog.open).toHaveBeenCalledWith(PurchaseDetailDialog, { transactionId: 't-orig' });
     });
 
     it('ocorrência projetada aparece como prevista e em aberto', async () => {
@@ -386,17 +380,14 @@ describe('HomePage', () => {
     it('abre o formulário de lançamento e recarrega', async () => {
       const fixture = await render();
       await click(fixture, one(fixture, '[data-testid="new-transaction"]'));
-      expect(dialog.open).toHaveBeenCalledWith(TransactionFormDialog, expect.anything());
+      expect(dialog.open).toHaveBeenCalledWith(TransactionFormDialog);
       expect(ledger.statement).toHaveBeenCalledTimes(2);
     });
 
     it('abre a confirmação de fechamento e recarrega', async () => {
       const fixture = await render();
       await click(fixture, one(fixture, '[data-testid="close-month"]'));
-      expect(dialog.open).toHaveBeenCalledWith(
-        CloseMonthDialog,
-        expect.objectContaining({ data: '2027-01' }),
-      );
+      expect(dialog.open).toHaveBeenCalledWith(CloseMonthDialog, '2027-01');
       expect(ledger.statement).toHaveBeenCalledTimes(2);
     });
 
@@ -411,7 +402,7 @@ describe('HomePage', () => {
     });
 
     it('paga o lançamento manual com a data escolhida', async () => {
-      dialog.open.mockReturnValue({ afterClosed: () => of({ paid_at: '2027-01-08' }) });
+      dialog.open.mockReturnValue(of({ paid_at: '2027-01-08' }));
       const fixture = await render();
       const [, pay] = await openMenu(fixture, rows(fixture)[0]);
       await click(fixture, pay);
@@ -419,7 +410,7 @@ describe('HomePage', () => {
     });
 
     it('paga a ocorrência de recorrência pelo endpoint da ocorrência', async () => {
-      dialog.open.mockReturnValue({ afterClosed: () => of({ paid_at: '2027-01-08' }) });
+      dialog.open.mockReturnValue(of({ paid_at: '2027-01-08' }));
       const fixture = await render(statement([projectedItem()]));
       const buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(
@@ -441,7 +432,7 @@ describe('HomePage', () => {
 
     it('apaga após confirmar e não apaga se cancelar', async () => {
       const fixture = await render();
-      dialog.open.mockReturnValue({ afterClosed: () => of(false) });
+      dialog.open.mockReturnValue(of(false));
       let buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(
         fixture,
@@ -449,7 +440,7 @@ describe('HomePage', () => {
       );
       expect(ledger.deleteTransaction).not.toHaveBeenCalled();
 
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      dialog.open.mockReturnValue(of(true));
       buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(
         fixture,
@@ -480,29 +471,29 @@ describe('HomePage', () => {
 
     it('apaga a compra de cartão avisando que os estornos vão junto', async () => {
       const fixture = await render(statement([cardItem()]));
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      dialog.open.mockReturnValue(of(true));
       const buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(
         fixture,
         buttons.find((b) => b.dataset['testid'] === 'act-delete')!,
       );
       const [, config] = dialog.open.mock.calls.at(-1)!;
-      expect(config.data.title).toBe('Apagar lançamento?');
-      expect(config.data.message).toContain('estornos');
+      expect(config.title).toBe('Apagar lançamento?');
+      expect(config.message).toContain('estornos');
       expect(ledger.deleteTransaction).toHaveBeenCalledWith('t-card');
     });
 
     it('apagar parcela apaga a compra parcelada inteira pelo plano', async () => {
       const fixture = await render(statement([installmentItem()]));
-      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      dialog.open.mockReturnValue(of(true));
       const buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(
         fixture,
         buttons.find((b) => b.dataset['testid'] === 'act-delete')!,
       );
       const [, config] = dialog.open.mock.calls.at(-1)!;
-      expect(config.data.title).toBe('Apagar compra parcelada?');
-      expect(config.data.message).toContain('10 parcelas');
+      expect(config.title).toBe('Apagar compra parcelada?');
+      expect(config.message).toContain('10 parcelas');
       expect(ledger.deletePlan).toHaveBeenCalledWith('plan1');
       expect(ledger.deleteTransaction).not.toHaveBeenCalled();
     });
@@ -514,10 +505,10 @@ describe('HomePage', () => {
         fixture,
         buttons.find((b) => b.dataset['testid'] === 'act-refund')!,
       );
-      expect(dialog.open).toHaveBeenLastCalledWith(
-        RefundDialog,
-        expect.objectContaining({ data: { description: 'Supermercado', transactionId: 't-card' } }),
-      );
+      expect(dialog.open).toHaveBeenLastCalledWith(RefundDialog, {
+        description: 'Supermercado',
+        transactionId: 't-card',
+      });
     });
 
     it('estorno de compra parcelada usa o plano', async () => {
@@ -527,22 +518,17 @@ describe('HomePage', () => {
         fixture,
         buttons.find((b) => b.dataset['testid'] === 'act-refund')!,
       );
-      expect(dialog.open).toHaveBeenLastCalledWith(
-        RefundDialog,
-        expect.objectContaining({
-          data: { description: 'Mercado Livre — Coxim do motor', planId: 'plan1' },
-        }),
-      );
+      expect(dialog.open).toHaveBeenLastCalledWith(RefundDialog, {
+        description: 'Mercado Livre — Coxim do motor',
+        planId: 'plan1',
+      });
     });
 
     it('editar abre o diálogo de edição com o item', async () => {
       const fixture = await render(statement([statementItem()]));
       const buttons = await openMenu(fixture, rows(fixture)[0]);
       await click(fixture, buttons[0]);
-      expect(dialog.open).toHaveBeenCalledWith(
-        TransactionEditDialog,
-        expect.objectContaining({ data: statementItem() }),
-      );
+      expect(dialog.open).toHaveBeenCalledWith(TransactionEditDialog, statementItem());
     });
   });
 });

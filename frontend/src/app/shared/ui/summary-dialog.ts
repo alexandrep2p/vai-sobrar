@@ -1,8 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Component } from '@angular/core';
+import { TuiButton } from '@taiga-ui/core';
 import { map, Observable } from 'rxjs';
-import { dialogConfig } from './dialog';
+import { AppDialog, injectDialog } from './dialog';
 
 export interface SummaryRow {
   label: string;
@@ -18,10 +17,10 @@ export interface SummaryData {
 /** Resumo dos dados antes de gravar (PD-37): "Voltar" retorna ao formulário, "Confirmar" grava. */
 @Component({
   selector: 'app-summary-dialog',
-  imports: [MatDialogModule, MatButton],
+  imports: [TuiButton],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>
+    <h2 class="dialog-title">{{ data.title }}</h2>
+    <div class="dialog-content">
       <dl class="summary-list" data-testid="summary">
         @for (row of data.rows; track row.label) {
           <div class="summary-row">
@@ -30,13 +29,15 @@ export interface SummaryData {
           </div>
         }
       </dl>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false" data-testid="summary-back">Voltar</button>
-      <button mat-flat-button [mat-dialog-close]="true" data-testid="summary-confirm">
+    </div>
+    <footer class="dialog-actions">
+      <button tuiButton appearance="flat" (click)="ref.close(false)" data-testid="summary-back">
+        Voltar
+      </button>
+      <button tuiButton (click)="ref.close(true)" data-testid="summary-confirm">
         {{ data.confirmLabel }}
       </button>
-    </mat-dialog-actions>
+    </footer>
   `,
   styles: `
     .summary-list {
@@ -47,10 +48,10 @@ export interface SummaryData {
       justify-content: space-between;
       gap: 1rem;
       padding: 0.35rem 0;
-      border-bottom: 1px solid var(--mat-sys-outline-variant, #ddd);
+      border-bottom: 1px solid var(--tui-border-normal);
     }
     dt {
-      color: var(--mat-sys-on-surface-variant, #666);
+      color: var(--tui-text-secondary);
     }
     dd {
       margin: 0;
@@ -61,13 +62,11 @@ export interface SummaryData {
   `,
 })
 export class SummaryDialog {
-  protected readonly data = inject<SummaryData>(MAT_DIALOG_DATA);
+  protected readonly ref = injectDialog<SummaryData, boolean>();
+  protected readonly data = this.ref.data;
 }
 
 /** Abre o resumo e emite `true` somente se o usuário confirmar. */
-export function confirmSummary(dialog: MatDialog, data: SummaryData): Observable<boolean> {
-  return dialog
-    .open(SummaryDialog, dialogConfig(data))
-    .afterClosed()
-    .pipe(map((result) => result === true));
+export function confirmSummary(dialog: AppDialog, data: SummaryData): Observable<boolean> {
+  return dialog.open(SummaryDialog, data).pipe(map((result) => result === true));
 }

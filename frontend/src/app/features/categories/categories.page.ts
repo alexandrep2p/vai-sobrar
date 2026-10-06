@@ -1,11 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { CategoryDialog } from './category-dialog';
 
@@ -25,7 +24,7 @@ const TYPES: CategoryType[] = ['INCOME', 'EXPENSE'];
 })
 export class CategoriesPage implements OnInit {
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
 
   protected readonly status = signal<LoadStatus>('loading');
   protected readonly categories = signal<Category[]>([]);
@@ -63,10 +62,7 @@ export class CategoriesPage implements OnInit {
   }
 
   private open(category: Category | null): void {
-    this.dialog
-      .open(CategoryDialog, dialogConfig(category))
-      .afterClosed()
-      .subscribe((saved) => saved && this.load());
+    this.dialog.open(CategoryDialog, category).subscribe((saved) => saved && this.load());
   }
 
   private group(active: boolean): Group[] {

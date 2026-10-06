@@ -1,11 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import type { CreditCard } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { CardDialog } from './card-dialog';
 
@@ -16,7 +15,7 @@ import { CardDialog } from './card-dialog';
 })
 export class CreditCardsPage implements OnInit {
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
 
   protected readonly status = signal<LoadStatus>('loading');
   protected readonly cards = signal<CreditCard[]>([]);
@@ -53,9 +52,6 @@ export class CreditCardsPage implements OnInit {
   }
 
   private open(card: CreditCard | null): void {
-    this.dialog
-      .open(CardDialog, dialogConfig(card))
-      .afterClosed()
-      .subscribe((saved) => saved && this.load());
+    this.dialog.open(CardDialog, card).subscribe((saved) => saved && this.load());
   }
 }

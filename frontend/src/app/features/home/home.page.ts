@@ -1,7 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
@@ -22,7 +21,7 @@ import {
   transactionStatusLabel,
 } from '../../shared/labels/labels';
 import { ConfirmDialog, type ConfirmData } from '../../shared/ui/confirm-dialog';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { PayDialog, type PayDialogResult } from '../../shared/ui/pay-dialog';
 import { CloseMonthDialog } from './close-month-dialog';
@@ -64,7 +63,7 @@ function uniqueRefs(refs: Ref[]): Ref[] {
 })
 export class HomePage implements OnInit {
   private readonly ledger = inject(LedgerService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly clock = inject(Clock);
 
   protected readonly month = signal(this.clock.currentMonth());
@@ -216,30 +215,27 @@ export class HomePage implements OnInit {
   // --- ações do extrato ---
 
   protected newTransaction(): void {
-    this.afterSaved(this.dialog.open(TransactionFormDialog, dialogConfig()).afterClosed());
+    this.afterSaved(this.dialog.open(TransactionFormDialog));
   }
 
   protected closeMonth(): void {
-    this.afterSaved(this.dialog.open(CloseMonthDialog, dialogConfig(this.month())).afterClosed());
+    this.afterSaved(this.dialog.open(CloseMonthDialog, this.month()));
   }
 
   protected edit(item: StatementItem): void {
-    this.afterSaved(this.dialog.open(TransactionEditDialog, dialogConfig(item)).afterClosed());
+    this.afterSaved(this.dialog.open(TransactionEditDialog, item));
   }
 
   protected pay(item: StatementItem): void {
     const data = { title: 'Pagar lançamento', confirmLabel: 'Pagar', message: item.description };
-    this.dialog
-      .open<PayDialog, typeof data, PayDialogResult>(PayDialog, dialogConfig(data))
-      .afterClosed()
-      .subscribe((result) => {
-        if (!result) return;
-        const request: Observable<unknown> =
-          item.recurrence_id && item.occurrence_month
-            ? this.ledger.payOccurrence(item.recurrence_id, item.occurrence_month, result.paid_at)
-            : this.ledger.payTransaction(item.transaction_id as string, result.paid_at);
-        request.subscribe(() => this.load());
-      });
+    this.dialog.open<PayDialogResult>(PayDialog, data).subscribe((result) => {
+      if (!result) return;
+      const request: Observable<unknown> =
+        item.recurrence_id && item.occurrence_month
+          ? this.ledger.payOccurrence(item.recurrence_id, item.occurrence_month, result.paid_at)
+          : this.ledger.payTransaction(item.transaction_id as string, result.paid_at);
+      request.subscribe(() => this.load());
+    });
   }
 
   protected unpay(item: StatementItem): void {
@@ -289,22 +285,21 @@ export class HomePage implements OnInit {
     const data = item.installment
       ? { description: item.description, planId: item.installment.installment_plan_id }
       : { description: item.description, transactionId: item.transaction_id as string };
-    this.afterSaved(this.dialog.open(RefundDialog, dialogConfig(data)).afterClosed());
+    this.afterSaved(this.dialog.open(RefundDialog, data));
   }
 
   protected openPurchase(item: StatementItem): void {
     const data = item.installment
       ? { planId: item.installment.installment_plan_id }
       : { transactionId: item.refund?.original_transaction_id };
-    this.afterSaved(this.dialog.open(PurchaseDetailDialog, dialogConfig(data)).afterClosed());
+    this.afterSaved(this.dialog.open(PurchaseDetailDialog, data));
   }
 
   // --- internos ---
 
   private confirm(data: ConfirmData, run: () => Observable<unknown>): void {
     this.dialog
-      .open(ConfirmDialog, dialogConfig(data))
-      .afterClosed()
+      .open(ConfirmDialog, data)
       .subscribe((confirmed) => confirmed && run().subscribe(() => this.load()));
   }
 

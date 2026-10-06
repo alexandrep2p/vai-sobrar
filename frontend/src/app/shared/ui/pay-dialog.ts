@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TuiButton } from '@taiga-ui/core';
 import { Clock } from '../../core/clock';
+import { injectDialog } from './dialog';
 
 export interface PayDialogData {
   title: string;
@@ -24,18 +24,11 @@ export interface PayDialogResult {
 /** Coleta a data do pagamento (e, opcionalmente, o método). Quem abre o diálogo faz a chamada. */
 @Component({
   selector: 'app-pay-dialog',
-  imports: [
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
-    MatSelectModule,
-    MatButton,
-  ],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MatSelectModule, TuiButton],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <h2 class="dialog-title">{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="confirm()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (data.message) {
           <p class="hint-text">{{ data.message }}</p>
         }
@@ -59,17 +52,17 @@ export interface PayDialogResult {
             }
           </mat-form-field>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="form.invalid">{{ data.confirmLabel }}</button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="form.invalid">{{ data.confirmLabel }}</button>
+      </footer>
     </form>
   `,
 })
 export class PayDialog {
-  protected readonly data = inject<PayDialogData>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PayDialog, PayDialogResult>);
+  protected readonly ref = injectDialog<PayDialogData, PayDialogResult>();
+  protected readonly data = this.ref.data;
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     paid_at: [inject(Clock).today(), Validators.required],

@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -17,7 +16,7 @@ import {
   OVERDUE_INVOICE_LABEL,
   PROJECTED_ITEM_LABEL,
 } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { InvoiceDetailDialog } from './invoice-detail-dialog';
 
@@ -33,7 +32,7 @@ const MONTHS_AFTER = 11;
 export class InvoicesPage implements OnInit {
   private readonly catalog = inject(CatalogService);
   private readonly ledger = inject(LedgerService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly clock = inject(Clock);
   private readonly route = inject(ActivatedRoute);
 
@@ -105,11 +104,7 @@ export class InvoicesPage implements OnInit {
     const card = this.card();
     if (!card || (!invoice.id && invoice.projected_total === 0)) return;
     this.dialog
-      .open(
-        InvoiceDetailDialog,
-        dialogConfig({ invoiceId: invoice.id, month: invoice.reference_month, card }),
-      )
-      .afterClosed()
+      .open(InvoiceDetailDialog, { invoiceId: invoice.id, month: invoice.reference_month, card })
       .subscribe((changed) => changed && this.loadInvoices());
   }
 }

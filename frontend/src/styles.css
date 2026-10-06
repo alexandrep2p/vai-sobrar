@@ -142,13 +142,28 @@ h1 {
   font: var(--tui-typography-body-m);
 }
 
-.destructive {
-  --mat-button-filled-container-color: var(--mat-sys-error);
-  --mat-button-filled-label-text-color: var(--mat-sys-on-error);
+/* Diálogos (AppDialog): título, conteúdo e ações. No mobile ocupam quase toda a largura. */
+.dialog-title {
+  margin: 0 0 1.25rem;
+  padding-inline-end: 2.5rem; /* espaço do botão fechar (X) */
+  font: var(--tui-typography-heading-h5);
 }
 
-.mat-mdc-dialog-surface {
-  border-radius: var(--mat-sys-corner-extra-large);
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+  /* `tui-root` dá especificidade sobre o estilo do Taiga, injetado depois deste arquivo. */
+  tui-root tui-dialog[data-appearance~='taiga'] {
+    max-inline-size: calc(100vw - 1rem);
+    margin: 0.5rem;
+    padding: 1.25rem 1rem;
+  }
 }
 
 @media (min-width: 768px) {

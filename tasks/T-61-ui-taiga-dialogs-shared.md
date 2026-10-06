@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-60
-* **Status:** Pendente
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -50,3 +50,11 @@ Trocar a infraestrutura de diálogos para o Taiga UI por meio de uma abstração
 
 ## Decisões técnicas registradas
 
+* `AppDialog.open(component, data)` abre via `TuiDialogService` (`size: 'm'`) e aplica `defaultIfEmpty(undefined)`: dispensar (Cancelar, X, Esc, clique fora) emite `undefined`, como o antigo `afterClosed()`. Os chamadores só trocaram `MatDialog` por `AppDialog` e perderam o `.afterClosed()`.
+* Nos diálogos, `protected readonly ref = injectDialog<D, R>()` substitui `MAT_DIALOG_DATA` e `MatDialogRef`. Os dados ficam em `ref.data`; `ref.close(valor)` chama `completeWith` e `ref.close()` sem valor só dispensa.
+* Esqueleto comum: `h2.dialog-title`, `div.dialog-content` e `footer.dialog-actions` (estilos em `styles.css`). No mobile, o diálogo ocupa a largura menos 0,5rem de cada lado.
+* Botões: `mat-flat-button` virou `tuiButton`, `mat-button` virou `appearance="flat"`, `mat-stroked-button` virou `appearance="outline"` e o destaque destrutivo virou `appearance="primary-destructive"`. O tamanho padrão é `m`, via `tuiButtonOptionsProvider`.
+* `load-state`: `tui-loader` e botão outline.
+* Testes: `dialogProviders(data, ref)` fornece o contexto Polymorpheus (fechamento observado em `ref.close`) e um `AppDialog` falso. O resumo de confirmação é lido (`summaryRow`) e respondido (`answerSummary`) pelo registro desse falso, sem overlay no DOM. Os mocks de `open` devolvem o Observable diretamente.
+* Convivência: campos Material (`mat-form-field`, `mat-select`) dentro de diálogos Taiga funcionam. O dropdown do `mat-select` abre acima do diálogo, sem conflito de z-index.
+* Verificado no navegador (desktop e 375px): novo lançamento, select, resumo aninhado (Voltar), Cancelar e Esc, sem gravar dados.

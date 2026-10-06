@@ -1,6 +1,5 @@
 import { Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
 import type { Category, PaymentMethod } from '../../core/api/models';
@@ -18,6 +17,7 @@ import {
 import {
   all,
   answerSummary,
+  dialogProviders,
   one,
   submitButton,
   summaryRow,
@@ -37,12 +37,7 @@ const ref = { close: vi.fn() };
 
 function create<T>(component: Type<T>, data: unknown, providers: unknown[]): ComponentFixture<T> {
   TestBed.configureTestingModule({
-    providers: [
-      clock,
-      { provide: MatDialogRef, useValue: ref },
-      { provide: MAT_DIALOG_DATA, useValue: data },
-      ...(providers as never[]),
-    ],
+    providers: [clock, ...dialogProviders(data, ref), ...(providers as never[])],
   });
   const fixture = TestBed.createComponent(component);
   fixture.detectChanges();

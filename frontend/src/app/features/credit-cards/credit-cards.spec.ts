@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import type { CreditCard } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, one, submitButton, text, type } from '../../../testing/helpers';
+import { AppDialog } from '../../shared/ui/dialog';
+import {
+  all,
+  click,
+  dialogProviders,
+  dialogRef,
+  one,
+  submitButton,
+  text,
+  type,
+} from '../../../testing/helpers';
 import { CardDialog } from './card-dialog';
 import { CreditCardsPage } from './credit-cards.page';
 
@@ -25,12 +34,12 @@ describe('CreditCardsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     catalog.setCreditCardActive.mockReturnValue(of({}));
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: CatalogService, useValue: catalog },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
       ],
     });
   });
@@ -64,11 +73,12 @@ describe('CreditCardsPage', () => {
   it('abre o diálogo para editar', async () => {
     const fixture = await render([card()]);
     await click(fixture, one(fixture, '[data-testid="edit"]'));
-    expect(dialog.open).toHaveBeenCalledWith(CardDialog, expect.objectContaining({ data: card() }));
+    expect(dialog.open).toHaveBeenCalledWith(CardDialog, card());
   });
 });
 
 describe('CardDialog', () => {
+  const ref = dialogRef();
   const catalog = { createCreditCard: vi.fn(), updateCreditCard: vi.fn() };
 
   function setup(data: CreditCard | null) {
@@ -76,11 +86,7 @@ describe('CardDialog', () => {
     catalog.createCreditCard.mockReturnValue(of({}));
     catalog.updateCreditCard.mockReturnValue(of({}));
     TestBed.configureTestingModule({
-      providers: [
-        { provide: CatalogService, useValue: catalog },
-        { provide: MAT_DIALOG_DATA, useValue: data },
-        dialogRefMock(),
-      ],
+      providers: [{ provide: CatalogService, useValue: catalog }, ...dialogProviders(data, ref)],
     });
     const fixture = TestBed.createComponent(CardDialog);
     fixture.detectChanges();
@@ -114,7 +120,7 @@ describe('CardDialog', () => {
       best_purchase_day: 6,
       due_day: 15,
     });
-    expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalledWith(true);
+    expect(ref.close).toHaveBeenCalledWith(true);
   });
 
   it.each([

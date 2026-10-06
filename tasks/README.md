@@ -81,7 +81,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-58](T-58-ui-delete.md) | Apagar lançamentos e compras parceladas (frontend) | 4 | T-57, T-41 | Concluída |
 | [T-59](T-59-ui-home-card-panels-filters.md) | Home: painéis por cartão e filtros | 4 | T-39, T-41 | Concluída |
 | [T-60](T-60-ui-taiga-base-shell.md) | Base Taiga UI e shell | 4 | T-35 | Concluída |
-| [T-61](T-61-ui-taiga-dialogs-shared.md) | Diálogos e componentes compartilhados no Taiga UI | 4 | T-60 | Pendente |
+| [T-61](T-61-ui-taiga-dialogs-shared.md) | Diálogos e componentes compartilhados no Taiga UI | 4 | T-60 | Concluída |
 | [T-62](T-62-ui-taiga-registrations.md) | Cadastros no Taiga UI | 4 | T-61 | Pendente |
 | [T-63](T-63-ui-taiga-home.md) | Home no Taiga UI | 4 | T-61 | Pendente |
 | [T-64](T-64-ui-taiga-invoices-recurrences.md) | Faturas e recorrências no Taiga UI | 4 | T-61 | Pendente |

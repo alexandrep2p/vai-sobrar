@@ -1,15 +1,9 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TuiButton } from '@taiga-ui/core';
 import { forkJoin, Observable } from 'rxjs';
 import type { Category, PaymentMethod, StatementItem } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
@@ -18,6 +12,7 @@ import { formatDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog';
 import { editableFields } from './item-actions';
 
@@ -29,17 +24,16 @@ import { editableFields } from './item-actions';
   selector: 'app-transaction-edit-dialog',
   imports: [
     ReactiveFormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInput,
     MoneyInput,
     MatSelectModule,
-    MatButton,
+    TuiButton,
   ],
   template: `
-    <h2 mat-dialog-title>Editar lançamento</h2>
+    <h2 class="dialog-title">Editar lançamento</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (isPlan) {
           <p class="hint-text" data-testid="plan-hint">
             A alteração vale para todas as parcelas da compra.
@@ -87,19 +81,19 @@ import { editableFields } from './item-actions';
             </mat-select>
           </mat-form-field>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+      </footer>
     </form>
   `,
 })
 export class TransactionEditDialog implements OnInit {
-  protected readonly item = inject<StatementItem>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<TransactionEditDialog, boolean>);
+  protected readonly ref = injectDialog<StatementItem, boolean>();
+  protected readonly item = this.ref.data;
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly fields = editableFields(this.item);
@@ -193,8 +187,10 @@ export class TransactionEditDialog implements OnInit {
     const rows: SummaryRow[] = [{ label: 'Lançamento', value: item.description }];
     const change = (label: string, before: string, after: string) =>
       rows.push({ label, value: `${before} → ${after}` });
-    if ('description' in changes) change('Descrição', item.description, String(changes['description']));
-    if ('amount' in changes) change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
+    if ('description' in changes)
+      change('Descrição', item.description, String(changes['description']));
+    if ('amount' in changes)
+      change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
     if ('due_date' in changes) {
       change(
         'Vencimento',
@@ -203,7 +199,11 @@ export class TransactionEditDialog implements OnInit {
       );
     }
     if ('category_id' in changes) {
-      change('Categoria', item.category.name, name(this.categories(), String(changes['category_id'])));
+      change(
+        'Categoria',
+        item.category.name,
+        name(this.categories(), String(changes['category_id'])),
+      );
     }
     if ('payment_method_id' in changes) {
       change(
