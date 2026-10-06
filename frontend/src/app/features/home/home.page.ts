@@ -9,13 +9,21 @@ import {
   TuiLink,
   TuiSelectLike,
 } from '@taiga-ui/core';
-import { TuiAccordion, TuiChevron, TuiInputChip, TuiMultiSelect } from '@taiga-ui/kit';
+import {
+  TuiAccordion,
+  TuiCalendarMonth,
+  TuiChevron,
+  TuiInputChip,
+  TuiMultiSelect,
+} from '@taiga-ui/kit';
+import { type TuiMonth } from '@taiga-ui/cdk';
 import { Observable } from 'rxjs';
 import type { MonthlyStatement, Ref, RefundSituation, StatementItem } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
 import { addMonths, formatMonth, formatShortDate } from '../../shared/format/dates';
 import { formatCents, formatSignedCents } from '../../shared/format/money';
+import { isoToMonth, monthToIso } from '../../shared/forms/iso-dates';
 import {
   financialPeriodStatusLabel,
   invoiceStatusLabel,
@@ -59,6 +67,7 @@ function uniqueRefs(refs: Ref[]): Ref[] {
     TuiDropdown,
     TuiDataList,
     TuiAccordion,
+    TuiCalendarMonth,
     TuiExpand,
     TuiChevron,
     TuiInputChip,
@@ -186,8 +195,14 @@ export class HomePage implements OnInit {
     this.setMonth(this.clock.currentMonth());
   }
 
-  protected onMonthPicked(value: string): void {
-    if (/^\d{4}-\d{2}$/.test(value)) this.setMonth(value);
+  // --- seletor de mês (calendário de meses do Taiga, aberto pelo título) ---
+
+  protected readonly monthPickerOpen = signal(false);
+  protected readonly pickerMonth = computed(() => isoToMonth(this.month()));
+
+  protected pickMonth(month: TuiMonth): void {
+    this.monthPickerOpen.set(false);
+    this.setMonth(monthToIso(month));
   }
 
   private setMonth(month: string): void {

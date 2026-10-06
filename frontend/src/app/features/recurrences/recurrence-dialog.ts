@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { catchError, distinctUntilChanged, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 import type {
   Category,
@@ -16,6 +16,7 @@ import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate, formatMonthShort, nextOccurrenceDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { nameById } from '../../shared/forms/options';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
@@ -27,6 +28,7 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
 @Component({
   selector: 'app-recurrence-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
     MoneyInput,
     TuiButton,
@@ -37,6 +39,7 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
     TuiChevron,
     TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">{{ recurrence ? 'Editar recorrência' : 'Nova recorrência' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -115,7 +118,8 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
             <div class="field">
               <tui-textfield>
                 <label tuiLabel>Início</label>
-                <input tuiInput type="date" formControlName="start_date" />
+                <input tuiInputDate formControlName="start_date" />
+                <tui-calendar *tuiDropdown />
               </tui-textfield>
               @if (form.controls.start_date.touched && form.controls.start_date.invalid) {
                 <tui-error error="Informe a data de início." />
@@ -125,7 +129,8 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
           <div class="field">
             <tui-textfield>
               <label tuiLabel>Término (opcional)</label>
-              <input tuiInput type="date" formControlName="end_date" />
+              <input tuiInputDate formControlName="end_date" />
+              <tui-calendar *tuiDropdown />
             </tui-textfield>
           </div>
         </div>

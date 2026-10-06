@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { Clock } from '../../core/clock';
+import { ISO_DATE_INPUTS } from '../forms/iso-dates';
 import { nameById } from '../forms/options';
 import { injectDialog } from './dialog';
 
@@ -24,6 +25,7 @@ export interface PayDialogResult {
 @Component({
   selector: 'app-pay-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
     TuiButton,
     TuiInput,
@@ -33,6 +35,7 @@ export interface PayDialogResult {
     TuiChevron,
     TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="confirm()">
@@ -43,7 +46,8 @@ export interface PayDialogResult {
         <div class="field full-width">
           <tui-textfield>
             <label tuiLabel>Data do pagamento</label>
-            <input tuiInput type="date" formControlName="paid_at" />
+            <input tuiInputDate formControlName="paid_at" />
+            <tui-calendar *tuiDropdown />
           </tui-textfield>
           @if (form.controls.paid_at.touched && form.controls.paid_at.invalid) {
             <tui-error error="Informe a data." />

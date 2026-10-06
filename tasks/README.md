@@ -87,6 +87,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-64](T-64-ui-taiga-invoices-recurrences.md) | Faturas e recorrências no Taiga UI | 4 | T-61 | Concluída |
 | [T-65](T-65-ui-remove-material.md) | Remoção do Angular Material | 4 | T-62, T-63, T-64 | Concluída |
 | [T-66](T-66-ui-dark-mode.md) | Modo escuro | 4 | T-65 | Concluída |
+| [T-67](T-67-ui-date-calendars.md) | Calendário do Taiga nos campos de data e mês | 4 | T-65 | Concluída |
 
 ## Como usar
 

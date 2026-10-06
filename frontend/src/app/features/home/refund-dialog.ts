@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import type { RefundInput, RefundSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { positiveMoney } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
 import {
@@ -30,6 +31,7 @@ export interface RefundDialogData {
 @Component({
   selector: 'app-refund-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
     MoneyInput,
     TuiButton,
@@ -40,6 +42,7 @@ export interface RefundDialogData {
     TuiChevron,
     TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">Estornar compra</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -66,7 +69,8 @@ export interface RefundDialogData {
         <div class="field full-width">
           <tui-textfield>
             <label tuiLabel>Data do estorno</label>
-            <input tuiInput type="date" formControlName="refund_date" />
+            <input tuiInputDate formControlName="refund_date" />
+            <tui-calendar *tuiDropdown />
           </tui-textfield>
           @if (form.controls.refund_date.touched && form.controls.refund_date.invalid) {
             <tui-error error="Informe a data." />

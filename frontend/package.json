@@ -20,6 +20,7 @@
     "@angular/router": "^22.1.0",
     "@taiga-ui/cdk": "^5.27.0",
     "@taiga-ui/core": "^5.27.0",
+    "@taiga-ui/i18n": "^5.27.0",
     "@taiga-ui/icons": "^5.27.0",
     "@taiga-ui/kit": "^5.27.0",
     "@taiga-ui/layout": "^5.27.0",

@@ -1,13 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { forkJoin, Observable } from 'rxjs';
 import type { Category, PaymentMethod, StatementItem } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { nameById } from '../../shared/forms/options';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
@@ -22,6 +23,7 @@ import { editableFields } from './item-actions';
 @Component({
   selector: 'app-transaction-edit-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
     MoneyInput,
     TuiButton,
@@ -32,6 +34,7 @@ import { editableFields } from './item-actions';
     TuiChevron,
     TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">Editar lançamento</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -65,7 +68,8 @@ import { editableFields } from './item-actions';
           <div class="field full-width">
             <tui-textfield>
               <label tuiLabel>Vencimento</label>
-              <input tuiInput type="date" formControlName="due_date" />
+              <input tuiInputDate formControlName="due_date" />
+              <tui-calendar *tuiDropdown />
             </tui-textfield>
           </div>
         }

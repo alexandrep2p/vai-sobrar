@@ -149,15 +149,20 @@
     Mês anterior
   </button>
   <div class="month-title">
-    <label class="month-picker">
+    <button
+      type="button"
+      class="month-picker"
+      aria-label="Escolher mês"
+      [tuiDropdown]="monthPicker"
+      [tuiDropdownOpen]="monthPickerOpen()"
+      (tuiDropdownOpenChange)="monthPickerOpen.set($event)"
+      data-testid="month-picker"
+    >
       <span data-testid="month-label">{{ monthLabel() }}</span>
-      <input
-        type="month"
-        aria-label="Escolher mês"
-        [value]="month()"
-        (change)="onMonthPicked($any($event.target).value)"
-      />
-    </label>
+    </button>
+    <ng-template #monthPicker>
+      <tui-calendar-month [value]="pickerMonth()" (monthClick)="pickMonth($event)" />
+    </ng-template>
     @if (statement(); as s) {
       <span class="chip" [class.warn]="!monthOpen()" data-testid="period-status">
         {{ periodLabel() }}

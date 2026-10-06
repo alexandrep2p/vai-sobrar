@@ -29,22 +29,22 @@
     <tui-textfield>
       <label tuiLabel>De</label>
       <input
-        tuiInput
-        type="month"
-        [value]="from()"
-        (change)="setRange($any($event.target).value, to())"
+        tuiInputMonth
+        [ngModel]="from()"
+        (ngModelChange)="setRange($event, to())"
         data-testid="from"
       />
+      <tui-calendar-month *tuiDropdown />
     </tui-textfield>
     <tui-textfield>
       <label tuiLabel>Até</label>
       <input
-        tuiInput
-        type="month"
-        [value]="to()"
-        (change)="setRange(from(), $any($event.target).value)"
+        tuiInputMonth
+        [ngModel]="to()"
+        (ngModelChange)="setRange(from(), $event)"
         data-testid="to"
       />
+      <tui-calendar-month *tuiDropdown />
     </tui-textfield>
   </div>
 

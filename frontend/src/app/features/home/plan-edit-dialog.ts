@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiInputDate } from '@taiga-ui/kit';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
 import { describeInstallments } from '../../shared/format/installments';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { MoneyInput } from '../../shared/forms/money-input';
 import { positiveMoney } from '../../shared/forms/validators';
 import { AppDialog, injectDialog } from '../../shared/ui/dialog';
@@ -18,7 +20,8 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
  */
 @Component({
   selector: 'app-plan-edit-dialog',
-  imports: [ReactiveFormsModule, MoneyInput, TuiButton, TuiInput, TuiError],
+  imports: [TuiInputDate, ReactiveFormsModule, MoneyInput, TuiButton, TuiInput, TuiError],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">Editar compra parcelada</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -61,7 +64,8 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
           <div class="field">
             <tui-textfield>
               <label tuiLabel>Data da compra</label>
-              <input tuiInput type="date" formControlName="purchase_date" data-testid="date" />
+              <input tuiInputDate formControlName="purchase_date" data-testid="date" />
+              <tui-calendar *tuiDropdown />
             </tui-textfield>
             @if (form.controls.purchase_date.touched && form.controls.purchase_date.invalid) {
               <tui-error error="Informe a data da compra." />

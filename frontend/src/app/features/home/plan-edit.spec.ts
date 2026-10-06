@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
+import { LOCALE_PROVIDERS } from '../../core/locale';
 import { AppDialog } from '../../shared/ui/dialog';
 import {
   answerSummary,
@@ -51,7 +52,11 @@ describe('PlanEditDialog (T-56)', () => {
     vi.resetAllMocks();
     ledger.updatePlan.mockReturnValue(of({}));
     TestBed.configureTestingModule({
-      providers: [...dialogProviders(data, ref), { provide: LedgerService, useValue: ledger }],
+      providers: [
+        ...dialogProviders(data, ref),
+        { provide: LedgerService, useValue: ledger },
+        LOCALE_PROVIDERS,
+      ],
     });
     const fixture = TestBed.createComponent(PlanEditDialog);
     fixture.detectChanges();
@@ -68,7 +73,7 @@ describe('PlanEditDialog (T-56)', () => {
     const f = setup();
     expect(one<HTMLInputElement>(f, '[data-testid="amount"]').value).toBe('600,00');
     expect(one<HTMLInputElement>(f, '[data-testid="count"]').value).toBe('3');
-    expect(one<HTMLInputElement>(f, '[data-testid="date"]').value).toBe('2027-10-05');
+    expect(one<HTMLInputElement>(f, '[data-testid="date"]').value).toBe('05/10/2027');
     expect(submitButton(f).disabled).toBe(false);
   });
 
@@ -105,7 +110,7 @@ describe('PlanEditDialog (T-56)', () => {
 
   it('envia a nova data da compra', async () => {
     const f = setup();
-    await type(f, '[data-testid="date"]', '2027-10-07');
+    await type(f, '[data-testid="date"]', '07/10/2027');
     await submit(f);
     await answerSummary(f, true);
     expect(ledger.updatePlan).toHaveBeenCalledWith('plan1', { purchase_date: '2027-10-07' });

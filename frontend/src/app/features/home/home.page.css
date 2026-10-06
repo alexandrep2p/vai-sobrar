@@ -17,9 +17,17 @@
 }
 
 .month-picker {
-  position: relative;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--tui-radius-m);
+  background: none;
+  color: inherit;
   font: var(--tui-typography-heading-h6);
   cursor: pointer;
+}
+
+.month-picker:hover {
+  background: var(--tui-background-neutral-1-hover);
 }
 
 .month-picker span {
@@ -28,13 +36,6 @@
 
 .month-picker span::first-letter {
   text-transform: uppercase;
-}
-
-.month-picker input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .summary {

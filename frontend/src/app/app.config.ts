@@ -9,6 +9,7 @@ import {
 
 import { routes } from './app.routes';
 import { errorInterceptor } from './core/api/error.interceptor';
+import { LOCALE_PROVIDERS } from './core/locale';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,5 +21,6 @@ export const appConfig: ApplicationConfig = {
     tuiButtonOptionsProvider({ size: 'm' }),
     // Sem botão de limpar: os campos voltam a vazio só apagando o texto, como antes.
     tuiTextfieldOptionsProvider({ cleaner: signal(false) }),
+    LOCALE_PROVIDERS,
   ],
 };

@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSegmented, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputDate, TuiSegmented, TuiSelect } from '@taiga-ui/kit';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 import type {
   Category,
@@ -17,6 +17,7 @@ import { Clock } from '../../core/clock';
 import { formatDate, formatMonthShort } from '../../shared/format/dates';
 import { describeInstallments } from '../../shared/format/installments';
 import { formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { nameById } from '../../shared/forms/options';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
@@ -31,6 +32,7 @@ import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog'
 @Component({
   selector: 'app-transaction-form-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
     MoneyInput,
     TuiButton,
@@ -42,6 +44,7 @@ import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog'
     TuiSelect,
     TuiSegmented,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">Novo lançamento</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -113,7 +116,8 @@ import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog'
             <div class="field">
               <tui-textfield>
                 <label tuiLabel>{{ isCard() ? 'Data da compra' : 'Data' }}</label>
-                <input tuiInput type="date" formControlName="date" />
+                <input tuiInputDate formControlName="date" />
+                <tui-calendar *tuiDropdown />
               </tui-textfield>
               @if (form.controls.date.touched && form.controls.date.invalid) {
                 <tui-error error="Informe a data." />

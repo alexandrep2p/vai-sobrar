@@ -2,13 +2,14 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TuiButton, TuiDataList, TuiDropdown, TuiInput } from '@taiga-ui/core';
-import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
+import { TuiChevron, TuiInputMonth, TuiSelect } from '@taiga-ui/kit';
 import type { CreditCard, InvoiceSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { addMonths, formatDate, formatMonth } from '../../shared/format/dates';
 import { formatCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import {
   invoiceStatusLabel,
   NO_ENTRIES_CYCLE_LABEL,
@@ -35,8 +36,10 @@ const MONTHS_AFTER = 11;
     TuiDropdown,
     TuiChevron,
     TuiSelect,
+    TuiInputMonth,
   ],
   templateUrl: './invoices.page.html',
+  providers: [ISO_DATE_INPUTS],
   styles: `
     .filters {
       display: flex;

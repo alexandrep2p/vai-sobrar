@@ -1,15 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiInputDate } from '@taiga-ui/kit';
 import type { Recurrence } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { injectDialog } from '../../shared/ui/dialog';
 
 /** Pausa de recorrência ativa: início (hoje ou futuro) e retorno opcional (recurrences.md §11). */
 @Component({
   selector: 'app-pause-dialog',
-  imports: [ReactiveFormsModule, TuiButton, TuiInput, TuiError],
+  imports: [TuiInputDate, ReactiveFormsModule, TuiButton, TuiInput, TuiError],
+  providers: [ISO_DATE_INPUTS],
   template: `
     <h2 class="dialog-title">Pausar {{ recurrence.description }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -17,7 +20,8 @@ import { injectDialog } from '../../shared/ui/dialog';
         <div class="field full-width">
           <tui-textfield>
             <label tuiLabel>Início da pausa</label>
-            <input tuiInput type="date" formControlName="paused_from" />
+            <input tuiInputDate formControlName="paused_from" />
+            <tui-calendar *tuiDropdown />
           </tui-textfield>
           @if (form.controls.paused_from.touched && form.controls.paused_from.invalid) {
             <tui-error error="Informe a data." />
@@ -26,7 +30,8 @@ import { injectDialog } from '../../shared/ui/dialog';
         <div class="field full-width">
           <tui-textfield>
             <label tuiLabel>Retorno (opcional)</label>
-            <input tuiInput type="date" formControlName="paused_until" />
+            <input tuiInputDate formControlName="paused_until" />
+            <tui-calendar *tuiDropdown />
           </tui-textfield>
           <p class="field-hint">Sem retorno, a pausa dura até você retomar.</p>
         </div>
