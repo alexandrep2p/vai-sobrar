@@ -1,7 +1,6 @@
 <div class="page-header">
   <h1>Recorrências</h1>
-  <button mat-flat-button (click)="create()" data-testid="new">
-    <mat-icon>add</mat-icon>
+  <button tuiButton (click)="create()" data-testid="new" iconStart="@tui.plus">
     Nova recorrência
   </button>
 </div>
@@ -46,23 +45,64 @@
           {{ statusLabel(r.status) }}
         </span>
         @if (canEdit(r) || canPause(r) || canResume(r) || canCancel(r)) {
-          <button mat-icon-button aria-label="Ações" [matMenuTriggerFor]="menu" data-testid="menu">
-            <mat-icon>more_vert</mat-icon>
+          <button
+            tuiIconButton
+            type="button"
+            appearance="flat"
+            iconStart="@tui.ellipsis-vertical"
+            aria-label="Ações"
+            tuiDropdownAlign="end"
+            [tuiDropdown]="menu"
+            [tuiDropdownOpen]="openMenu() === r.id"
+            (tuiDropdownOpenChange)="openMenu.set($event ? r.id : null)"
+            data-testid="menu"
+          >
+            Ações
           </button>
-          <mat-menu #menu="matMenu">
-            @if (canEdit(r)) {
-              <button mat-menu-item (click)="edit(r)" data-testid="act-edit">Editar</button>
-            }
-            @if (canPause(r)) {
-              <button mat-menu-item (click)="pause(r)" data-testid="act-pause">Pausar</button>
-            }
-            @if (canResume(r)) {
-              <button mat-menu-item (click)="resume(r)" data-testid="act-resume">Retomar</button>
-            }
-            @if (canCancel(r)) {
-              <button mat-menu-item (click)="cancel(r)" data-testid="act-cancel">Cancelar</button>
-            }
-          </mat-menu>
+          <ng-template #menu>
+            <tui-data-list>
+              @if (canEdit(r)) {
+                <button
+                  tuiOption
+                  type="button"
+                  (click)="closeMenu(); edit(r)"
+                  data-testid="act-edit"
+                >
+                  Editar
+                </button>
+              }
+              @if (canPause(r)) {
+                <button
+                  tuiOption
+                  type="button"
+                  (click)="closeMenu(); pause(r)"
+                  data-testid="act-pause"
+                >
+                  Pausar
+                </button>
+              }
+              @if (canResume(r)) {
+                <button
+                  tuiOption
+                  type="button"
+                  (click)="closeMenu(); resume(r)"
+                  data-testid="act-resume"
+                >
+                  Retomar
+                </button>
+              }
+              @if (canCancel(r)) {
+                <button
+                  tuiOption
+                  type="button"
+                  (click)="closeMenu(); cancel(r)"
+                  data-testid="act-cancel"
+                >
+                  Cancelar
+                </button>
+              }
+            </tui-data-list>
+          </ng-template>
         }
       </div>
     }

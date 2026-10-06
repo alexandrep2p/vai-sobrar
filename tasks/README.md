@@ -84,7 +84,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-61](T-61-ui-taiga-dialogs-shared.md) | Diálogos e componentes compartilhados no Taiga UI | 4 | T-60 | Concluída |
 | [T-62](T-62-ui-taiga-registrations.md) | Cadastros no Taiga UI | 4 | T-61 | Concluída |
 | [T-63](T-63-ui-taiga-home.md) | Home no Taiga UI | 4 | T-61 | Concluída |
-| [T-64](T-64-ui-taiga-invoices-recurrences.md) | Faturas e recorrências no Taiga UI | 4 | T-61 | Pendente |
+| [T-64](T-64-ui-taiga-invoices-recurrences.md) | Faturas e recorrências no Taiga UI | 4 | T-61 | Concluída |
 | [T-65](T-65-ui-remove-material.md) | Remoção do Angular Material | 4 | T-62, T-63, T-64 | Pendente |
 
 ## Como usar

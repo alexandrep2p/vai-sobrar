@@ -1,9 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TuiButton, TuiDataList, TuiDropdown, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
 import type { CreditCard, InvoiceSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
@@ -26,8 +25,29 @@ const MONTHS_AFTER = 11;
 
 @Component({
   selector: 'app-invoices-page',
-  imports: [MatButton, MatFormFieldModule, MatInput, MatSelectModule, LoadState, RouterLink],
+  imports: [
+    FormsModule,
+    LoadState,
+    RouterLink,
+    TuiButton,
+    TuiInput,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
+  ],
   templateUrl: './invoices.page.html',
+  styles: `
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .filters tui-textfield {
+      flex: 1 1 12rem;
+    }
+  `,
 })
 export class InvoicesPage implements OnInit {
   private readonly catalog = inject(CatalogService);
@@ -53,6 +73,16 @@ export class InvoicesPage implements OnInit {
   protected readonly overdueLabel = OVERDUE_INVOICE_LABEL;
   protected readonly projectedLabel = PROJECTED_ITEM_LABEL;
   protected readonly emptyCycleLabel = NO_ENTRIES_CYCLE_LABEL;
+
+  protected cardLabel(card: CreditCard): string {
+    return card.active ? card.name : `${card.name} (inativo)`;
+  }
+
+  /** Texto do select de cartão (o valor é o id). */
+  protected readonly cardName = (id: string | null): string => {
+    const card = this.cards().find((c) => c.id === id);
+    return card ? this.cardLabel(card) : '';
+  };
 
   ngOnInit(): void {
     this.loadCards();

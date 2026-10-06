@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-61
-* **Status:** Pendente
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -46,3 +46,7 @@ Migrar as telas de faturas e recorrências e seus diálogos para o Taiga UI.
 
 ## Decisões técnicas registradas
 
+* Faturas: o select de cartão usa `tuiSelect` com `[ngModel]`/`(ngModelChange)`, porque o filtro não é um formulário. O rótulo inclui "(inativo)" pelo `cardLabel`. Os campos de mês são `input tuiInput type="month"`, sem controle de formulário.
+* Recorrências: menu de ações igual ao da Home (`tuiDropdown`, um aberto por vez por `openMenu`). O select de categoria mostra "Nome (Tipo)", como as opções.
+* Testes de recorrências com `tuiRoot()`/`overlay()` para o menu, e `label[tuiLabel]` no lugar de `mat-label`.
+* Verificado no navegador: troca de cartão, detalhe da fatura, menu → Pausar, nova recorrência e edição (selects com nome após a carga), sem gravar dados.

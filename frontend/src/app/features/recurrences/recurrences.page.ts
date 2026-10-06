@@ -1,7 +1,5 @@
 import { Component, inject, OnInit, signal, Type } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { TuiButton, TuiDataList, TuiDropdown } from '@taiga-ui/core';
 import type { Recurrence } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
@@ -15,7 +13,7 @@ import { RecurrenceDialog } from './recurrence-dialog';
 
 @Component({
   selector: 'app-recurrences-page',
-  imports: [MatButton, MatIconButton, MatIcon, MatMenuModule, LoadState],
+  imports: [LoadState, TuiButton, TuiDataList, TuiDropdown],
   templateUrl: './recurrences.page.html',
 })
 export class RecurrencesPage implements OnInit {
@@ -27,9 +25,15 @@ export class RecurrencesPage implements OnInit {
   protected readonly money = formatCents;
   protected readonly date = formatDate;
   protected readonly statusLabel = recurrenceStatusLabel;
+  /** Menu de ações aberto (id da recorrência): um por vez. */
+  protected readonly openMenu = signal<string | null>(null);
 
   ngOnInit(): void {
     this.load();
+  }
+
+  protected closeMenu(): void {
+    this.openMenu.set(null);
   }
 
   protected load(): void {

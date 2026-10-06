@@ -1,5 +1,6 @@
 import { Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTaiga } from '@taiga-ui/core';
 import { of } from 'rxjs';
 import type { Category, CreditCard, PaymentMethod, Recurrence } from '../../core/api/models';
 import { Clock } from '../../core/clock';
@@ -12,10 +13,12 @@ import {
   click,
   dialogProviders,
   one,
+  overlay,
   root,
   submitButton,
   summaryRow,
   text,
+  tuiRoot,
 } from '../../../testing/helpers';
 import { PauseDialog } from './pause-dialog';
 import { RecurrenceDialog } from './recurrence-dialog';
@@ -60,12 +63,14 @@ describe('RecurrencesPage', () => {
       providers: [
         { provide: LedgerService, useValue: ledger },
         { provide: AppDialog, useValue: dialog },
+        provideTaiga({ mode: 'light' }),
       ],
     });
   });
 
   async function render(list: Recurrence[]) {
     ledger.recurrences.mockReturnValue(of(list));
+    tuiRoot();
     const fixture = TestBed.createComponent(RecurrencesPage);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -76,7 +81,7 @@ describe('RecurrencesPage', () => {
   const rows = (f: ComponentFixture<unknown>) => all(f, '[data-testid="recurrence-row"]');
   async function menu(f: ComponentFixture<unknown>, row: HTMLElement) {
     await click(f, row.querySelector<HTMLElement>('[data-testid="menu"]')!);
-    return Array.from(document.querySelectorAll<HTMLElement>('[data-testid^="act-"]'));
+    return overlay('[data-testid^="act-"]');
   }
   const ids = (buttons: HTMLElement[]) => buttons.map((b) => b.dataset['testid']);
 
@@ -270,7 +275,7 @@ describe('RecurrenceDialog', () => {
   });
 
   const dayLabel = (f: ComponentFixture<unknown>) =>
-    all(f, 'mat-label')
+    all(f, 'label[tuiLabel]')
       .map((l) => l.textContent?.trim())
       .find((t) => t?.startsWith('Dia do') || t?.startsWith('Dia da'));
 
