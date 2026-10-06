@@ -152,4 +152,20 @@ describe('CategoryDialog', () => {
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.updateCategory).toHaveBeenCalledWith('x', { name: 'Novo' });
   });
+
+  it('mostra o tipo pelo rótulo e o bloqueia quando a categoria está em uso', async () => {
+    const fixture = setup(category({ id: 'x', type: 'INCOME', in_use: true }));
+    await fixture.whenStable();
+    const select = one<HTMLInputElement>(fixture, '[data-testid="type"]');
+    expect(select.value).toBe('Entrada');
+    expect(select.disabled).toBe(true);
+  });
+
+  it('com nome inválido e tocado, mostra o erro do campo', async () => {
+    const fixture = setup(null);
+    const input = one<HTMLInputElement>(fixture, 'input');
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(text(fixture)).toContain('Informe o nome.');
+  });
 });

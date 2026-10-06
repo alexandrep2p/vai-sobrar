@@ -1,8 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
 import type { CreditCard } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { trimmedLength } from '../../shared/forms/validators';
@@ -13,47 +11,55 @@ const dayValidators = [Validators.required, Validators.min(1), Validators.max(31
 /** Cadastro e edição de cartão (nome, melhor dia de compra e dia de vencimento). */
 @Component({
   selector: 'app-card-dialog',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, TuiButton],
+  imports: [ReactiveFormsModule, TuiButton, TuiInput, TuiError],
   template: `
     <h2 class="dialog-title">{{ card ? 'Editar cartão' : 'Novo cartão' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="dialog-content">
-        <mat-form-field class="full-width">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" maxlength="100" autocomplete="off" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Informe o nome.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Nome</label>
+            <input tuiInput formControlName="name" maxlength="100" autocomplete="off" />
+          </tui-textfield>
+          @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+            <tui-error error="Informe o nome." />
           }
-        </mat-form-field>
+        </div>
         <div class="form-grid two">
-          <mat-form-field>
-            <mat-label>Melhor dia de compra</mat-label>
-            <input
-              matInput
-              type="number"
-              inputmode="numeric"
-              min="1"
-              max="31"
-              formControlName="best_purchase_day"
-            />
-            @if (form.controls.best_purchase_day.invalid) {
-              <mat-error>Informe um dia de 1 a 31.</mat-error>
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Melhor dia de compra</label>
+              <input
+                tuiInput
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="31"
+                formControlName="best_purchase_day"
+              />
+            </tui-textfield>
+            @if (
+              form.controls.best_purchase_day.touched && form.controls.best_purchase_day.invalid
+            ) {
+              <tui-error error="Informe um dia de 1 a 31." />
             }
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Dia de vencimento</mat-label>
-            <input
-              matInput
-              type="number"
-              inputmode="numeric"
-              min="1"
-              max="31"
-              formControlName="due_day"
-            />
-            @if (form.controls.due_day.invalid) {
-              <mat-error>Informe um dia de 1 a 31.</mat-error>
+          </div>
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Dia de vencimento</label>
+              <input
+                tuiInput
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="31"
+                formControlName="due_day"
+              />
+            </tui-textfield>
+            @if (form.controls.due_day.touched && form.controls.due_day.invalid) {
+              <tui-error error="Informe um dia de 1 a 31." />
             }
-          </mat-form-field>
+          </div>
         </div>
         @if (card) {
           <p class="hint-text" data-testid="future-warning">

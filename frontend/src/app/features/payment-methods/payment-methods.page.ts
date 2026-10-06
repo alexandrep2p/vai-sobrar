@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { TuiButton } from '@taiga-ui/core';
 import type { PaymentMethod } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { paymentMethodKindLabel, paymentMethodSourceLabel } from '../../shared/labels/labels';
@@ -11,7 +10,7 @@ import { MethodDialog } from './method-dialog';
 
 @Component({
   selector: 'app-payment-methods-page',
-  imports: [MatButton, MatIconButton, MatIcon, LoadState, RouterLink],
+  imports: [LoadState, RouterLink, TuiButton],
   templateUrl: './payment-methods.page.html',
 })
 export class PaymentMethodsPage implements OnInit {

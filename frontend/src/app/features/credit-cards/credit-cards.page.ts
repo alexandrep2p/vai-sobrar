@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { TuiButton } from '@taiga-ui/core';
 import type { CreditCard } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { AppDialog } from '../../shared/ui/dialog';
@@ -10,7 +9,7 @@ import { CardDialog } from './card-dialog';
 
 @Component({
   selector: 'app-credit-cards-page',
-  imports: [MatButton, MatIconButton, MatIcon, LoadState, RouterLink],
+  imports: [LoadState, RouterLink, TuiButton],
   templateUrl: './credit-cards.page.html',
 })
 export class CreditCardsPage implements OnInit {

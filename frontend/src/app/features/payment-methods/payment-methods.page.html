@@ -1,9 +1,6 @@
 <div class="page-header">
   <h1>Métodos de pagamento</h1>
-  <button mat-flat-button (click)="create()">
-    <mat-icon>add</mat-icon>
-    Novo método
-  </button>
+  <button tuiButton (click)="create()" iconStart="@tui.plus">Novo método</button>
 </div>
 
 <app-load-state
@@ -23,13 +20,28 @@
               <div class="sub">{{ sourceLabel(method.source) }} · {{ kindLabel(method.kind) }}</div>
             </div>
             @if (isEditable(method)) {
-              <button mat-icon-button aria-label="Editar" (click)="edit(method)" data-testid="edit">
-                <mat-icon>edit</mat-icon>
+              <button
+                tuiIconButton
+                appearance="flat"
+                iconStart="@tui.pencil"
+                aria-label="Editar"
+                (click)="edit(method)"
+                data-testid="edit"
+              >
+                Editar
               </button>
             } @else if (method.kind === 'CREDIT_CARD') {
-              <a mat-button routerLink="/cartoes" data-testid="card-link">Editar no cartão</a>
+              <a tuiButton appearance="flat" size="s" routerLink="/cartoes" data-testid="card-link"
+                >Editar no cartão</a
+              >
             }
-            <button mat-stroked-button (click)="toggle(method)" data-testid="toggle">
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              (click)="toggle(method)"
+              data-testid="toggle"
+            >
               {{ method.active ? 'Desativar' : 'Reativar' }}
             </button>
           </div>

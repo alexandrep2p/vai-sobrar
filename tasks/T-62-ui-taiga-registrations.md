@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-61
-* **Status:** Pendente
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -46,3 +46,8 @@ Migrar as telas de categorias, métodos de pagamento e cartões (páginas, diál
 
 ## Decisões técnicas registradas
 
+* Campo de texto: `div.field` contendo `tui-textfield` (`label tuiLabel` e `input tuiInput`), `tui-error` e `p.field-hint`. O erro aparece com o campo tocado (`touched && condição`), como o `mat-error`.
+* Select de valor simples: `tui-textfield tuiChevron [stringify]` com `input tuiSelect` e `tui-data-list` de `button tuiOption [value]`. O controle guarda o próprio valor (id ou enum), sem objetos.
+* Sem botão de limpar nos campos (`tuiTextfieldOptionsProvider({ cleaner: signal(false) })`): o limpar gravaria `null` em controles não anuláveis.
+* Botões das linhas: `tuiButton appearance="outline" size="s"`. Ícones isolados viram `tuiIconButton appearance="flat"`, com o rótulo de acessibilidade como texto.
+* Verificado no navegador: listas, edição com tipo bloqueado, select de tipo e diálogo de cartão.

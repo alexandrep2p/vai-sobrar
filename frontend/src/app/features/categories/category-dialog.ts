@@ -1,9 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { trimmedLength } from '../../shared/forms/validators';
@@ -13,29 +11,43 @@ import { injectDialog } from '../../shared/ui/dialog';
 /** Criação e edição de categoria. `data` é a categoria editada (ausente na criação). */
 @Component({
   selector: 'app-category-dialog',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MatSelectModule, TuiButton],
+  imports: [
+    ReactiveFormsModule,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
+  ],
   template: `
     <h2 class="dialog-title">{{ category ? 'Editar categoria' : 'Nova categoria' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="dialog-content">
-        <mat-form-field class="full-width">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" maxlength="100" autocomplete="off" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Informe o nome.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Nome</label>
+            <input tuiInput formControlName="name" maxlength="100" autocomplete="off" />
+          </tui-textfield>
+          @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+            <tui-error error="Informe o nome." />
           }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="type">
-            @for (type of types; track type) {
-              <mat-option [value]="type">{{ label(type) }}</mat-option>
-            }
-          </mat-select>
+        </div>
+        <div class="field full-width">
+          <tui-textfield tuiChevron [stringify]="label">
+            <label tuiLabel>Tipo</label>
+            <input tuiSelect formControlName="type" data-testid="type" />
+            <tui-data-list *tuiDropdown>
+              @for (type of types; track type) {
+                <button tuiOption type="button" [value]="type">{{ label(type) }}</button>
+              }
+            </tui-data-list>
+          </tui-textfield>
           @if (category?.in_use) {
-            <mat-hint>O tipo não pode mudar enquanto a categoria estiver em uso.</mat-hint>
+            <p class="field-hint">O tipo não pode mudar enquanto a categoria estiver em uso.</p>
           }
-        </mat-form-field>
+        </div>
       </div>
       <footer class="dialog-actions">
         <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>

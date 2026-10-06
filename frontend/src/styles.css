@@ -130,6 +130,20 @@ h1 {
   width: 100%;
 }
 
+/* Campo de formulário: tui-textfield seguido do erro (tui-error) e da dica. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.field-hint {
+  margin: 0;
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
+}
+
 .hint-text {
   margin: 0 0 1rem;
   font: var(--tui-typography-body-s);

@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
+import { TuiButton } from '@taiga-ui/core';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels';
@@ -19,7 +18,7 @@ const TYPES: CategoryType[] = ['INCOME', 'EXPENSE'];
 
 @Component({
   selector: 'app-categories-page',
-  imports: [MatButton, MatIconButton, MatIcon, LoadState],
+  imports: [LoadState, TuiButton],
   templateUrl: './categories.page.html',
 })
 export class CategoriesPage implements OnInit {
