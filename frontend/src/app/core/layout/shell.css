@@ -7,6 +7,10 @@
   min-height: 100vh;
 }
 
+.main-column {
+  min-width: 0;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -17,6 +21,10 @@
   padding: 0.5rem;
   background: var(--tui-background-base-alt);
   border-bottom: 1px solid var(--tui-border-normal);
+}
+
+.theme-toggle {
+  margin-left: auto;
 }
 
 .topbar-title {
@@ -104,8 +112,11 @@
     border-right: 1px solid var(--tui-border-normal);
   }
 
+  .topbar {
+    padding: 0.5rem 2rem;
+  }
+
   .content {
-    min-width: 0;
     padding: 1.5rem 2rem;
   }
 }

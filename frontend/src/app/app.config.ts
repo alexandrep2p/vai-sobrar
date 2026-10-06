@@ -15,8 +15,8 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withFetch(), withInterceptors([errorInterceptor])),
-    // Tema claro fixo: o app não tem modo escuro.
-    provideTaiga({ mode: 'light' }),
+    // Sem `mode`: o tema segue o sistema até o usuário escolher no botão do shell (PD-40).
+    provideTaiga(),
     tuiButtonOptionsProvider({ size: 'm' }),
     // Sem botão de limpar: os campos voltam a vazio só apagando o texto, como antes.
     tuiTextfieldOptionsProvider({ cleaner: signal(false) }),

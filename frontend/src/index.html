@@ -9,5 +9,14 @@
   </head>
   <body>
     <app-root></app-root>
+    <script>
+      // Aplica o tema (PD-40) antes de o Angular iniciar, evitando piscar claro no modo escuro.
+      // A chave é a padrão do Taiga (TUI_DARK_MODE_KEY); sem escolha salva, segue o sistema.
+      try {
+        const saved = localStorage.getItem('tuiDark');
+        const dark = saved ? saved === 'true' : matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.body.setAttribute('tuiTheme', 'dark');
+      } catch {}
+    </script>
   </body>
 </html>

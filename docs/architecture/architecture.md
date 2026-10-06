@@ -10,7 +10,7 @@ O modelo de domínio (`docs/domain/domain-model.md`) e as feature specs (`docs/s
 
 ## 2. Stack
 
-* **Frontend:** Angular 22 + Taiga UI (tema padrão, modo claro), mobile first
+* **Frontend:** Angular 22 + Taiga UI (tema padrão, claro e escuro — PD-40), mobile first
 * **Backend:** Node.js + Express
 * **Linguagem:** TypeScript (frontend e backend)
 * **Banco:** PostgreSQL
@@ -494,7 +494,7 @@ O agente de programação recebe uma task pequena por vez, com os documentos fon
 
 ## 25. Decisões arquiteturais fechadas
 
-Angular 22 com Taiga UI (tema padrão em modo claro, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; single-user.
+Angular 22 com Taiga UI (tema padrão claro e escuro, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; single-user.
 
 ---
 

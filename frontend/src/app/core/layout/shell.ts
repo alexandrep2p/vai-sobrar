@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TuiButton, TuiIcon } from '@taiga-ui/core';
+import { TUI_DARK_MODE, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { NAV_ITEMS } from './nav-items';
 
 /** A partir deste ponto o menu lateral fica fixo; abaixo dele vira uma gaveta (mobile first). */
@@ -19,6 +19,16 @@ export class ShellComponent {
   protected readonly isDesktop = desktopSignal();
   /** Aberto por padrão só no desktop; no mobile o usuário abre e fecha. */
   protected readonly navOpen = linkedSignal(() => this.isDesktop());
+
+  /** Tema escuro (PD-40): segue o sistema até a escolha no botão, que fica salva no navegador. */
+  protected readonly dark = inject(TUI_DARK_MODE);
+  protected readonly themeLabel = computed(() =>
+    this.dark() ? 'Ativar modo claro' : 'Ativar modo escuro',
+  );
+
+  protected toggleTheme(): void {
+    this.dark.set(!this.dark());
+  }
 
   protected onNavigate(): void {
     if (!this.isDesktop()) this.navOpen.set(false);

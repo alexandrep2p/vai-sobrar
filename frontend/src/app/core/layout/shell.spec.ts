@@ -10,6 +10,7 @@ import { NAV_ITEMS } from './nav-items';
 
 describe('navegação', () => {
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     });
@@ -39,7 +40,7 @@ describe('navegação', () => {
     const nav = root.querySelector<HTMLElement>('[data-testid="sidenav"]')!;
     expect(nav.classList).not.toContain('open');
 
-    root.querySelector<HTMLButtonElement>('.topbar button')!.click();
+    root.querySelector<HTMLButtonElement>('[data-testid="menu-toggle"]')!.click();
     harness.detectChanges();
     expect(nav.classList).toContain('open');
     expect(root.querySelector('[data-testid="nav-backdrop"]')).not.toBeNull();
@@ -58,5 +59,39 @@ describe('navegação', () => {
       '[data-testid="sidenav"] [data-testid="nav-link"]',
     );
     expect(links?.length).toBe(NAV_ITEMS.length);
+  });
+
+  describe('modo escuro (PD-40)', () => {
+    async function themeButton() {
+      const harness = await RouterTestingHarness.create();
+      await harness.navigateByUrl('/home');
+      const button = harness.routeNativeElement!.querySelector<HTMLButtonElement>(
+        '[data-testid="theme-toggle"]',
+      )!;
+      return { harness, button };
+    }
+
+    it('no tema claro mostra a lua; ao clicar fica escuro, mostra o sol e lembra a escolha', async () => {
+      const { harness, button } = await themeButton();
+      expect(button.textContent?.trim()).toBe('Ativar modo escuro');
+      expect(button.getAttribute('style')).toContain('moon');
+
+      button.click();
+      harness.detectChanges();
+      expect(button.textContent?.trim()).toBe('Ativar modo claro');
+      expect(button.getAttribute('style')).toContain('sun');
+      expect(localStorage.getItem('tuiDark')).toBe('true');
+
+      button.click();
+      harness.detectChanges();
+      expect(button.textContent?.trim()).toBe('Ativar modo escuro');
+      expect(localStorage.getItem('tuiDark')).toBe('false');
+    });
+
+    it('abre no tema salvo no navegador', async () => {
+      localStorage.setItem('tuiDark', 'true');
+      const { button } = await themeButton();
+      expect(button.textContent?.trim()).toBe('Ativar modo claro');
+    });
   });
 });

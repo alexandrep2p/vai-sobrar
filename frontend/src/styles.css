@@ -16,6 +16,11 @@ body {
   color: var(--tui-text-primary);
 }
 
+/* Modo escuro (PD-40): controles nativos (data, mês, barras de rolagem) também no tema escuro. */
+body[tuiTheme='dark'] {
+  color-scheme: dark;
+}
+
 h1 {
   margin: 0 0 1rem;
   font: var(--tui-typography-heading-h5);

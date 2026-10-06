@@ -1,21 +1,6 @@
 <div class="layout">
-  @if (!isDesktop()) {
-    <header class="topbar">
-      <button
-        tuiIconButton
-        type="button"
-        appearance="flat"
-        size="m"
-        iconStart="@tui.menu"
-        (click)="navOpen.set(true)"
-      >
-        Abrir menu
-      </button>
-      <span class="topbar-title">Vai Sobrar</span>
-    </header>
-    @if (navOpen()) {
-      <div class="backdrop" data-testid="nav-backdrop" (click)="navOpen.set(false)"></div>
-    }
+  @if (!isDesktop() && navOpen()) {
+    <div class="backdrop" data-testid="nav-backdrop" (click)="navOpen.set(false)"></div>
   }
 
   <nav
@@ -42,7 +27,36 @@
     }
   </nav>
 
-  <main class="content">
-    <router-outlet />
-  </main>
+  <div class="main-column">
+    <header class="topbar">
+      @if (!isDesktop()) {
+        <button
+          tuiIconButton
+          type="button"
+          appearance="flat"
+          iconStart="@tui.menu"
+          (click)="navOpen.set(true)"
+          data-testid="menu-toggle"
+        >
+          Abrir menu
+        </button>
+        <span class="topbar-title">Vai Sobrar</span>
+      }
+      <button
+        tuiIconButton
+        type="button"
+        appearance="flat"
+        class="theme-toggle"
+        [iconStart]="dark() ? '@tui.sun' : '@tui.moon'"
+        [attr.title]="themeLabel()"
+        (click)="toggleTheme()"
+        data-testid="theme-toggle"
+      >
+        {{ themeLabel() }}
+      </button>
+    </header>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
 </div>
