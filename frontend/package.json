@@ -19,6 +19,11 @@
     "@angular/material": "^22.2.1",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@taiga-ui/cdk": "^5.27.0",
+    "@taiga-ui/core": "^5.27.0",
+    "@taiga-ui/icons": "^5.27.0",
+    "@taiga-ui/kit": "^5.27.0",
+    "@taiga-ui/layout": "^5.27.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -27,6 +32,7 @@
     "@angular/cli": "^22.1.3",
     "@angular/compiler-cli": "^22.1.0",
     "jsdom": "^28.0.0",
+    "less": "^4.9.1",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"

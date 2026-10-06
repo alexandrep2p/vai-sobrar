@@ -19,7 +19,7 @@ describe('navegação', () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/');
     expect(TestBed.inject(Location).path()).toBe('/home');
-    expect(harness.routeNativeElement?.querySelector('mat-sidenav')).not.toBeNull();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="sidenav"]')).not.toBeNull();
   });
 
   it('abre cada rota do menu', async () => {
@@ -32,10 +32,31 @@ describe('navegação', () => {
     }
   });
 
+  it('no mobile, abre a gaveta pelo botão e fecha ao navegar', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/home');
+    const root = harness.routeNativeElement as HTMLElement;
+    const nav = root.querySelector<HTMLElement>('[data-testid="sidenav"]')!;
+    expect(nav.classList).not.toContain('open');
+
+    root.querySelector<HTMLButtonElement>('.topbar button')!.click();
+    harness.detectChanges();
+    expect(nav.classList).toContain('open');
+    expect(root.querySelector('[data-testid="nav-backdrop"]')).not.toBeNull();
+
+    root.querySelectorAll<HTMLElement>('[data-testid="nav-link"]')[1].click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(TestBed.inject(Location).path()).toBe('/faturas');
+    expect(nav.classList).not.toContain('open');
+  });
+
   it('lista todos os itens no menu lateral', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/home');
-    const links = harness.routeNativeElement?.querySelectorAll('mat-sidenav a[mat-list-item]');
+    const links = harness.routeNativeElement?.querySelectorAll(
+      '[data-testid="sidenav"] [data-testid="nav-link"]',
+    );
     expect(links?.length).toBe(NAV_ITEMS.length);
   });
 });

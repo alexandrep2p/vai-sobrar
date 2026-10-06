@@ -22,9 +22,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@taiga-ui/icons/src",
+                "output": "assets/taiga-ui/icons"
               }
             ],
             "styles": [
+              "@taiga-ui/styles/taiga-ui-theme.less",
+              "@taiga-ui/styles/taiga-ui-fonts.less",
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css"
             ]
@@ -69,7 +76,10 @@
           }
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "setupFiles": ["src/test-setup.ts"]
+          }
         }
       }
     }
