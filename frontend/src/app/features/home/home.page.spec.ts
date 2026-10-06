@@ -83,6 +83,159 @@ describe('HomePage', () => {
     return Array.from(document.querySelectorAll<HTMLElement>('[data-testid^="act-"]'));
   }
 
+  describe('painéis por cartão e filtros (PD-39)', () => {
+    const nbsp = (t?: string | null) => t?.replace(/\s+/g, ' ').trim();
+    const mercado = { id: 'cat-m', name: 'Mercado' };
+    const lazer = { id: 'cat-l', name: 'Lazer' };
+    const inter = { id: 'card2', name: 'Inter' };
+    const interMethod = { id: 'pm-inter', name: 'Inter' };
+
+    /** 1 item sem cartão (PIX/Moradia) + 2 no Nubank (Mercado) + 1 no Inter (Lazer). */
+    const items = () => [
+      statementItem(),
+      cardItem({ category: mercado }),
+      installmentItem({ category: mercado }),
+      cardItem({
+        description: 'Cinema',
+        amount: 4000,
+        signed_amount: -4000,
+        transaction_id: 't-inter',
+        category: lazer,
+        credit_card: inter,
+        payment_method: interMethod,
+      }),
+    ];
+    const panels = (f: ComponentFixture<unknown>) => all(f, '[data-testid="card-panel"]');
+    const panelNames = (f: ComponentFixture<unknown>) =>
+      panels(f).map((p) => nbsp(p.querySelector('[data-testid="panel-title"]')?.textContent));
+    const itemsIn = (panel: HTMLElement) =>
+      Array.from(panel.querySelectorAll<HTMLElement>('[data-testid="item"]'));
+    const isOpen = (panel: HTMLElement) => panel.classList.contains('mat-expanded');
+    const setFilter = (
+      f: ComponentFixture<unknown>,
+      filter: 'categoryFilter' | 'methodFilter',
+      ids: string[],
+    ) => {
+      (f.componentInstance as unknown as Record<string, { set: (v: string[]) => void }>)[
+        filter
+      ].set(ids);
+      f.detectChanges();
+    };
+
+    it('itens de cartão ficam em um painel por cartão, recolhidos; os demais em lista', async () => {
+      const f = await render(statement(items()));
+      expect(panelNames(f)).toEqual(['Nubank', 'Inter']);
+      expect(panels(f).some(isOpen)).toBe(false);
+      expect(all(f, '[data-testid="other-items"] [data-testid="item"]')).toHaveLength(1);
+      expect(itemsIn(panels(f)[0]!)).toHaveLength(2);
+      expect(itemsIn(panels(f)[1]!)).toHaveLength(1);
+    });
+
+    it('o cabeçalho mostra a quantidade de lançamentos e o total do cartão', async () => {
+      const f = await render(statement(items()));
+      const [nubank, cardInter] = panels(f);
+      const summary = (p: HTMLElement) =>
+        nbsp(p.querySelector('[data-testid="panel-summary"]')?.textContent);
+      expect(summary(nubank!)).toBe('2 lançamentos · − R$ 699,00');
+      expect(summary(cardInter!)).toBe('1 lançamento · − R$ 40,00');
+    });
+
+    it('sem itens de cartão não há painéis', async () => {
+      const f = await render(statement([statementItem()]));
+      expect(panels(f)).toHaveLength(0);
+      expect(all(f, '[data-testid="other-items"] [data-testid="item"]')).toHaveLength(1);
+    });
+
+    it('as opções dos filtros são as categorias e os métodos do mês', async () => {
+      const f = await render(statement(items()));
+      const c = f.componentInstance as unknown as {
+        categoryOptions: () => { name: string }[];
+        methodOptions: () => { name: string }[];
+      };
+      expect(c.categoryOptions().map((o) => o.name)).toEqual(['Lazer', 'Mercado', 'Moradia']);
+      expect(c.methodOptions().map((o) => o.name)).toEqual(['Inter', 'Nubank', 'PIX']);
+    });
+
+    it('filtra por categoria: painéis abrem, sem itens somem, totais do mês não mudam', async () => {
+      const f = await render(statement(items()));
+      const before = [testid(f, 'incomes'), testid(f, 'expenses'), testid(f, 'balance')];
+      setFilter(f, 'categoryFilter', ['cat-m']);
+      expect(panelNames(f)).toEqual(['Nubank']);
+      expect(isOpen(panels(f)[0]!)).toBe(true);
+      expect(all(f, '[data-testid="other-items"]')).toHaveLength(0);
+      expect(rows(f)).toHaveLength(2);
+      expect(nbsp(testid(f, 'filtered-summary'))).toBe('Filtrados: 2 itens · − R$ 699,00');
+      expect([testid(f, 'incomes'), testid(f, 'expenses'), testid(f, 'balance')]).toEqual(before);
+    });
+
+    it('vários valores no mesmo filtro valem como "ou"; entre filtros vale "e"', async () => {
+      const f = await render(statement(items()));
+      setFilter(f, 'categoryFilter', ['cat-m', 'cat-l']);
+      expect(panelNames(f)).toEqual(['Nubank', 'Inter']);
+      expect(rows(f)).toHaveLength(3);
+
+      setFilter(f, 'methodFilter', ['pm-inter']);
+      expect(panelNames(f)).toEqual(['Inter']);
+      expect(rows(f)).toHaveLength(1);
+      expect(nbsp(testid(f, 'filtered-summary'))).toBe('Filtrados: 1 item · − R$ 40,00');
+    });
+
+    it('filtro por método de pagamento mostra só os itens do método', async () => {
+      const f = await render(statement(items()));
+      setFilter(f, 'methodFilter', ['pm1']);
+      expect(panels(f)).toHaveLength(0);
+      expect(rows(f)).toHaveLength(1);
+      expect(rows(f)[0]!.textContent).toContain('Aluguel');
+    });
+
+    it('"Limpar filtros" restaura a lista e recolhe os painéis', async () => {
+      const f = await render(statement(items()));
+      setFilter(f, 'categoryFilter', ['cat-m']);
+      await click(f, one(f, '[data-testid="clear-filters"]'));
+      expect(rows(f)).toHaveLength(4);
+      expect(all(f, '[data-testid="filtered-summary"]')).toHaveLength(0);
+      expect(all(f, '[data-testid="clear-filters"]')).toHaveLength(0);
+      expect(panels(f).some(isOpen)).toBe(false);
+    });
+
+    it('filtro sem resultado mostra a mensagem própria', async () => {
+      const f = await render(statement(items()));
+      setFilter(f, 'categoryFilter', ['cat-l']);
+      setFilter(f, 'methodFilter', ['pm1']);
+      expect(testid(f, 'empty-filtered')).toBe('Nenhum item corresponde aos filtros.');
+      expect(rows(f)).toHaveLength(0);
+    });
+
+    it('seleciona pelo componente de seleção (overlay)', async () => {
+      const f = await render(statement(items()));
+      await click(f, one(f, '[data-testid="filter-method"] .mat-mdc-select-trigger'));
+      const options = Array.from(document.querySelectorAll<HTMLElement>('mat-option'));
+      const inter = options.find((o) => nbsp(o.textContent) === 'Inter')!;
+      await click(f, inter);
+      expect(panelNames(f)).toEqual(['Inter']);
+    });
+
+    it('ao trocar de mês, descarta seleções que não existem no novo mês', async () => {
+      const f = await render(statement(items()));
+      setFilter(f, 'categoryFilter', ['cat-l']);
+      ledger.statement.mockReturnValue(of(statement([statementItem()])));
+      await click(f, one(f, '[data-testid="next"]'));
+      expect(all(f, '[data-testid="clear-filters"]')).toHaveLength(0);
+      expect(rows(f)).toHaveLength(1);
+    });
+
+    it('as ações do item funcionam dentro do painel', async () => {
+      const f = await render(statement(items()));
+      dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+      const buttons = await openMenu(f, itemsIn(panels(f)[0]!)[0]!);
+      await click(
+        f,
+        buttons.find((b) => b.dataset['testid'] === 'act-delete')!,
+      );
+      expect(ledger.deleteTransaction).toHaveBeenCalledWith('t-card');
+    });
+  });
+
   describe('resumo e mês (CA-HOME-01)', () => {
     it('carrega o mês corrente e mostra o resumo', async () => {
       const fixture = await render();

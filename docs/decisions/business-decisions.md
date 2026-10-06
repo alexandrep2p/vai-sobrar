@@ -351,6 +351,17 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Exemplo:** compra de R$ 600 em 3x lançada errada, com faturas abertas → "Apagar" remove as 3 parcelas e as faturas que ficarem vazias; se a fatura de outubro já estiver paga, é rejeitado.
 * **Fonte:** `transactions.md` §13; `installments.md` §11; `credit-cards.md` §9; `recurrences.md` §10.
 
+### PD-39 — Home: painéis por cartão e filtros
+* **Status:** Vigente. Decisão de apresentação; não altera nenhuma regra financeira nem os totais.
+* **Decisão:** no extrato, os itens de cartão (compras, parcelas, ocorrências e créditos de estorno de um cartão) são agrupados por cartão em painéis expansíveis, **recolhidos por padrão**; os demais itens continuam em lista. O topo da lista tem filtros por **categoria** e por **método de pagamento**.
+* **Regra:**
+  * cabeçalho do painel: nome do cartão, quantidade de lançamentos e total (soma dos valores com sinal dos itens exibidos);
+  * filtros de múltipla escolha: dentro de um filtro vale "ou"; entre categoria e método vale "e"; sem seleção = sem filtro; as opções são as categorias e métodos que existem no mês;
+  * com filtro ativo, cada painel mostra só os itens que passam, **abre sozinho** (pode ser recolhido) e painel sem itens não aparece;
+  * os totais do topo (Entradas, Saídas, Saldo previsto) continuam sendo os do mês inteiro; com filtro ativo, mostra-se à parte "Filtrados: N itens · total";
+  * as ações do item (editar, pagar, estornar, apagar etc.) são as mesmas dentro e fora dos painéis.
+* **Fonte:** `home.md` §3.2 e §7.
+
 ---
 
 ## 3. Consequências registradas (CD)

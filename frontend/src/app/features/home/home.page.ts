@@ -1,10 +1,14 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 import { Observable } from 'rxjs';
-import type { MonthlyStatement, RefundSituation, StatementItem } from '../../core/api/models';
+import type { MonthlyStatement, Ref, RefundSituation, StatementItem } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
 import { addMonths, formatMonth, formatShortDate } from '../../shared/format/dates';
@@ -28,9 +32,33 @@ import { RefundDialog } from './refund-dialog';
 import { TransactionEditDialog } from './transaction-edit-dialog';
 import { TransactionFormDialog } from './transaction-form-dialog';
 
+/** Itens de um cartão no mês, exibidos em um painel (PD-39). */
+interface CardGroup {
+  card: Ref;
+  items: StatementItem[];
+  /** Soma dos valores com sinal dos itens exibidos. */
+  total: number;
+}
+
+const byName = (a: Ref, b: Ref): number => a.name.localeCompare(b.name, 'pt-BR');
+
+function uniqueRefs(refs: Ref[]): Ref[] {
+  return [...new Map(refs.map((r) => [r.id, r])).values()].sort(byName);
+}
+
 @Component({
   selector: 'app-home-page',
-  imports: [MatButton, MatIconButton, MatIcon, MatMenuModule, LoadState],
+  imports: [
+    NgTemplateOutlet,
+    MatButton,
+    MatIconButton,
+    MatIcon,
+    MatMenuModule,
+    MatExpansionModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    LoadState,
+  ],
   templateUrl: './home.page.html',
   styleUrl: './home.page.css',
 })
@@ -43,6 +71,53 @@ export class HomePage implements OnInit {
   protected readonly status = signal<LoadStatus>('loading');
   protected readonly statement = signal<MonthlyStatement | null>(null);
   protected readonly refundStates = signal<Record<string, RefundSituation>>({});
+
+  // --- filtros (PD-39): múltipla escolha; "ou" dentro de cada filtro, "e" entre eles ---
+  protected readonly categoryFilter = signal<string[]>([]);
+  protected readonly methodFilter = signal<string[]>([]);
+
+  protected readonly categoryOptions = computed(() =>
+    uniqueRefs((this.statement()?.items ?? []).map((i) => i.category)),
+  );
+  protected readonly methodOptions = computed(() =>
+    uniqueRefs((this.statement()?.items ?? []).map((i) => i.payment_method)),
+  );
+  protected readonly filtersActive = computed(
+    () => this.categoryFilter().length > 0 || this.methodFilter().length > 0,
+  );
+  protected readonly filteredItems = computed(() => {
+    const categories = this.categoryFilter();
+    const methods = this.methodFilter();
+    return (this.statement()?.items ?? []).filter(
+      (i) =>
+        (categories.length === 0 || categories.includes(i.category.id)) &&
+        (methods.length === 0 || methods.includes(i.payment_method.id)),
+    );
+  });
+  protected readonly filteredSummary = computed(() => ({
+    count: this.filteredItems().length,
+    total: this.filteredItems().reduce((sum, i) => sum + i.signed_amount, 0),
+  }));
+
+  /** Itens de cartão agrupados por cartão (ordem de primeira aparição no extrato). */
+  protected readonly cardGroups = computed<CardGroup[]>(() => {
+    const groups = new Map<string, CardGroup>();
+    for (const item of this.filteredItems()) {
+      if (!item.credit_card) continue;
+      const group = groups.get(item.credit_card.id) ?? {
+        card: item.credit_card,
+        items: [],
+        total: 0,
+      };
+      group.items.push(item);
+      group.total += item.signed_amount;
+      groups.set(item.credit_card.id, group);
+    }
+    return [...groups.values()];
+  });
+  protected readonly otherItems = computed(() =>
+    this.filteredItems().filter((i) => i.credit_card === null),
+  );
 
   protected readonly monthLabel = computed(() => formatMonth(this.month()));
   protected readonly isCurrentMonth = computed(() => this.month() === this.clock.currentMonth());
@@ -68,11 +143,25 @@ export class HomePage implements OnInit {
     this.ledger.statement(this.month()).subscribe({
       next: (statement) => {
         this.statement.set(statement);
+        this.pruneFilters(statement);
         this.status.set('ready');
         this.loadRefundStates(statement.items);
       },
       error: () => this.status.set('error'),
     });
+  }
+
+  protected clearFilters(): void {
+    this.categoryFilter.set([]);
+    this.methodFilter.set([]);
+  }
+
+  /** Descarta seleções que não existem mais no mês carregado (evita filtro "fantasma"). */
+  private pruneFilters(statement: MonthlyStatement): void {
+    const categories = new Set(statement.items.map((i) => i.category.id));
+    const methods = new Set(statement.items.map((i) => i.payment_method.id));
+    this.categoryFilter.update((ids) => ids.filter((id) => categories.has(id)));
+    this.methodFilter.update((ids) => ids.filter((id) => methods.has(id)));
   }
 
   // --- navegação entre meses ---

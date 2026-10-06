@@ -78,6 +78,14 @@ Mercado Livre — Coxim do motor — 2/10 — R$ 59,00
 
 ---
 
+### 3.2 Painéis por cartão e filtros (PD-39)
+
+* Os itens de cada cartão são agrupados em um painel expansível por cartão, recolhido por padrão; o cabeçalho mostra o nome do cartão, a quantidade de lançamentos e o total. Os demais itens ficam em lista.
+* Filtros por categoria e por método de pagamento, de múltipla escolha ("ou" dentro de cada filtro, "e" entre eles), com as opções existentes no mês.
+* Com filtro ativo, os painéis abrem sozinhos e mostram só os itens que passam; painel sem itens não aparece. Os totais do topo não mudam; os itens filtrados têm contagem e total à parte.
+
+---
+
 ## 4. Exemplo do extrato
 
 Cartão Nubank com melhor dia 6 e vencimento 15. Mês: janeiro/2027. Todos os itens de cartão abaixo estão na fatura Nubank de janeiro/2027 (ciclo 07/12 a 06/01, vencimento 15/01).
@@ -164,6 +172,8 @@ O mês não poderá ser reaberto.
 * **RN-HOME-05A** — Em "Ver compra original" de uma parcela, o plano pode ser editado (valor total, parcelas e data) quando `installments.md` §8 permitir (PD-36).
 * **RN-HOME-06** — Ocorrências projetadas aparecem como previstas `Em aberto`.
 * **RN-HOME-06A** — Data exibida: `due_date` para método comum, `purchase_date` para cartão, `refund_date` para créditos de estorno.
+* **RN-HOME-06B** — Itens de cartão ficam em painéis por cartão, recolhidos por padrão; os demais, em lista (PD-39).
+* **RN-HOME-06C** — Filtros por categoria e método (múltipla escolha, "ou" dentro e "e" entre); os totais do mês não mudam com o filtro (PD-39).
 * **RN-HOME-07** — Fechamento é manual, confirmado, irreversível e segue `financial-periods.md`.
 * **RN-HOME-08** — Mês fechado é exibido como fechado, sem ações de alteração.
 
@@ -182,6 +192,9 @@ O mês não poderá ser reaberto.
 * **CA-HOME-09** — Mês futuro mostra ocorrências projetadas de recorrências ativas.
 * **CA-HOME-10** — Fechar mês pede confirmação; com pendência, é rejeitado com o motivo.
 * **CA-HOME-11** — Mês fechado é exibido como fechado e sem ações de alteração.
+* **CA-HOME-13** — Dois cartões com lançamentos no mês: a Home mostra dois painéis recolhidos, cada um com nome, quantidade e total.
+* **CA-HOME-14** — Filtrar por categoria "Mercado" e método "Nubank" mostra só os itens que atendem aos dois; os painéis abrem; Entradas, Saídas e Saldo previsto não mudam.
+* **CA-HOME-15** — Filtro que não casa com nenhum item mostra "Nenhum item corresponde aos filtros".
 * **CA-HOME-12** — Compra de 20/12 na fatura de janeiro aparece no extrato de janeiro com a data 20/12.
 
 ---

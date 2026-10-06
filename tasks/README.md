@@ -79,6 +79,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-56](T-56-ui-installment-plan-edit.md) | Edição de compra parcelada (frontend) | 4 | T-55, T-49, T-50 | Concluída |
 | [T-57](T-57-api-delete.md) | Apagar lançamentos e compras parceladas (backend) | 3 | T-26, T-27, T-31, T-53 | Concluída |
 | [T-58](T-58-ui-delete.md) | Apagar lançamentos e compras parceladas (frontend) | 4 | T-57, T-41 | Concluída |
+| [T-59](T-59-ui-home-card-panels-filters.md) | Home: painéis por cartão e filtros | 4 | T-39, T-41 | Concluída |
 
 ## Como usar
 
