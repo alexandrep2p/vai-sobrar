@@ -31,7 +31,13 @@
         <div class="sub" data-testid="settled-by-invoice">Liquidação pelo pagamento da fatura</div>
       }
       @if (item.installment || item.refund) {
-        <button mat-button class="link" (click)="openPurchase(item)" data-testid="purchase-link">
+        <button
+          tuiLink
+          type="button"
+          class="link"
+          (click)="openPurchase(item)"
+          data-testid="purchase-link"
+        >
           Ver compra original
         </button>
       }
@@ -52,44 +58,95 @@
       }
     </div>
     @if (hasActions(a)) {
+      @let key = menuKey(item);
       <button
-        mat-icon-button
+        tuiIconButton
+        type="button"
+        appearance="flat"
+        iconStart="@tui.ellipsis-vertical"
         class="menu-trigger"
         aria-label="Ações"
-        [matMenuTriggerFor]="menu"
+        tuiDropdownAlign="end"
+        [tuiDropdown]="menu"
+        [tuiDropdownOpen]="openMenu() === key"
+        (tuiDropdownOpenChange)="openMenu.set($event ? key : null)"
         data-testid="menu"
       >
-        <mat-icon>more_vert</mat-icon>
+        Ações
       </button>
-      <mat-menu #menu="matMenu">
-        @if (a.edit) {
-          <button mat-menu-item (click)="edit(item)" data-testid="act-edit">Editar</button>
-        }
-        @if (a.pay) {
-          <button mat-menu-item (click)="pay(item)" data-testid="act-pay">Pagar</button>
-        }
-        @if (a.unpay) {
-          <button mat-menu-item (click)="unpay(item)" data-testid="act-unpay">
-            Desfazer pagamento
-          </button>
-        }
-        @if (a.refund) {
-          <button mat-menu-item (click)="refund(item)" data-testid="act-refund">Estornar</button>
-        }
-        @if (a.skip) {
-          <button mat-menu-item (click)="skip(item)" data-testid="act-skip">Pular</button>
-        }
-        @if (a.delete) {
-          <button mat-menu-item (click)="remove(item)" data-testid="act-delete">Apagar</button>
-        }
-      </mat-menu>
+      <ng-template #menu>
+        <tui-data-list>
+          @if (a.edit) {
+            <button
+              tuiOption
+              type="button"
+              (click)="closeMenu(); edit(item)"
+              data-testid="act-edit"
+            >
+              Editar
+            </button>
+          }
+          @if (a.pay) {
+            <button tuiOption type="button" (click)="closeMenu(); pay(item)" data-testid="act-pay">
+              Pagar
+            </button>
+          }
+          @if (a.unpay) {
+            <button
+              tuiOption
+              type="button"
+              (click)="closeMenu(); unpay(item)"
+              data-testid="act-unpay"
+            >
+              Desfazer pagamento
+            </button>
+          }
+          @if (a.refund) {
+            <button
+              tuiOption
+              type="button"
+              (click)="closeMenu(); refund(item)"
+              data-testid="act-refund"
+            >
+              Estornar
+            </button>
+          }
+          @if (a.skip) {
+            <button
+              tuiOption
+              type="button"
+              (click)="closeMenu(); skip(item)"
+              data-testid="act-skip"
+            >
+              Pular
+            </button>
+          }
+          @if (a.delete) {
+            <button
+              tuiOption
+              type="button"
+              (click)="closeMenu(); remove(item)"
+              data-testid="act-delete"
+            >
+              Apagar
+            </button>
+          }
+        </tui-data-list>
+      </ng-template>
     }
   </div>
 </ng-template>
 
 <div class="month-nav">
-  <button mat-icon-button aria-label="Mês anterior" (click)="go(-1)" data-testid="prev">
-    <mat-icon>chevron_left</mat-icon>
+  <button
+    tuiIconButton
+    type="button"
+    appearance="flat"
+    iconStart="@tui.chevron-left"
+    (click)="go(-1)"
+    data-testid="prev"
+  >
+    Mês anterior
   </button>
   <div class="month-title">
     <label class="month-picker">
@@ -107,11 +164,27 @@
       </span>
     }
   </div>
-  <button mat-icon-button aria-label="Próximo mês" (click)="go(1)" data-testid="next">
-    <mat-icon>chevron_right</mat-icon>
+  <button
+    tuiIconButton
+    type="button"
+    appearance="flat"
+    iconStart="@tui.chevron-right"
+    (click)="go(1)"
+    data-testid="next"
+  >
+    Próximo mês
   </button>
   @if (!isCurrentMonth()) {
-    <button mat-stroked-button (click)="goToday()" data-testid="today">Mês atual</button>
+    <button
+      tuiButton
+      type="button"
+      appearance="outline"
+      size="s"
+      (click)="goToday()"
+      data-testid="today"
+    >
+      Mês atual
+    </button>
   }
 </div>
 
@@ -136,11 +209,22 @@
       <h2 class="section-title no-margin">Extrato</h2>
       @if (monthOpen()) {
         <div class="header-actions">
-          <button mat-flat-button (click)="newTransaction()" data-testid="new-transaction">
-            <mat-icon>add</mat-icon>
+          <button
+            tuiButton
+            type="button"
+            iconStart="@tui.plus"
+            (click)="newTransaction()"
+            data-testid="new-transaction"
+          >
             Lançamento
           </button>
-          <button mat-stroked-button (click)="closeMonth()" data-testid="close-month">
+          <button
+            tuiButton
+            type="button"
+            appearance="outline"
+            (click)="closeMonth()"
+            data-testid="close-month"
+          >
             Fechar mês
           </button>
         </div>
@@ -151,34 +235,49 @@
       <div class="state-box" data-testid="empty">Nenhum item neste mês.</div>
     } @else {
       <div class="filters" data-testid="filters">
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>Categoria</mat-label>
-          <mat-select
-            multiple
-            [value]="categoryFilter()"
-            (selectionChange)="categoryFilter.set($event.value)"
-            data-testid="filter-category"
-          >
-            @for (c of categoryOptions(); track c.id) {
-              <mat-option [value]="c.id">{{ c.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>Método de pagamento</mat-label>
-          <mat-select
-            multiple
-            [value]="methodFilter()"
-            (selectionChange)="methodFilter.set($event.value)"
-            data-testid="filter-method"
-          >
-            @for (m of methodOptions(); track m.id) {
-              <mat-option [value]="m.id">{{ m.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <tui-textfield multi tuiChevron [stringify]="categoryName" data-testid="filter-category">
+          <label tuiLabel>Categoria</label>
+          <input
+            tuiInputChip
+            tuiSelectLike
+            [ngModel]="categoryFilter()"
+            (ngModelChange)="categoryFilter.set($event)"
+          />
+          <tui-input-chip *tuiItem />
+          <tui-data-list *tuiDropdown>
+            <tui-opt-group tuiMultiSelectGroup>
+              @for (c of categoryOptions(); track c.id) {
+                <button tuiOption type="button" [value]="c.id">{{ c.name }}</button>
+              }
+            </tui-opt-group>
+          </tui-data-list>
+        </tui-textfield>
+        <tui-textfield multi tuiChevron [stringify]="methodName" data-testid="filter-method">
+          <label tuiLabel>Método de pagamento</label>
+          <input
+            tuiInputChip
+            tuiSelectLike
+            [ngModel]="methodFilter()"
+            (ngModelChange)="methodFilter.set($event)"
+          />
+          <tui-input-chip *tuiItem />
+          <tui-data-list *tuiDropdown>
+            <tui-opt-group tuiMultiSelectGroup>
+              @for (m of methodOptions(); track m.id) {
+                <button tuiOption type="button" [value]="m.id">{{ m.name }}</button>
+              }
+            </tui-opt-group>
+          </tui-data-list>
+        </tui-textfield>
         @if (filtersActive()) {
-          <button mat-button (click)="clearFilters()" data-testid="clear-filters">
+          <button
+            tuiButton
+            type="button"
+            appearance="flat"
+            size="s"
+            (click)="clearFilters()"
+            data-testid="clear-filters"
+          >
             Limpar filtros
           </button>
         }
@@ -206,25 +305,30 @@
 
         @if (cardGroups().length > 0) {
           <h3 class="group-title">Cartões</h3>
-          <mat-accordion multi>
+          <tui-accordion class="card-panels" [closeOthers]="false">
             @for (group of cardGroups(); track group.card.id) {
-              <mat-expansion-panel [expanded]="filtersActive()" data-testid="card-panel">
-                <mat-expansion-panel-header>
-                  <mat-panel-title data-testid="panel-title">{{ group.card.name }}</mat-panel-title>
-                  <mat-panel-description data-testid="panel-summary">
-                    {{ group.items.length }}
-                    {{ group.items.length === 1 ? 'lançamento' : 'lançamentos' }} ·
-                    {{ signed(group.total) }}
-                  </mat-panel-description>
-                </mat-expansion-panel-header>
+              <button
+                appearance="secondary"
+                class="panel-header"
+                [tuiAccordion]="filtersActive()"
+                data-testid="card-panel"
+              >
+                <span class="panel-title" data-testid="panel-title">{{ group.card.name }}</span>
+                <span class="panel-summary" data-testid="panel-summary">
+                  {{ group.items.length }}
+                  {{ group.items.length === 1 ? 'lançamento' : 'lançamentos' }} ·
+                  {{ signed(group.total) }}
+                </span>
+              </button>
+              <tui-expand class="panel-body" data-testid="panel-body">
                 <div class="list-card panel-list">
                   @for (item of group.items; track trackKey(item, $index)) {
                     <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
                   }
                 </div>
-              </mat-expansion-panel>
+              </tui-expand>
             }
-          </mat-accordion>
+          </tui-accordion>
         }
       }
     }

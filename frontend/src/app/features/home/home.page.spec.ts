@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTaiga } from '@taiga-ui/core';
 import { of } from 'rxjs';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
@@ -12,7 +13,7 @@ import {
   statementItem,
 } from '../../../testing/fixtures';
 import { AppDialog } from '../../shared/ui/dialog';
-import { all, click, fail, one, text } from '../../../testing/helpers';
+import { all, click, fail, one, overlay, text, tuiRoot } from '../../../testing/helpers';
 import { CloseMonthDialog } from './close-month-dialog';
 import { HomePage } from './home.page';
 import { PurchaseDetailDialog } from './purchase-detail-dialog';
@@ -60,12 +61,14 @@ describe('HomePage', () => {
         { provide: LedgerService, useValue: ledger },
         { provide: AppDialog, useValue: dialog },
         { provide: Clock, useValue: { today: () => '2027-01-10', currentMonth: () => '2027-01' } },
+        provideTaiga({ mode: 'light' }),
       ],
     });
   });
 
   async function render(data = statement([statementItem()])) {
     ledger.statement.mockReturnValue(of(data));
+    tuiRoot();
     const fixture = TestBed.createComponent(HomePage);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -77,10 +80,10 @@ describe('HomePage', () => {
   const testid = (f: ComponentFixture<unknown>, id: string) =>
     one(f, `[data-testid="${id}"]`).textContent?.replace(/\s+/g, ' ').trim();
 
-  /** Abre o menu de ações da linha e devolve os botões do overlay. */
+  /** Abre o menu de ações da linha e devolve os botões do overlay (no tui-root). */
   async function openMenu(f: ComponentFixture<unknown>, row: HTMLElement) {
     await click(f, row.querySelector<HTMLElement>('[data-testid="menu"]')!);
-    return Array.from(document.querySelectorAll<HTMLElement>('[data-testid^="act-"]'));
+    return overlay('[data-testid^="act-"]');
   }
 
   describe('painéis por cartão e filtros (PD-39)', () => {
@@ -108,9 +111,10 @@ describe('HomePage', () => {
     const panels = (f: ComponentFixture<unknown>) => all(f, '[data-testid="card-panel"]');
     const panelNames = (f: ComponentFixture<unknown>) =>
       panels(f).map((p) => nbsp(p.querySelector('[data-testid="panel-title"]')?.textContent));
+    /** Itens do painel: ficam no corpo (tui-expand) logo após o cabeçalho. */
     const itemsIn = (panel: HTMLElement) =>
-      Array.from(panel.querySelectorAll<HTMLElement>('[data-testid="item"]'));
-    const isOpen = (panel: HTMLElement) => panel.classList.contains('mat-expanded');
+      Array.from(panel.nextElementSibling!.querySelectorAll<HTMLElement>('[data-testid="item"]'));
+    const isOpen = (panel: HTMLElement) => panel.getAttribute('aria-expanded') === 'true';
     const setFilter = (
       f: ComponentFixture<unknown>,
       filter: 'categoryFilter' | 'methodFilter',
@@ -208,8 +212,8 @@ describe('HomePage', () => {
 
     it('seleciona pelo componente de seleção (overlay)', async () => {
       const f = await render(statement(items()));
-      await click(f, one(f, '[data-testid="filter-method"] .mat-mdc-select-trigger'));
-      const options = Array.from(document.querySelectorAll<HTMLElement>('mat-option'));
+      await click(f, one(f, '[data-testid="filter-method"] input'));
+      const options = overlay('[tuiOption]');
       const inter = options.find((o) => nbsp(o.textContent) === 'Inter')!;
       await click(f, inter);
       expect(panelNames(f)).toEqual(['Inter']);

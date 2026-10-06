@@ -2,7 +2,7 @@
 
 * **Fase:** 4 — Frontend
 * **Depende de:** T-61
-* **Status:** Pendente
+* **Status:** Concluída
 
 ## Objetivo
 
@@ -47,3 +47,11 @@ Migrar a Home (extrato, painéis por cartão, filtros, menu de ações) e seus d
 
 ## Decisões técnicas registradas
 
+* Painéis por cartão: `tui-accordion [closeOthers]="false"`, com `button [tuiAccordion]="filtersActive()"` como cabeçalho (`data-testid="card-panel"`) e `tui-expand` como corpo. Os dois precisam ser filhos diretos do accordion. O `tui-expand` sem `*tuiItem` mantém os itens renderizados mesmo recolhidos, como na T-59. Nos testes, o painel aberto é `aria-expanded="true"` e os itens ficam no elemento seguinte ao cabeçalho.
+* Filtros: `tui-textfield multi tuiChevron` com `input tuiInputChip tuiSelectLike` (não editável), chips (`tui-input-chip *tuiItem`) e `tui-opt-group tuiMultiSelectGroup`. Os valores são ids; os nomes vêm de `[stringify]` (`categoryName` e `methodName`).
+* Menu de ações do item: `tuiIconButton` com `[tuiDropdown]` e `tui-data-list`. Só um menu fica aberto por vez (`openMenu`, a chave do item), e a escolha de uma ação fecha o menu antes de executá-la.
+* Formulário de lançamento: o alternador Saída/Entrada virou `tui-segmented` com radios `formControlName="type"`. Os selects de id usam `nameById` (`shared/forms/options.ts`); na edição, o próprio item entra no `stringify` para o campo não ficar vazio antes de as listas carregarem.
+* `pay-dialog` (compartilhado) migrado junto, por ser usado na Home.
+* Testes: `tuiRoot()` cria o `TuiRoot` no mesmo TestBed, e `overlay()` lê menus e dropdowns abertos nele. `click()` também atualiza o root. O TestBed tira do documento os elementos raiz anteriores, por isso a leitura é pelo root e não por `document`.
+* Cards de saldo: `--tui-status-info-pale`, em vez do accent laranja, que soaria como alerta.
+* Verificado no navegador (desktop e 375px): painéis, filtro com chip e painel abrindo, menu → Editar (select com nome), Saída/Entrada, sem gravar dados.

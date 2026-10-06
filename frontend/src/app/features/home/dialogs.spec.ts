@@ -273,7 +273,7 @@ describe('TransactionEditDialog (T-41)', () => {
   }
 
   const labels = (f: ComponentFixture<unknown>) =>
-    all(f, 'mat-label').map((l) => l.textContent?.trim());
+    all(f, 'label[tuiLabel]').map((l) => l.textContent?.trim());
 
   it('manual: edita descrição, valor, vencimento, categoria e método', () => {
     expect(labels(setup())).toEqual([

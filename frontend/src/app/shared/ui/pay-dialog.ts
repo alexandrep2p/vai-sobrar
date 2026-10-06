@@ -1,10 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
 import { Clock } from '../../core/clock';
+import { nameById } from '../forms/options';
 import { injectDialog } from './dialog';
 
 export interface PayDialogData {
@@ -24,7 +23,16 @@ export interface PayDialogResult {
 /** Coleta a data do pagamento (e, opcionalmente, o método). Quem abre o diálogo faz a chamada. */
 @Component({
   selector: 'app-pay-dialog',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MatSelectModule, TuiButton],
+  imports: [
+    ReactiveFormsModule,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
+  ],
   template: `
     <h2 class="dialog-title">{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="confirm()">
@@ -32,25 +40,36 @@ export interface PayDialogResult {
         @if (data.message) {
           <p class="hint-text">{{ data.message }}</p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Data do pagamento</mat-label>
-          <input matInput type="date" formControlName="paid_at" />
-          @if (form.controls.paid_at.invalid) {
-            <mat-error>Informe a data.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Data do pagamento</label>
+            <input tuiInput type="date" formControlName="paid_at" />
+          </tui-textfield>
+          @if (form.controls.paid_at.touched && form.controls.paid_at.invalid) {
+            <tui-error error="Informe a data." />
           }
-        </mat-form-field>
+        </div>
         @if (data.methods) {
-          <mat-form-field class="full-width">
-            <mat-label>Método de pagamento</mat-label>
-            <mat-select formControlName="payment_method_id">
-              @for (method of data.methods; track method.id) {
-                <mat-option [value]="method.id">{{ method.name }}</mat-option>
-              }
-            </mat-select>
-            @if (form.controls.payment_method_id.invalid) {
-              <mat-error>Escolha o método.</mat-error>
+          <div class="field full-width">
+            <tui-textfield tuiChevron [stringify]="methodName">
+              <label tuiLabel>Método de pagamento</label>
+              <input
+                tuiSelect
+                formControlName="payment_method_id"
+                data-testid="payment_method_id"
+              />
+              <tui-data-list *tuiDropdown>
+                @for (method of data.methods; track method.id) {
+                  <button tuiOption type="button" [value]="method.id">{{ method.name }}</button>
+                }
+              </tui-data-list>
+            </tui-textfield>
+            @if (
+              form.controls.payment_method_id.touched && form.controls.payment_method_id.invalid
+            ) {
+              <tui-error error="Escolha o método." />
             }
-          </mat-form-field>
+          </div>
         }
       </div>
       <footer class="dialog-actions">
@@ -63,6 +82,7 @@ export interface PayDialogResult {
 export class PayDialog {
   protected readonly ref = injectDialog<PayDialogData, PayDialogResult>();
   protected readonly data = this.ref.data;
+  protected readonly methodName = nameById(() => this.data.methods ?? []);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     paid_at: [inject(Clock).today(), Validators.required],

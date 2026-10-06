@@ -1,8 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
@@ -20,7 +18,7 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
  */
 @Component({
   selector: 'app-plan-edit-dialog',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MoneyInput, TuiButton],
+  imports: [ReactiveFormsModule, MoneyInput, TuiButton, TuiInput, TuiError],
   template: `
     <h2 class="dialog-title">Editar compra parcelada</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -31,36 +29,44 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
           As parcelas serão recalculadas. A edição só é possível enquanto nenhuma parcela estiver em
           fatura paga ou mês fechado e a compra não tiver estorno.
         </p>
-        <mat-form-field class="full-width">
-          <mat-label>Valor total (R$)</mat-label>
-          <input matInput appMoneyInput formControlName="amount" data-testid="amount" />
-          @if (form.controls.amount.invalid) {
-            <mat-error>Informe um valor maior que zero.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Valor total (R$)</label>
+            <input tuiInput appMoneyInput formControlName="amount" data-testid="amount" />
+          </tui-textfield>
+          @if (form.controls.amount.touched && form.controls.amount.invalid) {
+            <tui-error error="Informe um valor maior que zero." />
           }
-        </mat-form-field>
+        </div>
         <div class="form-grid two">
-          <mat-form-field>
-            <mat-label>Parcelas</mat-label>
-            <input
-              matInput
-              type="number"
-              inputmode="numeric"
-              min="2"
-              max="120"
-              formControlName="installment_count"
-              data-testid="count"
-            />
-            @if (form.controls.installment_count.invalid) {
-              <mat-error>Informe de 2 a 120.</mat-error>
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Parcelas</label>
+              <input
+                tuiInput
+                type="number"
+                inputmode="numeric"
+                min="2"
+                max="120"
+                formControlName="installment_count"
+                data-testid="count"
+              />
+            </tui-textfield>
+            @if (
+              form.controls.installment_count.touched && form.controls.installment_count.invalid
+            ) {
+              <tui-error error="Informe de 2 a 120." />
             }
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Data da compra</mat-label>
-            <input matInput type="date" formControlName="purchase_date" data-testid="date" />
-            @if (form.controls.purchase_date.invalid) {
-              <mat-error>Informe a data da compra.</mat-error>
+          </div>
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Data da compra</label>
+              <input tuiInput type="date" formControlName="purchase_date" data-testid="date" />
+            </tui-textfield>
+            @if (form.controls.purchase_date.touched && form.controls.purchase_date.invalid) {
+              <tui-error error="Informe a data da compra." />
             }
-          </mat-form-field>
+          </div>
         </div>
       </div>
       <footer class="dialog-actions">

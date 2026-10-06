@@ -1,9 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiSelect } from '@taiga-ui/kit';
 import type { RefundInput, RefundSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
@@ -33,11 +31,14 @@ export interface RefundDialogData {
   selector: 'app-refund-dialog',
   imports: [
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInput,
     MoneyInput,
-    MatSelectModule,
     TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
   ],
   template: `
     <h2 class="dialog-title">Estornar compra</h2>
@@ -53,29 +54,38 @@ export interface RefundDialogData {
             }
           </p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Valor do estorno (R$)</mat-label>
-          <input matInput appMoneyInput formControlName="amount" />
-          @if (form.controls.amount.invalid) {
-            <mat-error>Informe um valor maior que zero.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Valor do estorno (R$)</label>
+            <input tuiInput appMoneyInput formControlName="amount" />
+          </tui-textfield>
+          @if (form.controls.amount.touched && form.controls.amount.invalid) {
+            <tui-error error="Informe um valor maior que zero." />
           }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Data do estorno</mat-label>
-          <input matInput type="date" formControlName="refund_date" />
-          @if (form.controls.refund_date.invalid) {
-            <mat-error>Informe a data.</mat-error>
+        </div>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Data do estorno</label>
+            <input tuiInput type="date" formControlName="refund_date" />
+          </tui-textfield>
+          @if (form.controls.refund_date.touched && form.controls.refund_date.invalid) {
+            <tui-error error="Informe a data." />
           }
-        </mat-form-field>
+        </div>
         @if (data.planId) {
-          <mat-form-field class="full-width">
-            <mat-label>Estratégia</mat-label>
-            <mat-select formControlName="strategy">
-              @for (strategy of strategies; track strategy) {
-                <mat-option [value]="strategy">{{ strategyLabel(strategy) }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="field full-width">
+            <tui-textfield tuiChevron [stringify]="strategyLabel">
+              <label tuiLabel>Estratégia</label>
+              <input tuiSelect formControlName="strategy" data-testid="strategy" />
+              <tui-data-list *tuiDropdown>
+                @for (strategy of strategies; track strategy) {
+                  <button tuiOption type="button" [value]="strategy">
+                    {{ strategyLabel(strategy) }}
+                  </button>
+                }
+              </tui-data-list>
+            </tui-textfield>
+          </div>
         }
       </div>
       <footer class="dialog-actions">

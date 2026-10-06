@@ -1,11 +1,15 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import {
+  TuiButton,
+  TuiDataList,
+  TuiDropdown,
+  TuiExpand,
+  TuiLink,
+  TuiSelectLike,
+} from '@taiga-ui/core';
+import { TuiAccordion, TuiChevron, TuiInputChip, TuiMultiSelect } from '@taiga-ui/kit';
 import { Observable } from 'rxjs';
 import type { MonthlyStatement, Ref, RefundSituation, StatementItem } from '../../core/api/models';
 import { Clock } from '../../core/clock';
@@ -49,13 +53,17 @@ function uniqueRefs(refs: Ref[]): Ref[] {
   selector: 'app-home-page',
   imports: [
     NgTemplateOutlet,
-    MatButton,
-    MatIconButton,
-    MatIcon,
-    MatMenuModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatSelectModule,
+    FormsModule,
+    TuiButton,
+    TuiLink,
+    TuiDropdown,
+    TuiDataList,
+    TuiAccordion,
+    TuiExpand,
+    TuiChevron,
+    TuiInputChip,
+    TuiSelectLike,
+    TuiMultiSelect,
     LoadState,
   ],
   templateUrl: './home.page.html',
@@ -81,6 +89,11 @@ export class HomePage implements OnInit {
   protected readonly methodOptions = computed(() =>
     uniqueRefs((this.statement()?.items ?? []).map((i) => i.payment_method)),
   );
+  /** Nomes exibidos nos chips dos filtros (o valor selecionado é o id). */
+  protected readonly categoryName = (id: string): string =>
+    this.categoryOptions().find((c) => c.id === id)?.name ?? '';
+  protected readonly methodName = (id: string): string =>
+    this.methodOptions().find((m) => m.id === id)?.name ?? '';
   protected readonly filtersActive = computed(
     () => this.categoryFilter().length > 0 || this.methodFilter().length > 0,
   );
@@ -209,7 +222,19 @@ export class HomePage implements OnInit {
   }
 
   protected trackKey(item: StatementItem, index: number): string {
-    return `${item.item_type}:${item.transaction_id ?? item.recurrence_id ?? item.refund?.refund_id}:${item.occurrence_month ?? ''}:${index}`;
+    return `${this.menuKey(item)}:${index}`;
+  }
+
+  // --- menu de ações do item: um aberto por vez ---
+
+  protected readonly openMenu = signal<string | null>(null);
+
+  protected menuKey(item: StatementItem): string {
+    return `${item.item_type}:${item.transaction_id ?? item.recurrence_id ?? item.refund?.refund_id}:${item.occurrence_month ?? ''}`;
+  }
+
+  protected closeMenu(): void {
+    this.openMenu.set(null);
   }
 
   // --- ações do extrato ---

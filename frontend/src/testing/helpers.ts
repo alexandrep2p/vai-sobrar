@@ -1,4 +1,5 @@
-import { ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TuiRoot } from '@taiga-ui/core';
 import { POLYMORPHEUS_CONTEXT } from '@taiga-ui/polymorpheus';
 import { type Observable, of, Subject, throwError } from 'rxjs';
 import { AppDialog } from '../app/shared/ui/dialog';
@@ -28,6 +29,8 @@ export async function click(
   element.click();
   fixture.detectChanges();
   await fixture.whenStable();
+  // Overlays (menus, dropdowns) abertos pelo clique vivem no tui-root.
+  activeRoot?.detectChanges();
 }
 
 export async function type(
@@ -120,6 +123,29 @@ export async function answerSummary(
   await fixture.whenStable();
   return true;
 }
+
+/**
+ * Cria o `tui-root` do teste. Menus e dropdowns do Taiga abrem em portal dentro dele; sem ele, o
+ * conteúdo do overlay não é renderizado. Leia o overlay com `overlay()`. Exige `provideTaiga()`.
+ */
+export function tuiRoot(): ComponentFixture<TuiRoot> {
+  const root = TestBed.createComponent(TuiRoot);
+  activeRoot = root;
+  root.componentRef.onDestroy(() => {
+    if (activeRoot === root) activeRoot = null;
+  });
+  root.detectChanges();
+  return root;
+}
+
+/** Elementos abertos em overlay (menus, dropdowns) dentro do `tui-root` do teste. */
+export function overlay<T extends HTMLElement = HTMLElement>(selector: string): T[] {
+  const root = activeRoot?.nativeElement as HTMLElement | undefined;
+  return root ? Array.from(root.querySelectorAll<T>(selector)) : [];
+}
+
+/** `tui-root` do teste atual, se criado por `tuiRoot()`. */
+let activeRoot: ComponentFixture<TuiRoot> | null = null;
 
 export const ok = <T>(value: T) => of(value);
 export const fail = (code = 'ERRO') => throwError(() => new Error(code));
