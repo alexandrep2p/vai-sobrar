@@ -1,9 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, fail, one, submitButton, text, type } from '../../../testing/helpers';
+import { AppDialog } from '../../shared/ui/dialog';
+import {
+  all,
+  click,
+  dialogProviders,
+  dialogRef,
+  fail,
+  one,
+  submitButton,
+  text,
+  type,
+} from '../../../testing/helpers';
 import { CategoriesPage } from './categories.page';
 import { CategoryDialog } from './category-dialog';
 
@@ -29,7 +39,7 @@ describe('CategoriesPage', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: CatalogService, useValue: catalog },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
       ],
     });
   });
@@ -90,18 +100,16 @@ describe('CategoriesPage', () => {
   });
 
   it('abre o diálogo de criação e recarrega ao salvar', async () => {
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     const fixture = await render([]);
     await click(fixture, one(fixture, '.page-header button'));
-    expect(dialog.open).toHaveBeenCalledWith(
-      CategoryDialog,
-      expect.objectContaining({ data: null }),
-    );
+    expect(dialog.open).toHaveBeenCalledWith(CategoryDialog, null);
     expect(catalog.categories).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('CategoryDialog', () => {
+  const ref = dialogRef();
   const catalog = { createCategory: vi.fn(), updateCategory: vi.fn() };
 
   function setup(data: Category | null) {
@@ -109,11 +117,7 @@ describe('CategoryDialog', () => {
     catalog.createCategory.mockReturnValue(of({}));
     catalog.updateCategory.mockReturnValue(of({}));
     TestBed.configureTestingModule({
-      providers: [
-        { provide: CatalogService, useValue: catalog },
-        { provide: MAT_DIALOG_DATA, useValue: data },
-        dialogRefMock(),
-      ],
+      providers: [{ provide: CatalogService, useValue: catalog }, ...dialogProviders(data, ref)],
     });
     const fixture = TestBed.createComponent(CategoryDialog);
     fixture.detectChanges();
@@ -125,7 +129,7 @@ describe('CategoryDialog', () => {
     await type(fixture, one(fixture, 'input'), '  Mercado ');
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.createCategory).toHaveBeenCalledWith({ name: 'Mercado', type: 'EXPENSE' });
-    expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalledWith(true);
+    expect(ref.close).toHaveBeenCalledWith(true);
   });
 
   it('mantém o botão desabilitado enquanto o nome estiver vazio', async () => {
@@ -147,5 +151,21 @@ describe('CategoryDialog', () => {
     await type(fixture, one(fixture, 'input'), 'Novo');
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.updateCategory).toHaveBeenCalledWith('x', { name: 'Novo' });
+  });
+
+  it('mostra o tipo pelo rótulo e o bloqueia quando a categoria está em uso', async () => {
+    const fixture = setup(category({ id: 'x', type: 'INCOME', in_use: true }));
+    await fixture.whenStable();
+    const select = one<HTMLInputElement>(fixture, '[data-testid="type"]');
+    expect(select.value).toBe('Entrada');
+    expect(select.disabled).toBe(true);
+  });
+
+  it('com nome inválido e tocado, mostra o erro do campo', async () => {
+    const fixture = setup(null);
+    const input = one<HTMLInputElement>(fixture, 'input');
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(text(fixture)).toContain('Informe o nome.');
   });
 });

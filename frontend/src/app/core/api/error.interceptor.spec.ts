@@ -1,14 +1,15 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { TuiNotificationService } from '@taiga-ui/core';
+import { EMPTY } from 'rxjs';
 import { ApiError } from './api-error';
 import { errorInterceptor } from './error.interceptor';
 
 describe('errorInterceptor', () => {
   let http: HttpClient;
   let controller: HttpTestingController;
-  const open = vi.fn();
+  const open = vi.fn(() => EMPTY);
 
   beforeEach(() => {
     open.mockClear();
@@ -16,14 +17,14 @@ describe('errorInterceptor', () => {
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open } },
+        { provide: TuiNotificationService, useValue: { open } },
       ],
     });
     http = TestBed.inject(HttpClient);
     controller = TestBed.inject(HttpTestingController);
   });
 
-  it('exibe toast amigável e propaga ApiError em erro de negócio', () => {
+  it('exibe notificação amigável e propaga ApiError em erro de negócio', () => {
     let caught: unknown;
     http.get('/api/x').subscribe({ error: (e: unknown) => (caught = e) });
     controller
@@ -37,8 +38,7 @@ describe('errorInterceptor', () => {
     expect((caught as ApiError).code).toBe('PERIOD_CLOSED');
     expect(open).toHaveBeenCalledWith(
       'Este mês está fechado e não pode ser alterado.',
-      'Fechar',
-      expect.objectContaining({ duration: 6000 }),
+      expect.objectContaining({ appearance: 'negative', autoClose: 6000 }),
     );
   });
 

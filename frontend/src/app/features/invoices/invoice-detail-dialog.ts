@@ -1,11 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { TuiButton } from '@taiga-ui/core';
 import type { CreditCard, InvoiceDetail } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
@@ -17,7 +11,7 @@ import {
   PROJECTED_ITEM_LABEL,
   transactionStatusLabel,
 } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { PayDialog, type PayDialogData, type PayDialogResult } from '../../shared/ui/pay-dialog';
 
 export interface InvoiceDetailData {
@@ -30,15 +24,15 @@ export interface InvoiceDetailData {
 /** Detalhe da fatura (invoices.md §7) e ação "Pagar fatura" (somente fatura fechada). */
 @Component({
   selector: 'app-invoice-detail-dialog',
-  imports: [MatDialogModule, MatButton],
+  imports: [TuiButton],
   template: `
-    <h2 mat-dialog-title>
+    <h2 class="dialog-title">
       Fatura {{ data.card.name }}
       @if (invoice(); as i) {
         · {{ month(i.reference_month) }}
       }
     </h2>
-    <mat-dialog-content>
+    <div class="dialog-content">
       @if (invoice(); as i) {
         <p class="invoice-status">
           <span class="chip" [class.positive]="i.status === 'PAID'" data-testid="status">
@@ -145,13 +139,13 @@ export interface InvoiceDetailData {
       } @else {
         <p>Carregando…</p>
       }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Fechar</button>
+    </div>
+    <footer class="dialog-actions">
+      <button tuiButton appearance="flat" (click)="ref.close()">Fechar</button>
       @if (invoice()?.id && invoice()?.status !== 'PAID') {
-        <button mat-flat-button (click)="pay()" data-testid="pay-invoice">Pagar fatura</button>
+        <button tuiButton (click)="pay()" data-testid="pay-invoice">Pagar fatura</button>
       }
-    </mat-dialog-actions>
+    </footer>
   `,
   styles: `
     .totals {
@@ -167,9 +161,9 @@ export interface InvoiceDetailData {
   `,
 })
 export class InvoiceDetailDialog implements OnInit {
-  protected readonly data = inject<InvoiceDetailData>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<InvoiceDetailDialog, boolean>);
-  private readonly dialog = inject(MatDialog);
+  protected readonly ref = injectDialog<InvoiceDetailData, boolean>();
+  protected readonly data = this.ref.data;
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
   private readonly catalog = inject(CatalogService);
 
@@ -207,21 +201,18 @@ export class InvoiceDetailDialog implements OnInit {
             : ''),
         methods: options,
       };
-      this.dialog
-        .open<PayDialog, PayDialogData, PayDialogResult>(PayDialog, dialogConfig(payData))
-        .afterClosed()
-        .subscribe((result) => {
-          if (!result) return;
-          this.ledger
-            .payInvoice(this.data.invoiceId as string, {
-              paid_at: result.paid_at,
-              payment_method_id: result.payment_method_id as string,
-            })
-            .subscribe((paid) => {
-              this.invoice.set(paid);
-              this.ref.close(true);
-            });
-        });
+      this.dialog.open<PayDialogResult>(PayDialog, payData).subscribe((result) => {
+        if (!result) return;
+        this.ledger
+          .payInvoice(this.data.invoiceId as string, {
+            paid_at: result.paid_at,
+            payment_method_id: result.payment_method_id as string,
+          })
+          .subscribe((paid) => {
+            this.invoice.set(paid);
+            this.ref.close(true);
+          });
+      });
     });
   }
 }

@@ -1,20 +1,24 @@
 import { Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { provideTaiga } from '@taiga-ui/core';
 import { of } from 'rxjs';
 import type { Category, CreditCard, PaymentMethod, Recurrence } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
+import { AppDialog } from '../../shared/ui/dialog';
 import {
   all,
   answerSummary,
-  root,
   click,
+  dialogProviders,
   one,
+  overlay,
+  root,
   submitButton,
   summaryRow,
   text,
+  tuiRoot,
 } from '../../../testing/helpers';
 import { PauseDialog } from './pause-dialog';
 import { RecurrenceDialog } from './recurrence-dialog';
@@ -54,17 +58,19 @@ describe('RecurrencesPage', () => {
     vi.resetAllMocks();
     ledger.resumeRecurrence.mockReturnValue(of({}));
     ledger.cancelRecurrence.mockReturnValue(of({}));
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     TestBed.configureTestingModule({
       providers: [
         { provide: LedgerService, useValue: ledger },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
+        provideTaiga({ mode: 'light' }),
       ],
     });
   });
 
   async function render(list: Recurrence[]) {
     ledger.recurrences.mockReturnValue(of(list));
+    tuiRoot();
     const fixture = TestBed.createComponent(RecurrencesPage);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -75,7 +81,7 @@ describe('RecurrencesPage', () => {
   const rows = (f: ComponentFixture<unknown>) => all(f, '[data-testid="recurrence-row"]');
   async function menu(f: ComponentFixture<unknown>, row: HTMLElement) {
     await click(f, row.querySelector<HTMLElement>('[data-testid="menu"]')!);
-    return Array.from(document.querySelectorAll<HTMLElement>('[data-testid^="act-"]'));
+    return overlay('[data-testid^="act-"]');
   }
   const ids = (buttons: HTMLElement[]) => buttons.map((b) => b.dataset['testid']);
 
@@ -148,7 +154,7 @@ describe('RecurrencesPage', () => {
 
   it('cancela somente após confirmar', async () => {
     const fixture = await render([recurrence()]);
-    dialog.open.mockReturnValue({ afterClosed: () => of(false) });
+    dialog.open.mockReturnValue(of(false));
     let buttons = await menu(fixture, rows(fixture)[0]);
     await click(
       fixture,
@@ -156,7 +162,7 @@ describe('RecurrencesPage', () => {
     );
     expect(ledger.cancelRecurrence).not.toHaveBeenCalled();
 
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     buttons = await menu(fixture, rows(fixture)[0]);
     await click(
       fixture,
@@ -168,40 +174,26 @@ describe('RecurrencesPage', () => {
   it('abre os diálogos de criação, edição e pausa', async () => {
     const fixture = await render([recurrence()]);
     await click(fixture, one(fixture, '[data-testid="new"]'));
-    expect(dialog.open).toHaveBeenLastCalledWith(
-      RecurrenceDialog,
-      expect.objectContaining({ data: null }),
-    );
+    expect(dialog.open).toHaveBeenLastCalledWith(RecurrenceDialog, null);
     let buttons = await menu(fixture, rows(fixture)[0]);
     await click(
       fixture,
       buttons.find((b) => b.dataset['testid'] === 'act-pause')!,
     );
-    expect(dialog.open).toHaveBeenLastCalledWith(
-      PauseDialog,
-      expect.objectContaining({ data: recurrence() }),
-    );
+    expect(dialog.open).toHaveBeenLastCalledWith(PauseDialog, recurrence());
     buttons = await menu(fixture, rows(fixture)[0]);
     await click(
       fixture,
       buttons.find((b) => b.dataset['testid'] === 'act-edit')!,
     );
-    expect(dialog.open).toHaveBeenLastCalledWith(
-      RecurrenceDialog,
-      expect.objectContaining({ data: recurrence() }),
-    );
+    expect(dialog.open).toHaveBeenLastCalledWith(RecurrenceDialog, recurrence());
   });
 });
 
 const ref = { close: vi.fn() };
 function create<T>(component: Type<T>, data: unknown, providers: unknown[]): ComponentFixture<T> {
   TestBed.configureTestingModule({
-    providers: [
-      clock,
-      { provide: MatDialogRef, useValue: ref },
-      { provide: MAT_DIALOG_DATA, useValue: data },
-      ...(providers as never[]),
-    ],
+    providers: [clock, ...dialogProviders(data, ref), ...(providers as never[])],
   });
   const fixture = TestBed.createComponent(component);
   fixture.detectChanges();
@@ -283,7 +275,7 @@ describe('RecurrenceDialog', () => {
   });
 
   const dayLabel = (f: ComponentFixture<unknown>) =>
-    all(f, 'mat-label')
+    all(f, 'label[tuiLabel]')
       .map((l) => l.textContent?.trim())
       .find((t) => t?.startsWith('Dia do') || t?.startsWith('Dia da'));
 

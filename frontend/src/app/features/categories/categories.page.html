@@ -1,9 +1,6 @@
 <div class="page-header">
   <h1>Categorias</h1>
-  <button mat-flat-button (click)="create()">
-    <mat-icon>add</mat-icon>
-    Nova categoria
-  </button>
+  <button tuiButton (click)="create()" iconStart="@tui.plus">Nova categoria</button>
 </div>
 
 <app-load-state
@@ -24,10 +21,22 @@
                 <div>{{ category.name }}</div>
                 <div class="sub">{{ typeLabel(category.type) }}</div>
               </div>
-              <button mat-icon-button aria-label="Editar" (click)="edit(category)">
-                <mat-icon>edit</mat-icon>
+              <button
+                tuiIconButton
+                appearance="flat"
+                iconStart="@tui.pencil"
+                aria-label="Editar"
+                (click)="edit(category)"
+              >
+                Editar
               </button>
-              <button mat-stroked-button (click)="toggle(category)" data-testid="toggle">
+              <button
+                tuiButton
+                appearance="outline"
+                size="s"
+                (click)="toggle(category)"
+                data-testid="toggle"
+              >
                 {{ category.active ? 'Desativar' : 'Reativar' }}
               </button>
             </div>

@@ -3,32 +3,94 @@
   display: block;
 }
 
-.container {
+.layout {
   min-height: 100vh;
 }
 
-.sidenav {
-  width: min(18rem, 85vw);
-}
-
-.brand {
-  display: block;
-  padding: 1.25rem 1rem 0.75rem;
-  font: var(--mat-sys-title-large);
-  color: var(--mat-sys-primary);
-  text-decoration: none;
+.main-column {
+  min-width: 0;
 }
 
 .topbar {
   position: sticky;
   top: 0;
   z-index: 2;
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  background: var(--mat-sys-surface-container);
+  padding: 0.5rem;
+  background: var(--tui-background-base-alt);
+  border-bottom: 1px solid var(--tui-border-normal);
+}
+
+.theme-toggle {
+  margin-left: auto;
 }
 
 .topbar-title {
-  font: var(--mat-sys-title-medium);
+  font: var(--tui-typography-heading-h6);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  background: var(--tui-service-backdrop);
+}
+
+.sidenav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: min(18rem, 85vw);
+  padding: 0 0.5rem 1rem;
+  background: var(--tui-background-base);
+}
+
+.sidenav.overlay {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 4;
+  overflow-y: auto;
+  box-shadow: var(--tui-shadow-popup);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform 0.2s ease,
+    visibility 0.2s;
+}
+
+.sidenav.overlay.open {
+  transform: none;
+  visibility: visible;
+}
+
+.brand {
+  display: block;
+  padding: 1.25rem 0.5rem 0.75rem;
+  font: var(--tui-typography-heading-h5);
+  color: var(--tui-text-action);
+  text-decoration: none;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--tui-radius-m);
+  font: var(--tui-typography-body-m);
+  color: var(--tui-text-primary);
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background: var(--tui-background-neutral-1-hover);
+}
+
+.nav-link.active {
+  background: var(--tui-background-accent-2);
+  color: var(--tui-text-primary-on-accent-2);
 }
 
 .content {
@@ -36,8 +98,22 @@
 }
 
 @media (min-width: 768px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+  }
+
   .sidenav {
-    width: 15rem;
+    position: sticky;
+    top: 0;
+    width: auto;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--tui-border-normal);
+  }
+
+  .topbar {
+    padding: 0.5rem 2rem;
   }
 
   .content {

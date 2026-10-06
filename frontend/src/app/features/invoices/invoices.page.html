@@ -9,41 +9,43 @@
   (retry)="loadCards()"
 >
   @if (cards().length === 0) {
-    <a mat-flat-button routerLink="/cartoes">Cadastrar cartão</a>
+    <a tuiButton routerLink="/cartoes">Cadastrar cartão</a>
   }
   <div class="filters">
-    <mat-form-field>
-      <mat-label>Cartão</mat-label>
-      <mat-select
-        [value]="cardId()"
-        (selectionChange)="selectCard($event.value)"
-        data-testid="card-select"
-      >
-        @for (c of cards(); track c.id) {
-          <mat-option [value]="c.id">{{ c.name }}{{ c.active ? '' : ' (inativo)' }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field>
-      <mat-label>De</mat-label>
+    <tui-textfield tuiChevron [stringify]="cardName">
+      <label tuiLabel>Cartão</label>
       <input
-        matInput
-        type="month"
-        [value]="from()"
-        (change)="setRange($any($event.target).value, to())"
+        tuiSelect
+        [ngModel]="cardId()"
+        (ngModelChange)="selectCard($event)"
+        data-testid="card-select"
+      />
+      <tui-data-list *tuiDropdown>
+        @for (c of cards(); track c.id) {
+          <button tuiOption type="button" [value]="c.id">{{ cardLabel(c) }}</button>
+        }
+      </tui-data-list>
+    </tui-textfield>
+    <tui-textfield>
+      <label tuiLabel>De</label>
+      <input
+        tuiInputMonth
+        [ngModel]="from()"
+        (ngModelChange)="setRange($event, to())"
         data-testid="from"
       />
-    </mat-form-field>
-    <mat-form-field>
-      <mat-label>Até</mat-label>
+      <tui-calendar-month *tuiDropdown />
+    </tui-textfield>
+    <tui-textfield>
+      <label tuiLabel>Até</label>
       <input
-        matInput
-        type="month"
-        [value]="to()"
-        (change)="setRange(from(), $any($event.target).value)"
+        tuiInputMonth
+        [ngModel]="to()"
+        (ngModelChange)="setRange(from(), $event)"
         data-testid="to"
       />
-    </mat-form-field>
+      <tui-calendar-month *tuiDropdown />
+    </tui-textfield>
   </div>
 
   @if (invoices().length === 0) {
@@ -77,7 +79,15 @@
             @if (invoice.situation === 'OVERDUE') {
               <span class="chip warn" data-testid="overdue">{{ overdueLabel }}</span>
             }
-            <button mat-stroked-button (click)="open(invoice)" data-testid="open">Detalhes</button>
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              (click)="open(invoice)"
+              data-testid="open"
+            >
+              Detalhes
+            </button>
           } @else {
             <span class="chip" data-testid="no-entries">{{ emptyCycleLabel }}</span>
           }

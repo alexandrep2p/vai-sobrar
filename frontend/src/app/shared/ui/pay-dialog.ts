@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { Clock } from '../../core/clock';
+import { ISO_DATE_INPUTS } from '../forms/iso-dates';
+import { nameById } from '../forms/options';
+import { injectDialog } from './dialog';
 
 export interface PayDialogData {
   title: string;
@@ -25,51 +25,68 @@ export interface PayDialogResult {
 @Component({
   selector: 'app-pay-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
-    MatSelectModule,
-    MatButton,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <h2 class="dialog-title">{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="confirm()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (data.message) {
           <p class="hint-text">{{ data.message }}</p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Data do pagamento</mat-label>
-          <input matInput type="date" formControlName="paid_at" />
-          @if (form.controls.paid_at.invalid) {
-            <mat-error>Informe a data.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Data do pagamento</label>
+            <input tuiInputDate formControlName="paid_at" />
+            <tui-calendar *tuiDropdown />
+          </tui-textfield>
+          @if (form.controls.paid_at.touched && form.controls.paid_at.invalid) {
+            <tui-error error="Informe a data." />
           }
-        </mat-form-field>
+        </div>
         @if (data.methods) {
-          <mat-form-field class="full-width">
-            <mat-label>Método de pagamento</mat-label>
-            <mat-select formControlName="payment_method_id">
-              @for (method of data.methods; track method.id) {
-                <mat-option [value]="method.id">{{ method.name }}</mat-option>
-              }
-            </mat-select>
-            @if (form.controls.payment_method_id.invalid) {
-              <mat-error>Escolha o método.</mat-error>
+          <div class="field full-width">
+            <tui-textfield tuiChevron [stringify]="methodName">
+              <label tuiLabel>Método de pagamento</label>
+              <input
+                tuiSelect
+                formControlName="payment_method_id"
+                data-testid="payment_method_id"
+              />
+              <tui-data-list *tuiDropdown>
+                @for (method of data.methods; track method.id) {
+                  <button tuiOption type="button" [value]="method.id">{{ method.name }}</button>
+                }
+              </tui-data-list>
+            </tui-textfield>
+            @if (
+              form.controls.payment_method_id.touched && form.controls.payment_method_id.invalid
+            ) {
+              <tui-error error="Escolha o método." />
             }
-          </mat-form-field>
+          </div>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="form.invalid">{{ data.confirmLabel }}</button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="form.invalid">{{ data.confirmLabel }}</button>
+      </footer>
     </form>
   `,
 })
 export class PayDialog {
-  protected readonly data = inject<PayDialogData>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PayDialog, PayDialogResult>);
+  protected readonly ref = injectDialog<PayDialogData, PayDialogResult>();
+  protected readonly data = this.ref.data;
+  protected readonly methodName = nameById(() => this.data.methods ?? []);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     paid_at: [inject(Clock).today(), Validators.required],

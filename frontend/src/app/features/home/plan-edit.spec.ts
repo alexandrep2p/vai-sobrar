@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
+import { LOCALE_PROVIDERS } from '../../core/locale';
+import { AppDialog } from '../../shared/ui/dialog';
 import {
   answerSummary,
   click,
+  dialogProviders,
   one,
   submitButton,
   summaryRow,
@@ -51,9 +53,9 @@ describe('PlanEditDialog (T-56)', () => {
     ledger.updatePlan.mockReturnValue(of({}));
     TestBed.configureTestingModule({
       providers: [
-        { provide: MatDialogRef, useValue: ref },
-        { provide: MAT_DIALOG_DATA, useValue: data },
+        ...dialogProviders(data, ref),
         { provide: LedgerService, useValue: ledger },
+        LOCALE_PROVIDERS,
       ],
     });
     const fixture = TestBed.createComponent(PlanEditDialog);
@@ -71,7 +73,7 @@ describe('PlanEditDialog (T-56)', () => {
     const f = setup();
     expect(one<HTMLInputElement>(f, '[data-testid="amount"]').value).toBe('600,00');
     expect(one<HTMLInputElement>(f, '[data-testid="count"]').value).toBe('3');
-    expect(one<HTMLInputElement>(f, '[data-testid="date"]').value).toBe('2027-10-05');
+    expect(one<HTMLInputElement>(f, '[data-testid="date"]').value).toBe('05/10/2027');
     expect(submitButton(f).disabled).toBe(false);
   });
 
@@ -108,7 +110,7 @@ describe('PlanEditDialog (T-56)', () => {
 
   it('envia a nova data da compra', async () => {
     const f = setup();
-    await type(f, '[data-testid="date"]', '2027-10-07');
+    await type(f, '[data-testid="date"]', '07/10/2027');
     await submit(f);
     await answerSummary(f, true);
     expect(ledger.updatePlan).toHaveBeenCalledWith('plan1', { purchase_date: '2027-10-07' });
@@ -142,14 +144,13 @@ describe('PurchaseDetailDialog: editar compra (T-56)', () => {
     ledger.getPlan.mockReturnValue(of(p));
     TestBed.configureTestingModule({
       providers: [
-        { provide: MatDialogRef, useValue: ref },
-        { provide: MAT_DIALOG_DATA, useValue: { planId: p.id } },
+        ...dialogProviders({ planId: p.id }, ref),
         { provide: LedgerService, useValue: ledger },
       ],
     });
-    // MatDialogModule (importado pelo componente) provê o próprio MatDialog; o mock entra no componente.
+    // O mock do AppDialog entra no componente (prevalece sobre o do TestBed).
     TestBed.overrideComponent(PurchaseDetailDialog, {
-      set: { providers: [{ provide: MatDialog, useValue: dialog }] },
+      set: { providers: [{ provide: AppDialog, useValue: dialog }] },
     });
     const fixture = TestBed.createComponent(PurchaseDetailDialog);
     fixture.detectChanges();
@@ -161,15 +162,15 @@ describe('PurchaseDetailDialog: editar compra (T-56)', () => {
     const f = setup(p);
     const button = one<HTMLButtonElement>(f, '[data-testid="edit-plan"]');
     expect(button.disabled).toBe(false);
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     await click(f, button);
-    expect(dialog.open).toHaveBeenCalledWith(PlanEditDialog, expect.objectContaining({ data: p }));
+    expect(dialog.open).toHaveBeenCalledWith(PlanEditDialog, p);
     expect(ref.close).toHaveBeenCalledWith(true);
   });
 
   it('não fecha o detalhe se a edição foi cancelada', async () => {
     const f = setup(plan());
-    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    dialog.open.mockReturnValue(of(undefined));
     await click(f, one(f, '[data-testid="edit-plan"]'));
     expect(ref.close).not.toHaveBeenCalled();
   });
@@ -199,8 +200,7 @@ describe('PurchaseDetailDialog: editar compra (T-56)', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
-        { provide: MatDialogRef, useValue: ref },
-        { provide: MAT_DIALOG_DATA, useValue: { transactionId: 't1' } },
+        ...dialogProviders({ transactionId: 't1' }, ref),
         { provide: LedgerService, useValue: ledger },
       ],
     });

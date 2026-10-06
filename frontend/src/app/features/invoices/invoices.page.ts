@@ -1,23 +1,22 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TuiButton, TuiDataList, TuiDropdown, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiInputMonth, TuiSelect } from '@taiga-ui/kit';
 import type { CreditCard, InvoiceSummary } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { addMonths, formatDate, formatMonth } from '../../shared/format/dates';
 import { formatCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import {
   invoiceStatusLabel,
   NO_ENTRIES_CYCLE_LABEL,
   OVERDUE_INVOICE_LABEL,
   PROJECTED_ITEM_LABEL,
 } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { InvoiceDetailDialog } from './invoice-detail-dialog';
 
@@ -27,13 +26,36 @@ const MONTHS_AFTER = 11;
 
 @Component({
   selector: 'app-invoices-page',
-  imports: [MatButton, MatFormFieldModule, MatInput, MatSelectModule, LoadState, RouterLink],
+  imports: [
+    FormsModule,
+    LoadState,
+    RouterLink,
+    TuiButton,
+    TuiInput,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
+    TuiInputMonth,
+  ],
   templateUrl: './invoices.page.html',
+  providers: [ISO_DATE_INPUTS],
+  styles: `
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .filters tui-textfield {
+      flex: 1 1 12rem;
+    }
+  `,
 })
 export class InvoicesPage implements OnInit {
   private readonly catalog = inject(CatalogService);
   private readonly ledger = inject(LedgerService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly clock = inject(Clock);
   private readonly route = inject(ActivatedRoute);
 
@@ -54,6 +76,16 @@ export class InvoicesPage implements OnInit {
   protected readonly overdueLabel = OVERDUE_INVOICE_LABEL;
   protected readonly projectedLabel = PROJECTED_ITEM_LABEL;
   protected readonly emptyCycleLabel = NO_ENTRIES_CYCLE_LABEL;
+
+  protected cardLabel(card: CreditCard): string {
+    return card.active ? card.name : `${card.name} (inativo)`;
+  }
+
+  /** Texto do select de cartão (o valor é o id). */
+  protected readonly cardName = (id: string | null): string => {
+    const card = this.cards().find((c) => c.id === id);
+    return card ? this.cardLabel(card) : '';
+  };
 
   ngOnInit(): void {
     this.loadCards();
@@ -105,11 +137,7 @@ export class InvoicesPage implements OnInit {
     const card = this.card();
     if (!card || (!invoice.id && invoice.projected_total === 0)) return;
     this.dialog
-      .open(
-        InvoiceDetailDialog,
-        dialogConfig({ invoiceId: invoice.id, month: invoice.reference_month, card }),
-      )
-      .afterClosed()
+      .open(InvoiceDetailDialog, { invoiceId: invoice.id, month: invoice.reference_month, card })
       .subscribe((changed) => changed && this.loadInvoices());
   }
 }

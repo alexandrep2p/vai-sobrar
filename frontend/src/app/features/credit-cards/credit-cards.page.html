@@ -1,9 +1,6 @@
 <div class="page-header">
   <h1>Cartões</h1>
-  <button mat-flat-button (click)="create()">
-    <mat-icon>add</mat-icon>
-    Novo cartão
-  </button>
+  <button tuiButton (click)="create()" iconStart="@tui.plus">Novo cartão</button>
 </div>
 
 <app-load-state
@@ -26,17 +23,31 @@
               </div>
             </div>
             <a
-              mat-icon-button
+              tuiIconButton
+              appearance="flat"
+              iconStart="@tui.receipt"
               aria-label="Ver faturas"
               routerLink="/faturas"
               [queryParams]="{ cartao: card.id }"
+              >Ver faturas</a
             >
-              <mat-icon>receipt_long</mat-icon>
-            </a>
-            <button mat-icon-button aria-label="Editar" (click)="edit(card)" data-testid="edit">
-              <mat-icon>edit</mat-icon>
+            <button
+              tuiIconButton
+              appearance="flat"
+              iconStart="@tui.pencil"
+              aria-label="Editar"
+              (click)="edit(card)"
+              data-testid="edit"
+            >
+              Editar
             </button>
-            <button mat-stroked-button (click)="toggle(card)" data-testid="toggle">
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              (click)="toggle(card)"
+              data-testid="toggle"
+            >
               {{ card.active ? 'Desativar' : 'Reativar' }}
             </button>
           </div>

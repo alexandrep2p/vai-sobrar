@@ -1,5 +1,5 @@
 /* Mobile first: o base vale para telas pequenas; ajustes maiores usam min-width.
-   O tema Angular Material (Azure & Blue) é carregado pelo angular.json. */
+   O tema do Taiga UI é carregado pelo angular.json; as cores e fontes vêm dos tokens --tui-*. */
 *,
 *::before,
 *::after {
@@ -12,19 +12,23 @@ html {
 
 body {
   margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background: var(--mat-sys-background);
-  color: var(--mat-sys-on-background);
+  background: var(--tui-background-base);
+  color: var(--tui-text-primary);
+}
+
+/* Modo escuro (PD-40): controles nativos (data, mês, barras de rolagem) também no tema escuro. */
+body[tuiTheme='dark'] {
+  color-scheme: dark;
 }
 
 h1 {
   margin: 0 0 1rem;
-  font: var(--mat-sys-headline-small);
+  font: var(--tui-typography-heading-h5);
 }
 
 @media (min-width: 768px) {
   h1 {
-    font: var(--mat-sys-headline-medium);
+    font: var(--tui-typography-heading-h4);
   }
 }
 
@@ -48,26 +52,26 @@ h1 {
   align-items: center;
   gap: 0.75rem;
   padding: 2rem 1rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--tui-text-secondary);
   text-align: center;
 }
 
 .section-title {
   margin: 1.5rem 0 0.5rem;
-  font: var(--mat-sys-title-medium);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-heading-h6);
+  color: var(--tui-text-secondary);
 }
 
 .group-title {
   margin: 0.75rem 0 0.25rem;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-primary);
+  font: var(--tui-typography-ui-m-bold);
+  color: var(--tui-text-action);
 }
 
 .list-card {
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-medium);
+  background: var(--tui-background-base);
+  border: 1px solid var(--tui-border-normal);
+  border-radius: var(--tui-radius-m);
 }
 
 .list-row {
@@ -75,7 +79,7 @@ h1 {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--tui-border-normal);
 }
 
 .list-row:last-child {
@@ -88,36 +92,36 @@ h1 {
 }
 
 .list-row .sub {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
 }
 
 .chip {
   display: inline-block;
   padding: 0.125rem 0.5rem;
-  border-radius: var(--mat-sys-corner-full);
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-  font: var(--mat-sys-label-small);
+  border-radius: 999px;
+  background: var(--tui-background-neutral-1);
+  color: var(--tui-text-primary);
+  font: var(--tui-typography-ui-xs);
   white-space: nowrap;
 }
 
 .chip.positive {
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
+  background: var(--tui-status-positive-pale);
+  color: var(--tui-text-positive);
 }
 
 .chip.warn {
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
+  background: var(--tui-status-negative-pale);
+  color: var(--tui-text-negative);
 }
 
 .income {
-  color: #1b6e3c;
+  color: var(--tui-text-positive);
 }
 
 .expense {
-  color: var(--mat-sys-error);
+  color: var(--tui-text-negative);
 }
 
 .form-grid {
@@ -126,30 +130,58 @@ h1 {
   gap: 0 1rem;
 }
 
-.form-grid mat-form-field,
 .full-width {
   width: 100%;
 }
 
+/* Campo de formulário: tui-textfield seguido do erro (tui-error) e da dica. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.field-hint {
+  margin: 0;
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
+}
+
 .hint-text {
   margin: 0 0 1rem;
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
 }
 
 .inline-error {
   margin: 0 0 0.5rem;
-  color: var(--mat-sys-error);
-  font: var(--mat-sys-body-medium);
+  color: var(--tui-text-negative);
+  font: var(--tui-typography-body-m);
 }
 
-.destructive {
-  --mat-button-filled-container-color: var(--mat-sys-error);
-  --mat-button-filled-label-text-color: var(--mat-sys-on-error);
+/* Diálogos (AppDialog): título, conteúdo e ações. No mobile ocupam quase toda a largura. */
+.dialog-title {
+  margin: 0 0 1.25rem;
+  padding-inline-end: 2.5rem; /* espaço do botão fechar (X) */
+  font: var(--tui-typography-heading-h5);
 }
 
-.mat-mdc-dialog-surface {
-  border-radius: var(--mat-sys-corner-extra-large);
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+  /* `tui-root` dá especificidade sobre o estilo do Taiga, injetado depois deste arquivo. */
+  tui-root tui-dialog[data-appearance~='taiga'] {
+    max-inline-size: calc(100vw - 1rem);
+    margin: 0.5rem;
+    padding: 1.25rem 1rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -158,12 +190,16 @@ h1 {
   }
 }
 
-.mat-button-toggle-group.full-width {
+/* Alternância Saída/Entrada do formulário de lançamento: ocupa a largura toda. */
+.type-toggle {
+  display: flex;
+  width: 100%;
   margin-bottom: 1rem;
 }
 
-.mat-button-toggle-group.full-width .mat-button-toggle {
+.type-toggle > label {
   flex: 1;
+  justify-content: center;
 }
 
 /* Linhas com muitas colunas quebram em duas linhas no mobile. */

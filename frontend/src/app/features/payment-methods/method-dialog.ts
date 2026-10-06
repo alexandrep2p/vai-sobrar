@@ -1,39 +1,39 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
+import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
 import type { PaymentMethod } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { trimmedLength } from '../../shared/forms/validators';
+import { injectDialog } from '../../shared/ui/dialog';
 
 /** Criação (método comum) e edição (método personalizado) de método de pagamento. */
 @Component({
   selector: 'app-method-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInput, MatButton],
+  imports: [ReactiveFormsModule, TuiButton, TuiInput, TuiError],
   template: `
-    <h2 mat-dialog-title>{{ method ? 'Editar método' : 'Novo método' }}</h2>
+    <h2 class="dialog-title">{{ method ? 'Editar método' : 'Novo método' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
-        <mat-form-field class="full-width">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" maxlength="100" autocomplete="off" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Informe o nome.</mat-error>
+      <div class="dialog-content">
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Nome</label>
+            <input tuiInput formControlName="name" maxlength="100" autocomplete="off" />
+          </tui-textfield>
+          @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+            <tui-error error="Informe o nome." />
           }
-        </mat-form-field>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
-      </mat-dialog-actions>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+      </footer>
     </form>
   `,
 })
 export class MethodDialog {
-  protected readonly method = inject<PaymentMethod | null>(MAT_DIALOG_DATA, { optional: true });
-  private readonly ref = inject(MatDialogRef<MethodDialog, boolean>);
+  protected readonly ref = injectDialog<PaymentMethod | null, boolean>();
+  protected readonly method = this.ref.data ?? null;
   private readonly catalog = inject(CatalogService);
   protected readonly submitting = signal(false);
 

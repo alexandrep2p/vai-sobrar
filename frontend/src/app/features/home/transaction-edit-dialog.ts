@@ -1,23 +1,18 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { forkJoin, Observable } from 'rxjs';
 import type { Category, PaymentMethod, StatementItem } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
+import { nameById } from '../../shared/forms/options';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary, type SummaryRow } from '../../shared/ui/summary-dialog';
 import { editableFields } from './item-actions';
 
@@ -28,78 +23,99 @@ import { editableFields } from './item-actions';
 @Component({
   selector: 'app-transaction-edit-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
     MoneyInput,
-    MatSelectModule,
-    MatButton,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
-    <h2 mat-dialog-title>Editar lançamento</h2>
+    <h2 class="dialog-title">Editar lançamento</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (isPlan) {
           <p class="hint-text" data-testid="plan-hint">
             A alteração vale para todas as parcelas da compra.
           </p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Descrição</mat-label>
-          <input matInput formControlName="description" maxlength="200" autocomplete="off" />
-          @if (form.controls.description.invalid) {
-            <mat-error>Informe a descrição.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Descrição</label>
+            <input tuiInput formControlName="description" maxlength="200" autocomplete="off" />
+          </tui-textfield>
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <tui-error error="Informe a descrição." />
           }
-        </mat-form-field>
+        </div>
         @if (fields.amount) {
-          <mat-form-field class="full-width">
-            <mat-label>Valor (R$)</mat-label>
-            <input matInput appMoneyInput formControlName="amount" />
-            @if (form.controls.amount.invalid) {
-              <mat-error>Informe um valor maior que zero.</mat-error>
+          <div class="field full-width">
+            <tui-textfield>
+              <label tuiLabel>Valor (R$)</label>
+              <input tuiInput appMoneyInput formControlName="amount" />
+            </tui-textfield>
+            @if (form.controls.amount.touched && form.controls.amount.invalid) {
+              <tui-error error="Informe um valor maior que zero." />
             }
-          </mat-form-field>
+          </div>
         }
         @if (fields.dueDate) {
-          <mat-form-field class="full-width">
-            <mat-label>Vencimento</mat-label>
-            <input matInput type="date" formControlName="due_date" />
-          </mat-form-field>
+          <div class="field full-width">
+            <tui-textfield>
+              <label tuiLabel>Vencimento</label>
+              <input tuiInputDate formControlName="due_date" />
+              <tui-calendar *tuiDropdown />
+            </tui-textfield>
+          </div>
         }
         @if (fields.category) {
-          <mat-form-field class="full-width">
-            <mat-label>Categoria</mat-label>
-            <mat-select formControlName="category_id">
-              @for (category of categoryOptions(); track category.id) {
-                <mat-option [value]="category.id">{{ category.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="field full-width">
+            <tui-textfield tuiChevron [stringify]="categoryName">
+              <label tuiLabel>Categoria</label>
+              <input tuiSelect formControlName="category_id" data-testid="category_id" />
+              <tui-data-list *tuiDropdown>
+                @for (category of categoryOptions(); track category.id) {
+                  <button tuiOption type="button" [value]="category.id">{{ category.name }}</button>
+                }
+              </tui-data-list>
+            </tui-textfield>
+          </div>
         }
         @if (fields.method) {
-          <mat-form-field class="full-width">
-            <mat-label>Método de pagamento</mat-label>
-            <mat-select formControlName="payment_method_id">
-              @for (method of methodOptions(); track method.id) {
-                <mat-option [value]="method.id">{{ method.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <div class="field full-width">
+            <tui-textfield tuiChevron [stringify]="methodName">
+              <label tuiLabel>Método de pagamento</label>
+              <input
+                tuiSelect
+                formControlName="payment_method_id"
+                data-testid="payment_method_id"
+              />
+              <tui-data-list *tuiDropdown>
+                @for (method of methodOptions(); track method.id) {
+                  <button tuiOption type="button" [value]="method.id">{{ method.name }}</button>
+                }
+              </tui-data-list>
+            </tui-textfield>
+          </div>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
-      </mat-dialog-actions>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+      </footer>
     </form>
   `,
 })
 export class TransactionEditDialog implements OnInit {
-  protected readonly item = inject<StatementItem>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<TransactionEditDialog, boolean>);
+  protected readonly ref = injectDialog<StatementItem, boolean>();
+  protected readonly item = this.ref.data;
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly fields = editableFields(this.item);
@@ -120,6 +136,9 @@ export class TransactionEditDialog implements OnInit {
       (m) => m.id === this.item.payment_method.id || (m.active && m.kind === 'STANDARD'),
     ),
   );
+  /** Nomes nos selects; os do próprio item valem antes de as listas carregarem. */
+  protected readonly categoryName = nameById(() => [this.item.category, ...this.categories()]);
+  protected readonly methodName = nameById(() => [this.item.payment_method, ...this.methods()]);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     description: [this.item.description, trimmedLength(200)],
@@ -193,8 +212,10 @@ export class TransactionEditDialog implements OnInit {
     const rows: SummaryRow[] = [{ label: 'Lançamento', value: item.description }];
     const change = (label: string, before: string, after: string) =>
       rows.push({ label, value: `${before} → ${after}` });
-    if ('description' in changes) change('Descrição', item.description, String(changes['description']));
-    if ('amount' in changes) change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
+    if ('description' in changes)
+      change('Descrição', item.description, String(changes['description']));
+    if ('amount' in changes)
+      change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
     if ('due_date' in changes) {
       change(
         'Vencimento',
@@ -203,7 +224,11 @@ export class TransactionEditDialog implements OnInit {
       );
     }
     if ('category_id' in changes) {
-      change('Categoria', item.category.name, name(this.categories(), String(changes['category_id'])));
+      change(
+        'Categoria',
+        item.category.name,
+        name(this.categories(), String(changes['category_id'])),
+      );
     }
     if ('payment_method_id' in changes) {
       change(
