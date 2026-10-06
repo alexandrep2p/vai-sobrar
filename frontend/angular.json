@@ -32,7 +32,6 @@
             "styles": [
               "@taiga-ui/styles/taiga-ui-theme.less",
               "@taiga-ui/styles/taiga-ui-fonts.less",
-              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css"
             ]
           },

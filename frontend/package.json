@@ -16,7 +16,6 @@
     "@angular/compiler": "^22.1.0",
     "@angular/core": "^22.1.0",
     "@angular/forms": "^22.1.0",
-    "@angular/material": "^22.2.1",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@taiga-ui/cdk": "^5.27.0",
