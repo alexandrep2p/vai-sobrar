@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, computed, DestroyRef, inject, linkedSignal, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TUI_DARK_MODE, TuiButton, TuiIcon } from '@taiga-ui/core';
+import { AuthService } from '../auth/auth.service';
 import { NAV_ITEMS } from './nav-items';
 
 /** A partir deste ponto o menu lateral fica fixo; abaixo dele vira uma gaveta (mobile first). */
@@ -15,7 +16,9 @@ const DESKTOP_QUERY = '(min-width: 768px)';
   host: { '(document:keydown.escape)': 'onNavigate()' },
 })
 export class ShellComponent {
+  private readonly auth = inject(AuthService);
   protected readonly items = NAV_ITEMS;
+  protected readonly user = this.auth.user;
   protected readonly isDesktop = desktopSignal();
   /** Aberto por padrão só no desktop; no mobile o usuário abre e fecha. */
   protected readonly navOpen = linkedSignal(() => this.isDesktop());
@@ -32,6 +35,11 @@ export class ShellComponent {
 
   protected onNavigate(): void {
     if (!this.isDesktop()) this.navOpen.set(false);
+  }
+
+  protected logout(): void {
+    this.onNavigate();
+    this.auth.logout();
   }
 }
 

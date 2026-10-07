@@ -51,7 +51,7 @@ Category
 ## 5. Nome
 
 * Obrigatório; 1 a 100 caracteres após trim; sem espaços no início ou no fim.
-* Único sem diferenciar maiúsculas/minúsculas, considerando categorias ativas e inativas.
+* Único sem diferenciar maiúsculas/minúsculas, considerando categorias ativas e inativas do mesmo usuário (PD-41); usuários diferentes podem ter categorias com o mesmo nome.
 
 ```text
 Existe "Alimentação" → não é possível criar "alimentação"
@@ -116,7 +116,7 @@ Estados da tela: carregando, lista preenchida, lista vazia e erro com nova tenta
 * **RN-CAT-01** — Não há lista fixa nem categoria obrigatória ou hard-coded.
 * **RN-CAT-02** — Tipos: `INCOME` e `EXPENSE`.
 * **RN-CAT-03** — Toda categoria nova começa ativa.
-* **RN-CAT-04** — Nome obrigatório, 1 a 100 caracteres, único sem diferenciar maiúsculas/minúsculas, entre ativas e inativas.
+* **RN-CAT-04** — Nome obrigatório, 1 a 100 caracteres, único sem diferenciar maiúsculas/minúsculas, entre ativas e inativas do mesmo usuário (PD-41).
 * **RN-CAT-05** — Editar o nome preserva o identificador.
 * **RN-CAT-06** — Categorias podem ser desativadas e reativadas; nunca excluídas.
 * **RN-CAT-07** — Categoria inativa não é usada em novos lançamentos e bloqueia ocorrências de recorrências.

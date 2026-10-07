@@ -35,7 +35,7 @@ const pay = (invoiceId: string, paidAt: string) =>
 const refund = (body: Record<string, unknown>) => api.post('/api/refunds', body);
 const closeMonth = (month: string) =>
   prisma.financialPeriod.create({
-    data: { referenceMonth: month, status: 'CLOSED', closedAt: new Date() },
+    data: { userId: env.userId, referenceMonth: month, status: 'CLOSED', closedAt: new Date() },
   });
 const counts = async () => ({
   transactions: await prisma.transaction.count(),

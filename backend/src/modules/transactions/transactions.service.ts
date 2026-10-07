@@ -247,6 +247,7 @@ export const createManualTransaction = async (
         dueDate: toDbDate(input.dueDate),
         status: 'PENDING',
         origin: 'MANUAL',
+        userId: ctx.userId,
         categoryId: input.categoryId,
         paymentMethodId: input.paymentMethodId,
       },
@@ -279,6 +280,7 @@ export const createCardPurchase = async (
         dueDate: invoice.dueDate,
         status: 'PENDING',
         origin: 'CREDIT_CARD',
+        userId: ctx.userId,
         categoryId: input.categoryId,
         paymentMethodId: input.paymentMethodId,
         purchaseDate: toDbDate(input.purchaseDate),
@@ -524,7 +526,11 @@ export const deleteTransaction = async (ctx: AppContext, id: string): Promise<vo
             occurrenceMonth: row.occurrenceMonth,
           },
         },
-        create: { recurrenceId: row.recurrenceId, occurrenceMonth: row.occurrenceMonth },
+        create: {
+          userId: row.userId,
+          recurrenceId: row.recurrenceId,
+          occurrenceMonth: row.occurrenceMonth,
+        },
         update: {},
       });
     }

@@ -59,13 +59,13 @@ export const listPaymentMethods = async ({ prisma }: AppContext): Promise<Paymen
 
 /** O fluxo genérico cria somente métodos `STANDARD` do usuário (payment-methods.md §4). */
 export const createPaymentMethod = async (
-  { prisma }: AppContext,
+  { prisma, userId }: AppContext,
   input: { name: string },
 ): Promise<PaymentMethodDto> => {
   await assertMethodNameAvailable(prisma, input.name);
   try {
     const method = await prisma.paymentMethod.create({
-      data: { name: input.name, source: 'USER', kind: 'STANDARD', active: true },
+      data: { userId, name: input.name, source: 'USER', kind: 'STANDARD', active: true },
     });
     return toPaymentMethodDto(method);
   } catch (error) {

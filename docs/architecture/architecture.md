@@ -123,15 +123,21 @@ recurrences
 recurrence_exceptions
 refunds
 refund_allocations
+users              (PD-41)
+sessions           (técnica: sessões de login)
 ```
+
+Todas as tabelas de negócio têm `user_id` (FK para `users`), inclusive as tabelas filhas, para que toda consulta possa ser filtrada pelo usuário (§22).
 
 ### 7.1 Constraints relevantes
 
 | Tabela | Constraint |
 |---|---|
-| `financial_periods` | `reference_month` único |
-| `categories` | nome único sem diferenciar maiúsculas/minúsculas |
-| `payment_methods` | nome único sem diferenciar maiúsculas/minúsculas (todos os métodos) |
+| `financial_periods` | `(user_id, reference_month)` único |
+| `categories` | `(user_id, lower(name))` único |
+| `payment_methods` | `(user_id, lower(name))` único (todos os métodos do usuário) |
+| `users` | `lower(email)` único; `lower(username)` único; formato do username |
+| `sessions` | `token_hash` único |
 | `credit_cards` | `payment_method_id` único; dias entre 1 e 31 |
 | `invoices` | `(credit_card_id, reference_month)` único; `due_date > closing_date` |
 | `installments` | `transaction_id` único; `(installment_plan_id, number)` único |
@@ -248,6 +254,7 @@ POST /api/invoices/:id/pay   { paid_at, payment_method_id }
 * **Idempotência:** `(recurrence_id, occurrence_month)` é único entre ocorrências e exceções.
 * **Alterações** na recorrência nunca atualizam ocorrências geradas.
 * **Ocorrência de cartão gerada** é postada como compra de cartão (§11.1) com `purchase_date` = data da ocorrência.
+* **Por usuário (PD-41):** a marca d'água da geração é guardada por usuário; o acesso de um usuário gera só as ocorrências dele, e a rotina periódica percorre todos os usuários.
 
 ---
 
@@ -309,6 +316,20 @@ Toda operação que possa afetar um mês é validada no backend contra o estado 
 ## 18. API
 
 Os contratos finais (DTOs) são definidos nas tasks; os recursos abaixo devem existir. Não existe `DELETE` para categorias, métodos, cartões, faturas, planos, parcelas, recorrências nem meses.
+
+### 18.0 Contas e acesso (PD-41)
+
+```text
+POST   /api/auth/register                (público)
+POST   /api/auth/login                   (público; abre a sessão)
+POST   /api/auth/logout
+GET    /api/auth/me
+PUT    /api/auth/me                      (nome e username)
+POST   /api/auth/me/password
+DELETE /api/auth/me                      (exclui a conta e todos os dados)
+```
+
+Todas as outras rotas de `/api` exigem sessão válida (`UNAUTHENTICATED`, 401). Detalhes: `specs/auth.md`.
 
 ### 18.1 Categorias
 
@@ -419,6 +440,8 @@ Devem ser protegidos, com o mecanismo do PostgreSQL/Prisma escolhido por caso de
 * geração duplicada de ocorrência;
 * criação duplicada de fatura para o mesmo cartão e mês.
 
+Os locks de meses (fechamento × escritas) são por usuário (PD-41): o fechamento de mês de um usuário não bloqueia os demais.
+
 ---
 
 ## 21. Testes
@@ -441,8 +464,13 @@ Prioridade dos testes automatizados no backend:
 
 ## 22. Segurança e usuários
 
-* O MVP é **single-user**. Não há autenticação, autorização, multiusuário, compartilhamento nem tenancy.
-* A modelagem pode receber `user_id` no futuro, mas o MVP não o implementa.
+* **Contas (PD-41):** cada usuário tem a sua conta e os seus dados. Não há papéis, permissões nem compartilhamento.
+* **Sessão:** o login cria uma sessão no PostgreSQL e devolve um cookie `httpOnly`, `SameSite=Strict`, `path=/` (com `Secure` em produção, via `COOKIE_SECURE`), com validade de 1 ano renovada com o uso. O cookie leva um token aleatório de 256 bits; o banco guarda só o SHA-256 do token. Logout e troca de senha apagam sessões no banco, revogando-as imediatamente.
+* **Por que cookie e não token em `localStorage`:** o JavaScript da página não lê o cookie (não pode ser roubado por XSS), a revogação é imediata e o frontend e a API são servidos na **mesma origem** (`/api` por proxy), o que dispensa CORS. `SameSite=Strict` impede o envio do cookie por outros sites (CSRF).
+* **Senha:** hash com `scrypt` (`node:crypto`), salt aleatório por usuário e comparação em tempo constante. Login com email inexistente também calcula um hash, para não revelar quais emails existem.
+* **Proteção das rotas:** o middleware `requireAuth` fica na frente de `/api` (exceto cadastro e login), valida a sessão e responde `UNAUTHENTICATED` (401) quando não há sessão válida.
+* **Isolamento:** depois de autenticar, o request recebe um contexto com um cliente Prisma restrito ao usuário (extensão de consulta): toda leitura, alteração e exclusão recebe `user_id` no filtro e toda criação grava o `user_id` do usuário. Uma referência a dado de outro usuário resulta em "não encontrado". Chaves estrangeiras compostas com `user_id` ficam como endurecimento futuro, pois conflitam com os `ON DELETE SET NULL` atuais.
+* **Limite de tentativas:** login, cadastro e as ações que conferem a senha atual (trocar senha, excluir conta) aceitam, juntas, 10 tentativas malsucedidas a cada 15 minutos por IP (`TOO_MANY_ATTEMPTS`, 429). Atrás de proxy reverso, `TRUST_PROXY` informa ao Express de onde vem o IP real.
 * O backend valida todos os dados recebidos, não confia em cálculos do frontend, usa o Prisma de forma segura e mantém segredos em variáveis de ambiente.
 
 ---
@@ -478,6 +506,12 @@ REFUND_EXCEEDS_REMAINING_AMOUNT
 INVALID_REFUND_DATE
 RECURRENCE_OCCURRENCE_NOT_SKIPPABLE
 RECURRENCE_CANCELLED
+UNAUTHENTICATED            (401)
+INVALID_CREDENTIALS        (401)
+EMAIL_TAKEN                (409)
+USERNAME_TAKEN             (409)
+INVALID_CURRENT_PASSWORD   (422)
+TOO_MANY_ATTEMPTS          (429)
 ```
 
 O frontend apresenta mensagens próprias e não depende do texto interno dos erros.
@@ -494,7 +528,7 @@ O agente de programação recebe uma task pequena por vez, com os documentos fon
 
 ## 25. Decisões arquiteturais fechadas
 
-Angular 22 com Taiga UI (tema padrão claro e escuro, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; single-user.
+Angular 22 com Taiga UI (tema padrão claro e escuro, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; contas de usuário com sessão em cookie e dados isolados por usuário (PD-41).
 
 ---
 
@@ -512,4 +546,4 @@ Podem ser definidas na task correspondente, sem alterar regras de negócio:
 
 ## 27. Fora da arquitetura do MVP
 
-Open Banking, conciliação, sincronização bancária, notificações, limite de crédito, motor de juros, investimentos, orçamento por categoria, transferências e multiusuário.
+Open Banking, conciliação, sincronização bancária, notificações, limite de crédito, motor de juros, investimentos, orçamento por categoria, transferências, papéis e compartilhamento de dados entre usuários.

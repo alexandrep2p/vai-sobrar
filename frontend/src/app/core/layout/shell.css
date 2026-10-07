@@ -84,6 +84,34 @@
   text-decoration: none;
 }
 
+.account {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.75rem 0.25rem;
+  border-top: 1px solid var(--tui-border-normal);
+  overflow-wrap: anywhere;
+}
+
+.account-name {
+  font: var(--tui-typography-body-m);
+  font-weight: 600;
+}
+
+.account-username {
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
+}
+
+/* "Sair" é um botão com a aparência dos links do menu. */
+button.nav-link {
+  width: 100%;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: start;
+}
+
 .nav-link:hover {
   background: var(--tui-background-neutral-1-hover);
 }

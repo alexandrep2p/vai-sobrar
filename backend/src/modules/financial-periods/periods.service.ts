@@ -21,7 +21,7 @@ export const loadClosedMonths = async (db: Db): Promise<ClosedMonths> => {
 };
 
 export const getPeriod = async (db: Db, month: YearMonth): Promise<PeriodDto> => {
-  const period = await db.financialPeriod.findUnique({ where: { referenceMonth: month } });
+  const period = await db.financialPeriod.findFirst({ where: { referenceMonth: month } });
   return {
     reference_month: month,
     status: period?.status ?? 'OPEN',

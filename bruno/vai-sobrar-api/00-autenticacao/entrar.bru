@@ -1,0 +1,34 @@
+meta {
+  name: Entrar
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "bruno-{{runId}}@vaisobrar.test",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  // Guarda o cookie de sessão (httpOnly) para as próximas requisições (header da collection).
+  const raw = res.getHeader('set-cookie');
+  const list = Array.isArray(raw) ? raw : [raw];
+  const cookie = list.find((c) => c && c.startsWith('vs_session='));
+  if (cookie) bru.setVar('sessionCookie', cookie.split(';')[0]);
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Abre a sessão. O cookie `vs_session` é guardado em `sessionCookie` e enviado por todas as requisições.
+}

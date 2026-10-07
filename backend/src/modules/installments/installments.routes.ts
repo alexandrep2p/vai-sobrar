@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import {
   asyncHandler,
   descriptionSchema,
@@ -28,12 +28,13 @@ const updateBody = z
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: 'Informe ao menos um campo.' });
 
-export const installmentsRouter = (ctx: AppContext): Router => {
+export const installmentsRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await getInstallmentPlan(ctx, id));
     }),
@@ -42,6 +43,7 @@ export const installmentsRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const body = updateBody.parse(req.body);
       res.json(
@@ -59,6 +61,7 @@ export const installmentsRouter = (ctx: AppContext): Router => {
   router.delete(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       await deleteInstallmentPlan(ctx, id);
       res.status(204).end();

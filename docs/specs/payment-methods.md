@@ -37,7 +37,7 @@ PaymentMethod
 
 ## 3. Métodos do sistema
 
-Na instalação, o sistema fornece:
+Na criação de cada conta (PD-41), o sistema fornece ao usuário:
 
 ```text
 PIX
@@ -144,7 +144,7 @@ Estados da tela: carregando, lista preenchida, lista vazia (tratada mesmo que os
 
 ## 11. Regras de negócio
 
-* **RN-MET-01** — O sistema fornece PIX, Dinheiro e Débito (`SYSTEM`, `STANDARD`).
+* **RN-MET-01** — O sistema fornece PIX, Dinheiro e Débito (`SYSTEM`, `STANDARD`) a cada conta criada.
 * **RN-MET-02** — O usuário cria métodos `STANDARD`; cartões são criados somente pelo fluxo de cartão.
 * **RN-MET-03** — Métodos do sistema não são editáveis.
 * **RN-MET-04** — Qualquer método pode ser desativado e reativado.
@@ -152,7 +152,7 @@ Estados da tela: carregando, lista preenchida, lista vazia (tratada mesmo que os
 * **RN-MET-06** — Método inativo não é usado em novos lançamentos, em pagamento de fatura nem em novas ocorrências de recorrência.
 * **RN-MET-07** — Um método serve para entradas e saídas.
 * **RN-MET-08** — Não existe método genérico `CRÉDITO`; todo `CREDIT_CARD` tem `CreditCard`.
-* **RN-MET-09** — Nome único entre todos os métodos; editar preserva o identificador.
+* **RN-MET-09** — Nome único entre todos os métodos do mesmo usuário (PD-41); editar preserva o identificador.
 * **RN-MET-10** — `name` e `active` do cartão existem somente no `PaymentMethod`.
 * **RN-MET-11** — `source` e `kind` não são alterados pelo usuário.
 * **RN-MET-12** — Método de lançamento de mês fechado é imutável; desativação não altera o histórico.

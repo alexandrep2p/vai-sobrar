@@ -19,7 +19,7 @@ const manual = (overrides: Record<string, unknown> = {}) => ({
 
 const closeMonth = (month: string) =>
   prisma.financialPeriod.create({
-    data: { referenceMonth: month, status: 'CLOSED', closedAt: new Date() },
+    data: { userId: env.userId, referenceMonth: month, status: 'CLOSED', closedAt: new Date() },
   });
 
 beforeEach(async () => {

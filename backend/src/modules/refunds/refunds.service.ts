@@ -25,6 +25,7 @@ import {
   loadCardInvoices,
   toSnapshot,
 } from '../invoices/invoice-store.js';
+import { tenantIdOf } from '../../shared/tenant.js';
 
 const refundInclude = {
   allocations: {
@@ -198,7 +199,12 @@ export const createRefund = async (ctx: AppContext, input: RefundInput): Promise
     const invoices = await loadCardInvoices(tx, card.id);
     const closed = await loadClosedMonths(tx);
     const byId = new Map(targets.map((t) => [t.id, t]));
-    const recognized: { transactionId: string; amount: number; invoiceId: string }[] = [];
+    const recognized: {
+      userId: string;
+      transactionId: string;
+      amount: number;
+      invoiceId: string;
+    }[] = [];
     for (const allocation of allocations) {
       const source = byId.get(allocation.transactionId) as TargetTransaction;
       if (!source.invoice) {
@@ -218,6 +224,7 @@ export const createRefund = async (ctx: AppContext, input: RefundInput): Promise
       const invoice = await ensureInvoice(tx, card.id, choice, invoices);
       if (!invoices.some((i) => i.id === invoice.id)) invoices.push(invoice);
       recognized.push({
+        userId: tenantIdOf(tx),
         transactionId: allocation.transactionId,
         amount: allocation.amount,
         invoiceId: invoice.id,
@@ -226,6 +233,7 @@ export const createRefund = async (ctx: AppContext, input: RefundInput): Promise
 
     return tx.refund.create({
       data: {
+        userId: tenantIdOf(tx),
         transactionId: input.transactionId ?? null,
         installmentPlanId: input.installmentPlanId ?? null,
         amount: input.amount,

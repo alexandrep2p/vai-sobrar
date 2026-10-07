@@ -184,6 +184,7 @@ export const generateOccurrenceInTx = async (
   if (!options.allowFuture && compareLocalDates(eligibility.date, today) > 0) return null;
 
   const base = {
+    userId: recurrence.userId,
     description: recurrence.description,
     amount: recurrence.amount,
     status: 'PENDING' as const,
@@ -220,7 +221,8 @@ export const generateOccurrenceInTx = async (
   });
 };
 
-const WATERMARK_KEY = 'occurrence_generation_watermark';
+/** Marca d'água por usuário (PD-41): o acesso de um usuário não avança a marca de outro. */
+export const watermarkKey = (userId: string): string => `occurrence_generation_watermark:${userId}`;
 
 /**
  * Gera as ocorrências com data no intervalo `(marca d'água, hoje]`, com a configuração e o
@@ -235,7 +237,8 @@ export const generateDueOccurrences = async (
 ): Promise<number> => {
   const { prisma, clock } = ctx;
   const today = clock.today();
-  const mark = await prisma.jobState.findUnique({ where: { key: WATERMARK_KEY } });
+  const markKey = watermarkKey(ctx.userId);
+  const mark = await prisma.jobState.findUnique({ where: { key: markKey } });
   const markDate = mark ? (mark.value as LocalDate) : null;
 
   let start: LocalDate;
@@ -271,12 +274,12 @@ export const generateDueOccurrences = async (
   }
 
   await prisma.$transaction(async (tx) => {
-    await lockJob(tx, 'occurrence-generation');
-    const current = await tx.jobState.findUnique({ where: { key: WATERMARK_KEY } });
+    await lockJob(tx, `occurrence-generation:${ctx.userId}`);
+    const current = await tx.jobState.findUnique({ where: { key: markKey } });
     if (!current || compareLocalDates(current.value as LocalDate, today) < 0) {
       await tx.jobState.upsert({
-        where: { key: WATERMARK_KEY },
-        create: { key: WATERMARK_KEY, value: today },
+        where: { key: markKey },
+        create: { key: markKey, value: today },
         update: { value: today },
       });
     }

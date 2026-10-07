@@ -69,7 +69,15 @@ describe('errorHandler', () => {
 
   it('todo código tem status HTTP de erro de cliente', () => {
     for (const code of BUSINESS_ERROR_CODES) {
-      expect([404, 409, 422]).toContain(httpStatusFor(code));
+      expect([401, 404, 409, 422, 429]).toContain(httpStatusFor(code));
     }
+  });
+
+  it('usa 401 para autenticação, 409 para email/username em uso e 429 para excesso', () => {
+    expect(httpStatusFor('UNAUTHENTICATED')).toBe(401);
+    expect(httpStatusFor('INVALID_CREDENTIALS')).toBe(401);
+    expect(httpStatusFor('EMAIL_TAKEN')).toBe(409);
+    expect(httpStatusFor('USERNAME_TAKEN')).toBe(409);
+    expect(httpStatusFor('TOO_MANY_ATTEMPTS')).toBe(429);
   });
 });

@@ -1,6 +1,6 @@
 # Collection do Bruno — Vai Sobrar API
 
-Collection com todos os endpoints do backend (53 requisições, 10 pastas), pronta para o [Bruno](https://www.usebruno.com/).
+Collection com todos os endpoints do backend (67 requisições, 12 pastas), pronta para o [Bruno](https://www.usebruno.com/).
 
 ## Como abrir
 
@@ -21,7 +21,13 @@ npm run prisma:migrate
 npm run dev
 ```
 
-(`prisma:migrate` só é necessário na primeira vez, ou depois de novas migrations. O servidor cria PIX, Dinheiro e Débito sozinho.)
+(`prisma:migrate` só é necessário na primeira vez, ou depois de novas migrations.)
+
+## Autenticação (PD-41)
+
+Toda a API, exceto cadastro e login, exige sessão. A pasta **00 - Autenticacao** cria uma conta de teste nova a cada execução (`bruno-{{runId}}@vaisobrar.test`, senha na variável `password` da collection), entra e guarda o cookie de sessão em `sessionCookie`. A collection envia esse cookie em todas as requisições (`headers` da collection). Cada conta começa só com PIX, Dinheiro e Débito e não vê dados de outras contas.
+
+A última pasta, **10 - Conta e sessao**, troca a senha, sai, confirma o `401` sem sessão, entra com a nova senha e **exclui a conta** com todos os dados da execução. Para explorar os dados criados (por exemplo, no frontend, entrando com o email e a senha da conta de teste), pare o Runner antes dessa pasta.
 
 ## Como usar
 
@@ -55,12 +61,14 @@ npx @usebruno/cli run --env Local -r
 | Pasta                     | Endpoints                                                                                                                                                                                                      |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 00 - Saude                | `GET /health`                                                                                                                                                                                                  |
+| 00 - Autenticacao         | `POST /api/auth/register`, `POST /api/auth/login`, `GET/PUT /api/auth/me`                                                                                                                                      |
 | 01 - Categorias           | `GET/POST /api/categories`, `PUT /api/categories/:id`, `POST .../activate`, `POST .../deactivate`                                                                                                              |
 | 02 - Metodos de pagamento | `GET/POST /api/payment-methods`, `PUT /api/payment-methods/:id`, `POST .../activate`, `POST .../deactivate`                                                                                                    |
 | 03 - Cartoes              | `GET/POST /api/credit-cards`, `GET/PUT /api/credit-cards/:id`, `POST .../activate`, `POST .../deactivate`                                                                                                      |
 | 04 - Lancamentos          | `GET/POST /api/transactions` (manual, cartão à vista e parcelado), `GET/PUT/DELETE /api/transactions/:id`, `POST .../pay`, `POST .../unpay`                                                                    |
-| 05 - Parcelamentos        | `GET/PUT /api/installment-plans/:id`, `GET .../refunds`                                                                                                                                                        |
+| 05 - Parcelamentos        | `GET/PUT/DELETE /api/installment-plans/:id`, `GET .../refunds`                                                                                                                                                 |
 | 06 - Faturas              | `GET /api/credit-cards/:id/invoices`, `GET /api/invoices/:id`, `POST /api/invoices/:id/pay`                                                                                                                    |
 | 07 - Estornos             | `POST /api/refunds`, `GET /api/refunds/:id`, `GET /api/transactions/:id/refunds`                                                                                                                               |
 | 08 - Recorrencias         | `GET/POST /api/recurrences`, `GET/PUT /api/recurrences/:id`, `POST .../pause`, `.../resume`, `.../cancel`, `PUT .../occurrences/:month`, `POST .../occurrences/:month/pay`, `POST .../occurrences/:month/skip` |
 | 09 - Extrato e meses      | `GET /api/monthly-statement?month=`, `GET /api/financial-periods/:month`, `POST .../close`                                                                                                                     |
+| 10 - Conta e sessao       | `POST /api/auth/me/password`, `POST /api/auth/logout`, `POST /api/auth/login`, `DELETE /api/auth/me`                                                                                                           |

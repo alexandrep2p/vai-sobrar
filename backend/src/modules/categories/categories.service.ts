@@ -63,13 +63,13 @@ export const listCategories = async ({ prisma }: AppContext): Promise<CategoryDt
 };
 
 export const createCategory = async (
-  { prisma }: AppContext,
+  { prisma, userId }: AppContext,
   input: { name: string; type: CategoryType },
 ): Promise<CategoryDto> => {
   await assertNameAvailable(prisma, input.name);
   try {
     const category = await prisma.category.create({
-      data: { name: input.name, type: input.type, active: true },
+      data: { userId, name: input.name, type: input.type, active: true },
     });
     return toDto(category, false);
   } catch (error) {

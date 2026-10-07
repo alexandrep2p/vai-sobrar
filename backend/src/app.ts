@@ -1,8 +1,7 @@
 import express, { Router, type Express, type Request, type Response } from 'express';
-import cors from 'cors';
 import { prisma as defaultPrisma } from './shared/prisma.js';
 import { SystemClock } from './shared/clock.js';
-import type { AppContext } from './shared/context.js';
+import { ctxOf, type BaseContext } from './shared/context.js';
 import { errorHandler } from './shared/error-handler.js';
 import { categoriesRouter } from './modules/categories/categories.routes.js';
 import { paymentMethodsRouter } from './modules/payment-methods/payment-methods.routes.js';
@@ -15,16 +14,36 @@ import { refundsRouter } from './modules/refunds/refunds.routes.js';
 import { recurrencesRouter } from './modules/recurrences/recurrences.routes.js';
 import { monthlyStatementRouter } from './modules/monthly-statement/monthly-statement.routes.js';
 import { periodsRouter } from './modules/financial-periods/periods.routes.js';
+import {
+  authRouter,
+  DEFAULT_AUTH_RATE_LIMIT,
+  type AuthRateLimit,
+} from './modules/auth/auth.routes.js';
+import { requireAuth } from './modules/auth/require-auth.js';
 
-export const defaultContext = (): AppContext => ({
+export const defaultContext = (): BaseContext => ({
   prisma: defaultPrisma,
   clock: new SystemClock(),
 });
 
-export const createApp = (ctx: AppContext = defaultContext()): Express => {
+export interface AppOptions {
+  /** Limite de tentativas de login/cadastro; `false` desliga (testes). */
+  authRateLimit?: AuthRateLimit | false;
+}
+
+export const createApp = (
+  base: BaseContext = defaultContext(),
+  options: AppOptions = {},
+): Express => {
   const app = express();
 
-  app.use(cors());
+  // Atrás de proxy reverso (produção), o IP real do cliente vem do X-Forwarded-For.
+  const trustProxy = process.env['TRUST_PROXY'];
+  if (trustProxy) {
+    // Número = saltos de proxy; senão, lista de IPs/sub-redes confiáveis (semântica do Express).
+    app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+  }
+  // Frontend e API na mesma origem (/api por proxy): sem CORS — architecture §22.
   app.use(express.json());
 
   app.get('/health', (_req: Request, res: Response) => {
@@ -35,20 +54,25 @@ export const createApp = (ctx: AppContext = defaultContext()): Express => {
     });
   });
 
+  // Públicas: cadastro e login (as demais rotas de /api/auth exigem sessão por conta própria).
+  app.use('/api/auth', authRouter(base, options.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT));
+
+  // Todo o restante de /api exige sessão; os casos de uso recebem o contexto do usuário (PD-41).
   const api = Router();
-  api.use((_req, _res, next) => {
-    refreshState(ctx).then(() => next(), next);
+  api.use(requireAuth(base));
+  api.use((req, _res, next) => {
+    refreshState(ctxOf(req)).then(() => next(), next);
   });
-  api.use('/categories', categoriesRouter(ctx));
-  api.use('/payment-methods', paymentMethodsRouter(ctx));
-  api.use('/credit-cards', creditCardsRouter(ctx));
-  api.use(invoicesRouter(ctx));
-  api.use(refundsRouter(ctx));
-  api.use('/transactions', transactionsRouter(ctx));
-  api.use('/installment-plans', installmentsRouter(ctx));
-  api.use('/recurrences', recurrencesRouter(ctx));
-  api.use('/monthly-statement', monthlyStatementRouter(ctx));
-  api.use('/financial-periods', periodsRouter(ctx));
+  api.use('/categories', categoriesRouter());
+  api.use('/payment-methods', paymentMethodsRouter());
+  api.use('/credit-cards', creditCardsRouter());
+  api.use(invoicesRouter());
+  api.use(refundsRouter());
+  api.use('/transactions', transactionsRouter());
+  api.use('/installment-plans', installmentsRouter());
+  api.use('/recurrences', recurrencesRouter());
+  api.use('/monthly-statement', monthlyStatementRouter());
+  api.use('/financial-periods', periodsRouter());
   app.use('/api', api);
 
   app.use(errorHandler);

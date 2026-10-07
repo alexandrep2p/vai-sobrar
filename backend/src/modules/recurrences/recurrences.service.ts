@@ -67,6 +67,7 @@ export const createRecurrence = async (
   const method = await loadActiveMethod(ctx.prisma, input.paymentMethodId);
   const created = await ctx.prisma.recurrence.create({
     data: {
+      userId: ctx.userId,
       description: input.description,
       amount: input.amount,
       categoryId: category.id,

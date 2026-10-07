@@ -1,11 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { Api, prisma, setupEnv } from './helpers.js';
+import { Api, prisma, setupEnv, type TestEnv } from './helpers.js';
 import { seedSystemMethods } from '../../src/shared/seed.js';
 
+let env: TestEnv;
 let api: Api;
 
 beforeEach(async () => {
-  api = new Api(await setupEnv());
+  env = await setupEnv();
+  api = new Api(env);
 });
 afterAll(() => prisma.$disconnect());
 
@@ -25,8 +27,8 @@ describe('seed dos métodos do sistema (T-16, CA-MET-01)', () => {
   });
 
   it('é idempotente', async () => {
-    await seedSystemMethods(prisma);
-    await seedSystemMethods(prisma);
+    await seedSystemMethods(prisma, env.userId);
+    await seedSystemMethods(prisma, env.userId);
     expect(await prisma.paymentMethod.count()).toBe(3);
   });
 });
@@ -234,7 +236,7 @@ describe('cartões (T-19)', () => {
   it('criação é atômica: falha no segundo insert não deixa método órfão', async () => {
     const { createCreditCard } =
       await import('../../src/modules/credit-cards/credit-cards.service.js');
-    const ctx = { prisma, clock: (await setupEnv()).clock };
+    const { ctx } = await setupEnv();
     await expect(
       createCreditCard(ctx, { name: 'Quebrado', bestPurchaseDay: 40, dueDay: 10 }),
     ).rejects.toThrow();
@@ -287,9 +289,12 @@ describe('meses financeiros (T-20)', () => {
   });
 
   it('mês persistido aberto e fechado', async () => {
-    await prisma.financialPeriod.create({ data: { referenceMonth: '2027-08', status: 'OPEN' } });
+    await prisma.financialPeriod.create({
+      data: { userId: env.userId, referenceMonth: '2027-08', status: 'OPEN' },
+    });
     await prisma.financialPeriod.create({
       data: {
+        userId: env.userId,
         referenceMonth: '2027-09',
         status: 'CLOSED',
         closedAt: new Date('2027-10-01T12:00:00Z'),

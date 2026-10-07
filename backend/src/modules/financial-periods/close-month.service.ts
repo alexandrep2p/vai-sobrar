@@ -5,6 +5,7 @@ import type { AppContext } from '../../shared/context.js';
 import { BusinessError } from '../../shared/errors.js';
 import { projectOccurrences } from '../recurrences/occurrences.js';
 import { getPeriod, loadClosedMonths, type PeriodDto } from './periods.service.js';
+import { tenantIdOf } from '../../shared/tenant.js';
 
 /**
  * financial-periods.md §4 / architecture §15: aplica `canClose` com os dados reais e persiste
@@ -43,8 +44,13 @@ export const closeMonth = async (ctx: AppContext, month: YearMonth): Promise<Per
     }
 
     await tx.financialPeriod.upsert({
-      where: { referenceMonth: month },
-      create: { referenceMonth: month, status: 'CLOSED', closedAt: new Date() },
+      where: { userId_referenceMonth: { userId: tenantIdOf(tx), referenceMonth: month } },
+      create: {
+        userId: tenantIdOf(tx),
+        referenceMonth: month,
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
       update: { status: 'CLOSED', closedAt: new Date() },
     });
     return getPeriod(tx, month);

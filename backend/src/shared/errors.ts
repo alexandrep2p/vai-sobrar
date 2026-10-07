@@ -39,12 +39,23 @@ export const BUSINESS_ERROR_CODES = [
   'RECURRENCE_INVALID_STATE',
   'INVALID_DUE_DATE',
   'INVALID_PAUSE_PERIOD',
+  // Contas e acesso (auth.md §9.1)
+  'UNAUTHENTICATED',
+  'INVALID_CREDENTIALS',
+  'EMAIL_TAKEN',
+  'USERNAME_TAKEN',
+  'TOO_MANY_ATTEMPTS',
+  'INVALID_CURRENT_PASSWORD',
 ] as const;
 
 export type BusinessErrorCode = (typeof BUSINESS_ERROR_CODES)[number];
 
-// Mapeamento técnico código -> status HTTP: 404 não encontrado, 409 conflito com o estado
-// atual, 422 demais violações de regra.
+// Mapeamento técnico código -> status HTTP: 401 sem autenticação, 404 não encontrado, 409
+// conflito com o estado atual, 429 excesso de tentativas, 422 demais violações de regra.
+const UNAUTHORIZED: ReadonlySet<BusinessErrorCode> = new Set([
+  'UNAUTHENTICATED',
+  'INVALID_CREDENTIALS',
+]);
 const NOT_FOUND: ReadonlySet<BusinessErrorCode> = new Set([
   'TRANSACTION_NOT_FOUND',
   'CATEGORY_NOT_FOUND',
@@ -74,9 +85,13 @@ const CONFLICT: ReadonlySet<BusinessErrorCode> = new Set([
   'CATEGORY_NAME_TAKEN',
   'PAYMENT_METHOD_NAME_TAKEN',
   'RECURRENCE_INVALID_STATE',
+  'EMAIL_TAKEN',
+  'USERNAME_TAKEN',
 ]);
 
 export const httpStatusFor = (code: BusinessErrorCode): number => {
+  if (UNAUTHORIZED.has(code)) return 401;
+  if (code === 'TOO_MANY_ATTEMPTS') return 429;
   if (NOT_FOUND.has(code)) return 404;
   if (CONFLICT.has(code)) return 409;
   return 422;

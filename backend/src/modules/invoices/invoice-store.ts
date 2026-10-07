@@ -62,12 +62,16 @@ export const ensureInvoice = async (
   }
 
   const { referenceMonth, closingDate, dueDate, status } = choice.invoice;
+  // SQL cru não passa pelo escopo do usuário: o dono da fatura é o dono do cartão (PD-41).
   const inserted = await tx.$executeRaw`
     INSERT INTO invoices
-      (id, credit_card_id, reference_month, closing_date, due_date, status, credit_balance, created_at, updated_at)
-    VALUES
-      (gen_random_uuid(), ${creditCardId}::uuid, ${referenceMonth}, ${toDbDate(closingDate)}::date,
-       ${toDbDate(dueDate)}::date, ${status}::invoice_status, 0, now(), now())
+      (id, user_id, credit_card_id, reference_month, closing_date, due_date, status, credit_balance,
+       created_at, updated_at)
+    SELECT
+      gen_random_uuid(), cc.user_id, cc.id, ${referenceMonth}, ${toDbDate(closingDate)}::date,
+      ${toDbDate(dueDate)}::date, ${status}::invoice_status, 0, now(), now()
+    FROM credit_cards cc
+    WHERE cc.id = ${creditCardId}::uuid
     ON CONFLICT (credit_card_id, reference_month) DO NOTHING`;
 
   const invoice = await tx.invoice.findUniqueOrThrow({

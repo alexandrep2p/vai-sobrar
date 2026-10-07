@@ -1,11 +1,11 @@
 meta {
   name: Apagar compra parcelada
   type: http
-  seq: 4
+  seq: 5
 }
 
 delete {
-  url: {{baseUrl}}/api/installment-plans/{{planId}}
+  url: {{baseUrl}}/api/installment-plans/{{planToDeleteId}}
   body: none
   auth: none
 }

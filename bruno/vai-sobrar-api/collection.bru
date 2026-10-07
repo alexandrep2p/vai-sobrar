@@ -7,11 +7,17 @@ docs {
 
   1. Suba o banco e o servidor (veja bruno/README.md).
   2. Selecione o ambiente **Local**.
-  3. Rode as pastas em ordem (ou a coleção inteira no Runner): os ids são guardados em variáveis
+  3. A pasta "00 - Autenticacao" cria uma conta de teste e entra; o cookie de sessão fica em
+     `sessionCookie` e é enviado por todas as requisições (header da collection).
+  4. Rode as pastas em ordem (ou a coleção inteira no Runner): os ids são guardados em variáveis
      (categoryId, cardId, transactionId, invoiceId...) e reutilizados pelas requisições seguintes.
 
   Variáveis de data (calculadas automaticamente): today, currentMonth, nextMonth, monthPlus2,
   monthPlus5, dueDate, dueNextMonth, pauseUntil, endDate.
+}
+
+headers {
+  Cookie: {{sessionCookie}}
 }
 
 script:pre-request {
@@ -36,4 +42,9 @@ script:pre-request {
   bru.setVar('endDate', fmt(new Date(now.getFullYear() + 1, now.getMonth(), 28)));
   // sufixo para tornar nomes únicos entre execuções
   if (!bru.getVar('runId')) bru.setVar('runId', String(Date.now()).slice(-6));
+  // senhas da conta de teste criada pela collection (PD-41)
+  if (!bru.getVar('password')) bru.setVar('password', 'Bruno123!');
+  if (!bru.getVar('newPassword')) bru.setVar('newPassword', 'Bruno456!');
+  // antes do login não há sessão; o servidor ignora o cookie vazio
+  if (!bru.getVar('sessionCookie')) bru.setVar('sessionCookie', 'vs_session=');
 }

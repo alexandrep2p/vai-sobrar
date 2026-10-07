@@ -25,6 +25,27 @@
         <span>{{ item.label }}</span>
       </a>
     }
+    @if (user(); as user) {
+      <div class="account" data-testid="account">
+        <span class="account-name">{{ user.name }}</span>
+        <span class="account-username">&#64;{{ user.username }}</span>
+      </div>
+      <a
+        class="nav-link"
+        data-testid="account-link"
+        routerLink="/conta"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="onNavigate()"
+      >
+        <tui-icon icon="@tui.circle-user" />
+        <span>Minha conta</span>
+      </a>
+      <button class="nav-link" type="button" data-testid="logout" (click)="logout()">
+        <tui-icon icon="@tui.log-out" />
+        <span>Sair</span>
+      </button>
+    }
   </nav>
 
   <div class="main-column">

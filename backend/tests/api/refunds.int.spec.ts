@@ -182,7 +182,12 @@ describe('estorno de compra à vista (T-27)', () => {
     const purchase = await buy('2027-04-05', 30000);
     await payInvoice(purchase.body.invoice.id, '2027-04-14');
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-04', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-04',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     env.clock.set(parseLocalDate('2027-06-03'));
     const res = await refund({
