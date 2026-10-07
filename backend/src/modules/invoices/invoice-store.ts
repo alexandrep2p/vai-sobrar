@@ -62,7 +62,7 @@ export const ensureInvoice = async (
   }
 
   const { referenceMonth, closingDate, dueDate, status } = choice.invoice;
-  // SQL cru não passa pelo escopo do usuário: o dono da fatura é o dono do cartão (PD-40).
+  // SQL cru não passa pelo escopo do usuário: o dono da fatura é o dono do cartão (PD-41).
   const inserted = await tx.$executeRaw`
     INSERT INTO invoices
       (id, user_id, credit_card_id, reference_month, closing_date, due_date, status, credit_balance,

@@ -42,7 +42,7 @@ script:pre-request {
   bru.setVar('endDate', fmt(new Date(now.getFullYear() + 1, now.getMonth(), 28)));
   // sufixo para tornar nomes únicos entre execuções
   if (!bru.getVar('runId')) bru.setVar('runId', String(Date.now()).slice(-6));
-  // senhas da conta de teste criada pela collection (PD-40)
+  // senhas da conta de teste criada pela collection (PD-41)
   if (!bru.getVar('password')) bru.setVar('password', 'Bruno123!');
   if (!bru.getVar('newPassword')) bru.setVar('newPassword', 'Bruno456!');
   // antes do login não há sessão; o servidor ignora o cookie vazio

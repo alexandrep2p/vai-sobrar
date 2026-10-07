@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { scopeArgs, scopedPrisma, tenantIdOf, TenantScopeError } from '../../src/shared/tenant.js';
 import { prisma, resetDatabase } from './db.js';
 
-// Extensão de escopo por usuário (PD-40, architecture §22).
+// Extensão de escopo por usuário (PD-41, architecture §22).
 
 let userA: string;
 let userB: string;

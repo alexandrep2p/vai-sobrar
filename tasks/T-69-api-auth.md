@@ -1,7 +1,7 @@
-# T-61 — API de autenticação
+# T-69 — API de autenticação
 
 * **Fase:** 3 — API do backend
-* **Depende de:** T-60
+* **Depende de:** T-68
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Cadastro, login, logout e consulta do usuário, com sessão em cookie e proteç�
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md`
 * `docs/architecture/architecture.md` §22 e §23
 
@@ -23,11 +23,11 @@ Cadastro, login, logout e consulta do usuário, com sessão em cookie e proteç�
 
 ## Fora de escopo
 
-* Isolamento dos dados (T-62); Minha conta (T-64).
+* Isolamento dos dados (T-70); Minha conta (T-72).
 
 ## Critérios de aceite
 
-* CA-AUTH-01..08 (o 07 vale para `/api/auth/me`; as demais rotas passam a exigir sessão na T-62).
+* CA-AUTH-01..08 (o 07 vale para `/api/auth/me`; as demais rotas passam a exigir sessão na T-70).
 
 ## Testes obrigatórios
 

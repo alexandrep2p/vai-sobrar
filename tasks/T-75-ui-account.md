@@ -1,7 +1,7 @@
-# T-67 — Tela Minha conta
+# T-75 — Tela Minha conta
 
 * **Fase:** 4 — Frontend
-* **Depende de:** T-64, T-66
+* **Depende de:** T-72, T-74
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Tela para editar perfil, trocar senha e excluir conta.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md` §8 e §10
 
 ## Escopo

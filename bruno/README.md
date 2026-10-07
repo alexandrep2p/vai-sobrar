@@ -23,7 +23,7 @@ npm run dev
 
 (`prisma:migrate` só é necessário na primeira vez, ou depois de novas migrations.)
 
-## Autenticação (PD-40)
+## Autenticação (PD-41)
 
 Toda a API, exceto cadastro e login, exige sessão. A pasta **00 - Autenticacao** cria uma conta de teste nova a cada execução (`bruno-{{runId}}@vaisobrar.test`, senha na variável `password` da collection), entra e guarda o cookie de sessão em `sessionCookie`. A collection envia esse cookie em todas as requisições (`headers` da collection). Cada conta começa só com PIX, Dinheiro e Débito e não vê dados de outras contas.
 

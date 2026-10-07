@@ -13,7 +13,7 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | 4 | Frontend |
 | 5 | Validação transversal |
 
-Contas e isolamento por usuário (PD-40): T-60..T-68.
+Contas e isolamento por usuário (PD-41): T-68..T-76.
 
 ## Ordem sugerida
 
@@ -82,15 +82,15 @@ Contas e isolamento por usuário (PD-40): T-60..T-68.
 | [T-57](T-57-api-delete.md) | Apagar lançamentos e compras parceladas (backend) | 3 | T-26, T-27, T-31, T-53 | Concluída |
 | [T-58](T-58-ui-delete.md) | Apagar lançamentos e compras parceladas (frontend) | 4 | T-57, T-41 | Concluída |
 | [T-59](T-59-ui-home-card-panels-filters.md) | Home: painéis por cartão e filtros | 4 | T-39, T-41 | Concluída |
-| [T-60](T-60-registro-pd40.md) | Registrar a PD-40 (contas e dados por usuário) | 0 | — | Concluída |
-| [T-61](T-61-api-auth.md) | API de autenticação | 3 | T-60 | Concluída |
-| [T-62](T-62-tenancy.md) | Dados separados por usuário | 3 | T-61 | Concluída |
-| [T-63](T-63-tenancy-tests.md) | Testes de isolamento entre usuários | 5 | T-62 | Concluída |
-| [T-64](T-64-api-account.md) | Minha conta (backend) | 3 | T-62 | Concluída |
-| [T-65](T-65-ui-auth-core.md) | Núcleo de autenticação (frontend) | 4 | T-61 | Concluída |
-| [T-66](T-66-ui-login-register.md) | Telas de login e cadastro | 4 | T-65 | Concluída |
-| [T-67](T-67-ui-account.md) | Tela Minha conta | 4 | T-64, T-66 | Concluída |
-| [T-68](T-68-bruno-auth.md) | Collection do Bruno com autenticação | 5 | T-64 | Concluída |
+| [T-68](T-68-registro-pd41.md) | Registrar a PD-41 (contas e dados por usuário) | 0 | — | Concluída |
+| [T-69](T-69-api-auth.md) | API de autenticação | 3 | T-68 | Concluída |
+| [T-70](T-70-tenancy.md) | Dados separados por usuário | 3 | T-69 | Concluída |
+| [T-71](T-71-tenancy-tests.md) | Testes de isolamento entre usuários | 5 | T-70 | Concluída |
+| [T-72](T-72-api-account.md) | Minha conta (backend) | 3 | T-70 | Concluída |
+| [T-73](T-73-ui-auth-core.md) | Núcleo de autenticação (frontend) | 4 | T-69 | Concluída |
+| [T-74](T-74-ui-login-register.md) | Telas de login e cadastro | 4 | T-73 | Concluída |
+| [T-75](T-75-ui-account.md) | Tela Minha conta | 4 | T-72, T-74 | Concluída |
+| [T-76](T-76-bruno-auth.md) | Collection do Bruno com autenticação | 5 | T-72 | Concluída |
 
 ## Como usar
 

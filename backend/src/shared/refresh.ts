@@ -7,7 +7,7 @@ import { syncRecurrencePauses } from '../modules/recurrences/recurrences.service
  * Mecanismo de transição por tempo e de geração na data (architecture §11.2/§12/§26; T-23, T-30):
  * avaliação a cada acesso à API somada a uma rotina periódica no servidor (startBackgroundJobs).
  * Determinístico e idempotente: o resultado depende só do relógio e do estado persistido.
- * Atua somente sobre os dados do usuário do contexto (PD-40).
+ * Atua somente sobre os dados do usuário do contexto (PD-41).
  */
 export const refreshState = async (ctx: AppContext): Promise<void> => {
   const today = ctx.clock.today();

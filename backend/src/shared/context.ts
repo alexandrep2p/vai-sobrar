@@ -10,7 +10,7 @@ export interface BaseContext {
   clock: Clock;
 }
 
-/** Dependências injetadas nos casos de uso: `prisma` restrito ao usuário `userId` (PD-40). */
+/** Dependências injetadas nos casos de uso: `prisma` restrito ao usuário `userId` (PD-41). */
 export interface AppContext extends BaseContext {
   userId: string;
 }

@@ -1,7 +1,7 @@
-# T-65 — Núcleo de autenticação (frontend)
+# T-73 — Núcleo de autenticação (frontend)
 
 * **Fase:** 4 — Frontend
-* **Depende de:** T-61
+* **Depende de:** T-69
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Estado do usuário, proteção das rotas e tratamento de sessão no frontend.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md` §10
 
 ## Escopo
@@ -22,7 +22,7 @@ Estado do usuário, proteção das rotas e tratamento de sessão no frontend.
 
 ## Fora de escopo
 
-* Telas de login/cadastro (T-66) e Minha conta (T-67).
+* Telas de login/cadastro (T-74) e Minha conta (T-75).
 
 ## Critérios de aceite
 

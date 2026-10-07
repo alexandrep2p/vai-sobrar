@@ -216,7 +216,7 @@ describe('limite de tentativas (architecture §22)', () => {
   });
 });
 
-describe('proteção da API e conta nova (T-62)', () => {
+describe('proteção da API e conta nova (T-70)', () => {
   it.each([
     ['get', '/api/categories'],
     ['get', '/api/payment-methods'],
@@ -250,7 +250,7 @@ describe('proteção da API e conta nova (T-62)', () => {
   });
 });
 
-describe('Minha conta (auth.md §8, T-64)', () => {
+describe('Minha conta (auth.md §8, T-72)', () => {
   const me = (cookie: string) => request(env.app).get('/api/auth/me').set('Cookie', cookie);
   const put = (cookie: string, body: Record<string, unknown>) =>
     request(env.app).put('/api/auth/me').set('Cookie', cookie).send(body);

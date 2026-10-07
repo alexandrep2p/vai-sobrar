@@ -57,7 +57,7 @@ export const createApp = (
   // Públicas: cadastro e login (as demais rotas de /api/auth exigem sessão por conta própria).
   app.use('/api/auth', authRouter(base, options.authRateLimit ?? DEFAULT_AUTH_RATE_LIMIT));
 
-  // Todo o restante de /api exige sessão; os casos de uso recebem o contexto do usuário (PD-40).
+  // Todo o restante de /api exige sessão; os casos de uso recebem o contexto do usuário (PD-41).
   const api = Router();
   api.use(requireAuth(base));
   api.use((req, _res, next) => {

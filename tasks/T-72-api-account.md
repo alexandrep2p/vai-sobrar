@@ -1,7 +1,7 @@
-# T-64 — Minha conta (backend)
+# T-72 — Minha conta (backend)
 
 * **Fase:** 3 — API do backend
-* **Depende de:** T-62
+* **Depende de:** T-70
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Editar perfil, trocar senha e excluir conta.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md` §8
 
 ## Escopo

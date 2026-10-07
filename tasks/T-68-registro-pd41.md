@@ -1,4 +1,4 @@
-# T-60 — Registrar a PD-40 (contas e dados por usuário)
+# T-68 — Registrar a PD-41 (contas e dados por usuário)
 
 * **Fase:** 0 — Base técnica
 * **Depende de:** —
@@ -14,10 +14,10 @@ Registrar a decisão de contas de usuário e isolamento dos dados e propagá-la 
 
 ## Escopo
 
-* PD-40 em `business-decisions.md`; PD-22 marcada como substituída; nota na PD-38.
+* PD-41 em `business-decisions.md`; PD-22 marcada como substituída; nota na PD-38.
 * Nova spec `docs/specs/auth.md`.
 * Ajustes em `prd.md` (§3, §4.3, §15), `domain-model.md` (§2, §3.13, invariante 15, §7), `architecture.md` (§7, §12, §18.0, §20, §22, §23, §25, §27), `categories.md` e `payment-methods.md` (unicidade por usuário, métodos do sistema por conta).
-* Tasks T-60..T-68.
+* Tasks T-68..T-76.
 
 ## Fora de escopo
 

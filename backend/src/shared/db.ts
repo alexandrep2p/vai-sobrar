@@ -44,7 +44,7 @@ export const lockJob = (tx: Tx, name: string): Promise<void> => exclusive(tx, `j
 /**
  * Barreira de meses: toda escrita que depende do estado dos meses toma o lock compartilhado;
  * o fechamento de mês toma o exclusivo. Assim, fechamento e escritas não se intercalam.
- * Os meses são de cada usuário (PD-40): a chave inclui o usuário do cliente restrito.
+ * Os meses são de cada usuário (PD-41): a chave inclui o usuário do cliente restrito.
  */
 const periodsKey = (tx: Tx): string => `periods:${tenantIdOf(tx)}`;
 

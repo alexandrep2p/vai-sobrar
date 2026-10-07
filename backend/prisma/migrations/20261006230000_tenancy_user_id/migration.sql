@@ -1,4 +1,4 @@
--- PD-40: dados separados por usuário (T-62).
+-- PD-41: dados separados por usuário (T-70).
 -- Os dados gravados antes das contas não pertencem a ninguém e são descartados (decisão do usuário).
 TRUNCATE TABLE
   "refund_allocations", "refunds", "installments", "recurrence_exceptions", "transactions",

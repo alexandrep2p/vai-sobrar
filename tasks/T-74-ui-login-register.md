@@ -1,7 +1,7 @@
-# T-66 — Telas de login e cadastro
+# T-74 — Telas de login e cadastro
 
 * **Fase:** 4 — Frontend
-* **Depende de:** T-65
+* **Depende de:** T-73
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Telas de login e cadastro com validação e checklist de senha.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md` §4–§6 e §10
 * `docs/decisions/business-decisions.md` (PD-37)
 

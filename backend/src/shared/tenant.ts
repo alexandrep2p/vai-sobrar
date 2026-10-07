@@ -2,7 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Db } from './db.js';
 
 /**
- * Isolamento por usuário (PD-40, architecture §22): cliente Prisma restrito a um usuário.
+ * Isolamento por usuário (PD-41, architecture §22): cliente Prisma restrito a um usuário.
  * Toda leitura, alteração e exclusão dos modelos de negócio recebe `userId` no filtro; toda
  * criação grava o `userId` do usuário. Operação não prevista falha (nunca passa sem filtro).
  * Não cobre SQL cru (`$queryRaw`/`$executeRaw`) nem escritas aninhadas, que levam `userId`

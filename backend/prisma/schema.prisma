@@ -89,7 +89,7 @@ enum RefundStrategy {
 
 model FinancialPeriod {
   id             String                @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId         String                @map("user_id") @db.Uuid
   user           User                  @relation(fields: [userId], references: [id])
   referenceMonth String                @map("reference_month") @db.Char(7)
@@ -104,7 +104,7 @@ model FinancialPeriod {
 
 model Category {
   id           String        @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId       String        @map("user_id") @db.Uuid
   user         User          @relation(fields: [userId], references: [id])
   name         String        @db.VarChar(100)
@@ -121,7 +121,7 @@ model Category {
 
 model PaymentMethod {
   id           String              @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId       String              @map("user_id") @db.Uuid
   user         User                @relation(fields: [userId], references: [id])
   name         String              @db.VarChar(100)
@@ -141,7 +141,7 @@ model PaymentMethod {
 
 model CreditCard {
   id               String            @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId           String            @map("user_id") @db.Uuid
   user             User              @relation(fields: [userId], references: [id])
   paymentMethodId  String            @unique @map("payment_method_id") @db.Uuid
@@ -159,7 +159,7 @@ model CreditCard {
 
 model Invoice {
   id                           String             @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId                       String             @map("user_id") @db.Uuid
   user                         User               @relation(fields: [userId], references: [id])
   creditCardId                 String             @map("credit_card_id") @db.Uuid
@@ -188,7 +188,7 @@ model Invoice {
 
 model Transaction {
   id                String             @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId            String             @map("user_id") @db.Uuid
   user              User               @relation(fields: [userId], references: [id])
   description       String             @db.VarChar(200)
@@ -225,7 +225,7 @@ model Transaction {
 
 model InstallmentPlan {
   id               String        @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId           String        @map("user_id") @db.Uuid
   user             User          @relation(fields: [userId], references: [id])
   creditCardId     String        @map("credit_card_id") @db.Uuid
@@ -245,7 +245,7 @@ model InstallmentPlan {
 
 model Installment {
   id                String          @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId            String          @map("user_id") @db.Uuid
   user              User            @relation(fields: [userId], references: [id])
   installmentPlanId String          @map("installment_plan_id") @db.Uuid
@@ -262,7 +262,7 @@ model Installment {
 
 model Recurrence {
   id              String                @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId          String                @map("user_id") @db.Uuid
   user            User                  @relation(fields: [userId], references: [id])
   description     String                @db.VarChar(200)
@@ -294,7 +294,7 @@ model Recurrence {
 
 model RecurrenceException {
   id              String     @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId          String     @map("user_id") @db.Uuid
   user            User       @relation(fields: [userId], references: [id])
   recurrenceId    String     @map("recurrence_id") @db.Uuid
@@ -309,7 +309,7 @@ model RecurrenceException {
 
 model Refund {
   id                String             @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId            String             @map("user_id") @db.Uuid
   user              User               @relation(fields: [userId], references: [id])
   transactionId     String?            @map("transaction_id") @db.Uuid
@@ -330,7 +330,7 @@ model Refund {
 
 model RefundAllocation {
   id            String      @id @default(uuid()) @db.Uuid
-  // Dono do registro (PD-40).
+  // Dono do registro (PD-41).
   userId        String      @map("user_id") @db.Uuid
   user          User        @relation(fields: [userId], references: [id])
   refundId      String      @map("refund_id") @db.Uuid
@@ -349,7 +349,7 @@ model RefundAllocation {
   @@map("refund_allocations")
 }
 
-// ---------- Contas (PD-40, auth.md) ----------
+// ---------- Contas (PD-41, auth.md) ----------
 // Unicidade de email/username sem diferenciar maiúsculas e CHECK do username vivem em SQL
 // (migration *_auth_users_sessions).
 

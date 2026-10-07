@@ -1,7 +1,7 @@
-# T-63 — Testes de isolamento entre usuários
+# T-71 — Testes de isolamento entre usuários
 
 * **Fase:** 5 — Validação transversal
-* **Depende de:** T-62
+* **Depende de:** T-70
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Provar que um usuário não vê, altera nem referencia dados de outro.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md`
 
 ## Escopo

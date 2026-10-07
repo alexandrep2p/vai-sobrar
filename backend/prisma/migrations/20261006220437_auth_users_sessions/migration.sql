@@ -31,7 +31,7 @@ CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Regras não expressáveis no Prisma (auth.md §4, PD-40)
+-- Regras não expressáveis no Prisma (auth.md §4, PD-41)
 -- Email (gravado em minúsculas) e username únicos sem diferenciar maiúsculas.
 CREATE UNIQUE INDEX "users_email_lower_key" ON "users" (lower("email"));
 CREATE UNIQUE INDEX "users_username_lower_key" ON "users" (lower("username"));

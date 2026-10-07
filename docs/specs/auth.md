@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Permitir que cada pessoa crie uma conta, entre com email e senha e use o Vai Sobrar com dados próprios, que nenhum outro usuário vê ou altera (PD-40).
+Permitir que cada pessoa crie uma conta, entre com email e senha e use o Vai Sobrar com dados próprios, que nenhum outro usuário vê ou altera (PD-41).
 
 ---
 

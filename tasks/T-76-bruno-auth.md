@@ -1,7 +1,7 @@
-# T-68 — Collection do Bruno com autenticação
+# T-76 — Collection do Bruno com autenticação
 
 * **Fase:** 5 — Validação transversal
-* **Depende de:** T-64
+* **Depende de:** T-72
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Manter a collection do Bruno executável com a API protegida.
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md`
 * `bruno/README.md`
 

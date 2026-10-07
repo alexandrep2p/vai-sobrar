@@ -123,7 +123,7 @@ recurrences
 recurrence_exceptions
 refunds
 refund_allocations
-users              (PD-40)
+users              (PD-41)
 sessions           (técnica: sessões de login)
 ```
 
@@ -254,7 +254,7 @@ POST /api/invoices/:id/pay   { paid_at, payment_method_id }
 * **Idempotência:** `(recurrence_id, occurrence_month)` é único entre ocorrências e exceções.
 * **Alterações** na recorrência nunca atualizam ocorrências geradas.
 * **Ocorrência de cartão gerada** é postada como compra de cartão (§11.1) com `purchase_date` = data da ocorrência.
-* **Por usuário (PD-40):** a marca d'água da geração é guardada por usuário; o acesso de um usuário gera só as ocorrências dele, e a rotina periódica percorre todos os usuários.
+* **Por usuário (PD-41):** a marca d'água da geração é guardada por usuário; o acesso de um usuário gera só as ocorrências dele, e a rotina periódica percorre todos os usuários.
 
 ---
 
@@ -317,7 +317,7 @@ Toda operação que possa afetar um mês é validada no backend contra o estado 
 
 Os contratos finais (DTOs) são definidos nas tasks; os recursos abaixo devem existir. Não existe `DELETE` para categorias, métodos, cartões, faturas, planos, parcelas, recorrências nem meses.
 
-### 18.0 Contas e acesso (PD-40)
+### 18.0 Contas e acesso (PD-41)
 
 ```text
 POST   /api/auth/register                (público)
@@ -440,7 +440,7 @@ Devem ser protegidos, com o mecanismo do PostgreSQL/Prisma escolhido por caso de
 * geração duplicada de ocorrência;
 * criação duplicada de fatura para o mesmo cartão e mês.
 
-Os locks de meses (fechamento × escritas) são por usuário (PD-40): o fechamento de mês de um usuário não bloqueia os demais.
+Os locks de meses (fechamento × escritas) são por usuário (PD-41): o fechamento de mês de um usuário não bloqueia os demais.
 
 ---
 
@@ -464,7 +464,7 @@ Prioridade dos testes automatizados no backend:
 
 ## 22. Segurança e usuários
 
-* **Contas (PD-40):** cada usuário tem a sua conta e os seus dados. Não há papéis, permissões nem compartilhamento.
+* **Contas (PD-41):** cada usuário tem a sua conta e os seus dados. Não há papéis, permissões nem compartilhamento.
 * **Sessão:** o login cria uma sessão no PostgreSQL e devolve um cookie `httpOnly`, `SameSite=Strict`, `path=/` (com `Secure` em produção, via `COOKIE_SECURE`), com validade de 1 ano renovada com o uso. O cookie leva um token aleatório de 256 bits; o banco guarda só o SHA-256 do token. Logout e troca de senha apagam sessões no banco, revogando-as imediatamente.
 * **Por que cookie e não token em `localStorage`:** o JavaScript da página não lê o cookie (não pode ser roubado por XSS), a revogação é imediata e o frontend e a API são servidos na **mesma origem** (`/api` por proxy), o que dispensa CORS. `SameSite=Strict` impede o envio do cookie por outros sites (CSRF).
 * **Senha:** hash com `scrypt` (`node:crypto`), salt aleatório por usuário e comparação em tempo constante. Login com email inexistente também calcula um hash, para não revelar quais emails existem.
@@ -528,7 +528,7 @@ O agente de programação recebe uma task pequena por vez, com os documentos fon
 
 ## 25. Decisões arquiteturais fechadas
 
-Angular 22 com Angular Material (tema Azure & Blue, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; contas de usuário com sessão em cookie e dados isolados por usuário (PD-40).
+Angular 22 com Angular Material (tema Azure & Blue, interface mobile first), Node.js + Express, TypeScript, PostgreSQL, Prisma, Zod, Vitest, REST; backend por módulos; backend como autoridade financeira; centavos inteiros; regras de domínio centralizadas (§9); transações de banco para operações compostas; mês financeiro lógico com registro sob demanda; fatura persistida somente com conteúdo e com ciclo gravado; recorrência com projeção e geração na data ou por interação; enums ASCII em inglês; contas de usuário com sessão em cookie e dados isolados por usuário (PD-41).
 
 ---
 

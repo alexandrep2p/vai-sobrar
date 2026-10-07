@@ -3,7 +3,7 @@ import { parseLocalDate } from '../../src/shared/dates.js';
 import { refreshAllUsers } from '../../src/shared/refresh.js';
 import { Api, prisma, setupEnv, type TestEnv, type TestUser } from './helpers.js';
 
-// Isolamento entre usuários (PD-40, auth.md §7, CA-AUTH-09/10).
+// Isolamento entre usuários (PD-41, auth.md §7, CA-AUTH-09/10).
 
 let env: TestEnv;
 let a: Api;

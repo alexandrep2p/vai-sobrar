@@ -33,7 +33,7 @@ O planejamento considera entradas, despesas, lançamentos em aberto e pagos, rec
 * Dados históricos são preservados: entidades usadas são desativadas, canceladas ou estornadas, não apagadas.
 * Fechar um mês é uma ação explícita, cronológica e irreversível.
 * O sistema não toma decisões implícitas que alterem o planejamento sem regra configurada pelo usuário.
-* Cada usuário tem uma conta e vê somente os próprios dados (PD-40).
+* Cada usuário tem uma conta e vê somente os próprios dados (PD-41).
 
 ---
 
@@ -70,7 +70,7 @@ Saldo previsto = R$ 6.880
 
 O usuário cria uma conta (nome, username, email e senha), entra com email e senha e permanece conectado até sair. Cada usuário vê e altera apenas os próprios dados. Em "Minha conta", o usuário edita nome e username, troca a senha e pode excluir a conta com todos os dados.
 
-Detalhes: `docs/specs/auth.md` (PD-40).
+Detalhes: `docs/specs/auth.md` (PD-41).
 
 ---
 

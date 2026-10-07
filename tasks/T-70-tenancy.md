@@ -1,7 +1,7 @@
-# T-62 — Dados separados por usuário
+# T-70 — Dados separados por usuário
 
 * **Fase:** 3 — API do backend
-* **Depende de:** T-61
+* **Depende de:** T-69
 * **Status:** Concluída
 
 ## Objetivo
@@ -10,7 +10,7 @@ Tornar todos os dados financeiros pertencentes a um usuário e exigir sessão em
 
 ## Documentos fonte
 
-* `docs/decisions/business-decisions.md` (PD-40)
+* `docs/decisions/business-decisions.md` (PD-41)
 * `docs/specs/auth.md`
 * `docs/architecture/architecture.md` §7, §12, §20 e §22
 * `docs/specs/payment-methods.md` §3
@@ -26,7 +26,7 @@ Tornar todos os dados financeiros pertencentes a um usuário e exigir sessão em
 
 ## Fora de escopo
 
-* Testes de isolamento entre usuários (T-63).
+* Testes de isolamento entre usuários (T-71).
 
 ## Critérios de aceite
 

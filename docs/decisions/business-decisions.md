@@ -213,7 +213,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Fonte:** `categories.md` §4.1.
 
 ### PD-22 — Usuário único
-* **Status:** Substituída pela PD-40.
+* **Status:** Substituída pela PD-41.
 * **Decisão (original):** o MVP é single-user, sem autenticação, autorização, multiusuário ou tenancy. `user_id` pode existir no futuro.
 * **Fonte:** `architecture.md` §22.
 
@@ -342,7 +342,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 ### PD-38 — Apagar lançamentos e compras parceladas (provisório)
 * **Status:** Vigente, **provisório**. Substitui, para lançamentos e compra parcelada, as regras de não exclusão (RN-TRA-14/15, RN-CAR-15, RN-PAR-12, RN-REC-12 e a decisão 13 do modelo de domínio).
 * **Decisão:** enquanto o sistema não tem usuários, o usuário pode **apagar** (exclusão física, sem rastro) lançamentos e compras parceladas. Quando existirem usuários e papéis, apagar passa a ser privilégio de **super admin**, com auditoria; isso não faz parte desta decisão.
-* **Nota (PD-40):** com contas de usuário e ainda sem papéis, cada usuário continua podendo apagar os **próprios** lançamentos e compras parceladas. Papéis e super admin ficam para o futuro.
+* **Nota (PD-41):** com contas de usuário e ainda sem papéis, cada usuário continua podendo apagar os **próprios** lançamentos e compras parceladas. Papéis e super admin ficam para o futuro.
 * **Regra:**
   * **o que se apaga:** lançamento `MANUAL`; ocorrência gerada de recorrência (método comum ou cartão, `PENDING` ou `PAID`); compra à vista no cartão; compra parcelada **somente inteira** (todas as parcelas de uma vez). Parcela isolada não é apagada;
   * **travas:** mês financeiro fechado (do lançamento, de qualquer parcela ou de crédito de estorno afetado) → `PERIOD_CLOSED`; fatura `PAID` (do lançamento, de qualquer parcela ou que recebeu crédito de estorno) → `INVOICE_ALREADY_PAID`;
@@ -364,7 +364,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
   * as ações do item (editar, pagar, estornar, apagar etc.) são as mesmas dentro e fora dos painéis.
 * **Fonte:** `home.md` §3.2 e §7.
 
-### PD-40 — Contas de usuário e dados separados por usuário
+### PD-41 — Contas de usuário e dados separados por usuário
 * **Status:** Vigente. Substitui a PD-22.
 * **Decisão:** o sistema passa a ter contas. Só um usuário autenticado acessa a aplicação, e cada usuário vê e altera **apenas os próprios dados**.
 * **Regra:**

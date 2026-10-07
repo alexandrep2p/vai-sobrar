@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { scopedPrisma } from '../../src/shared/tenant.js';
 import { prisma, resetDatabase } from './db.js';
 
-// Registros de negócio pertencem a um usuário (PD-40): o cliente restrito grava o user_id.
+// Registros de negócio pertencem a um usuário (PD-41): o cliente restrito grava o user_id.
 let db: PrismaClient;
 
 const date = (iso: string): Date => new Date(`${iso}T00:00:00.000Z`);

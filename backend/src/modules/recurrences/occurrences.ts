@@ -221,7 +221,7 @@ export const generateOccurrenceInTx = async (
   });
 };
 
-/** Marca d'água por usuário (PD-40): o acesso de um usuário não avança a marca de outro. */
+/** Marca d'água por usuário (PD-41): o acesso de um usuário não avança a marca de outro. */
 export const watermarkKey = (userId: string): string => `occurrence_generation_watermark:${userId}`;
 
 /**

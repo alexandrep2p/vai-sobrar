@@ -6,7 +6,7 @@ import type { Db } from '../../shared/db.js';
 
 export const SESSION_COOKIE = 'vs_session';
 
-/** A sessão não expira por tempo (PD-40): o cookie vale 1 ano e é renovado com o uso. */
+/** A sessão não expira por tempo (PD-41): o cookie vale 1 ano e é renovado com o uso. */
 const COOKIE_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 /** Intervalo mínimo entre renovações do cookie / `last_used_at`. */
 export const SESSION_RENEW_AFTER_MS = 24 * 60 * 60 * 1000;

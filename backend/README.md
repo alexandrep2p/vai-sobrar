@@ -39,7 +39,7 @@ npm run db:test:migrate
 npm run dev
 ```
 
-O servidor sobe em `http://localhost:3000` e inicia a rotina periódica (transição de faturas/pausas e geração de ocorrências de recorrência, para cada usuário). Toda a API, exceto `POST /api/auth/register` e `POST /api/auth/login`, exige a sessão em cookie (`vs_session`); cada conta recebe PIX, Dinheiro e Débito ao ser criada (PD-40). Em produção, defina `COOKIE_SECURE=true` (HTTPS) e, atrás de proxy reverso, `TRUST_PROXY` (veja `.env.example`).
+O servidor sobe em `http://localhost:3000` e inicia a rotina periódica (transição de faturas/pausas e geração de ocorrências de recorrência, para cada usuário). Toda a API, exceto `POST /api/auth/register` e `POST /api/auth/login`, exige a sessão em cookie (`vs_session`); cada conta recebe PIX, Dinheiro e Débito ao ser criada (PD-41). Em produção, defina `COOKIE_SECURE=true` (HTTPS) e, atrás de proxy reverso, `TRUST_PROXY` (veja `.env.example`).
 
 Para recriar os bancos do zero: `docker compose down -v` e `docker compose up -d`.
 
