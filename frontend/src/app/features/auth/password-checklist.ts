@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
+import { TuiIcon } from '@taiga-ui/core';
 import { passwordChecks, type PasswordChecks } from '../../shared/forms/auth-validators';
 
 const RULES: readonly { key: keyof PasswordChecks; label: string }[] = [
@@ -12,14 +12,15 @@ const RULES: readonly { key: keyof PasswordChecks; label: string }[] = [
 /** Requisitos da senha, atualizados a cada tecla (auth.md §4). */
 @Component({
   selector: 'app-password-checklist',
-  imports: [MatIcon],
+  imports: [TuiIcon],
   template: `
     <ul class="checklist" aria-live="polite" aria-label="Requisitos da senha">
       @for (rule of rules; track rule.key) {
         <li [class.met]="checks()[rule.key]" [attr.data-rule]="rule.key">
-          <mat-icon aria-hidden="true">
-            {{ checks()[rule.key] ? 'check_circle' : 'radio_button_unchecked' }}
-          </mat-icon>
+          <tui-icon
+            aria-hidden="true"
+            [icon]="checks()[rule.key] ? '@tui.circle-check' : '@tui.circle'"
+          />
           <span>{{ rule.label }}</span>
           <span class="sr-only">{{ checks()[rule.key] ? '(atendido)' : '(pendente)' }}</span>
         </li>
@@ -30,11 +31,11 @@ const RULES: readonly { key: keyof PasswordChecks; label: string }[] = [
     .checklist {
       display: grid;
       gap: 0.25rem;
-      margin: -0.25rem 0 1rem;
+      margin: -0.5rem 0 1rem;
       padding: 0;
       list-style: none;
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
+      font: var(--tui-typography-body-s);
+      color: var(--tui-text-secondary);
     }
     li {
       display: flex;
@@ -42,12 +43,10 @@ const RULES: readonly { key: keyof PasswordChecks; label: string }[] = [
       gap: 0.375rem;
     }
     li.met {
-      color: var(--mat-sys-primary);
+      color: var(--tui-text-positive);
     }
-    mat-icon {
-      width: 18px;
-      height: 18px;
-      font-size: 18px;
+    tui-icon {
+      font-size: 1rem;
     }
     .sr-only {
       position: absolute;

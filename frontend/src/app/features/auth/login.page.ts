@@ -1,10 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
-import { MatInput } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TuiButton, TuiError, TuiIcon, TuiInput } from '@taiga-ui/core';
+import { TuiPassword } from '@taiga-ui/kit';
 import { ApiError } from '../../core/api/api-error';
 import { safeReturnUrl } from '../../core/auth/auth.guards';
 import { AuthService } from '../../core/auth/auth.service';
@@ -12,15 +10,7 @@ import { AuthService } from '../../core/auth/auth.service';
 /** Login por email e senha (auth.md §6). */
 @Component({
   selector: 'app-login-page',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    MatFormFieldModule,
-    MatInput,
-    MatButton,
-    MatIconButton,
-    MatIcon,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, TuiButton, TuiInput, TuiError, TuiIcon, TuiPassword],
   template: `
     <main class="auth-card">
       <p class="brand">Vai Sobrar</p>
@@ -29,42 +19,33 @@ import { AuthService } from '../../core/auth/auth.service';
         <p class="form-error" role="alert" data-testid="form-error">{{ message }}</p>
       }
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <mat-form-field class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" />
-          @if (form.controls.email.hasError('required')) {
-            <mat-error>Informe o email.</mat-error>
-          } @else if (form.controls.email.hasError('email')) {
-            <mat-error>Email inválido.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Email</label>
+            <input tuiInput type="email" formControlName="email" autocomplete="email" />
+          </tui-textfield>
+          @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+            <tui-error error="Informe o email." />
+          } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+            <tui-error error="Email inválido." />
           }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Senha</mat-label>
-          <input
-            matInput
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            autocomplete="current-password"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="showPassword.set(!showPassword())"
-            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          >
-            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          @if (form.controls.password.hasError('required')) {
-            <mat-error>Informe a senha.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Senha</label>
+            <input
+              tuiInput
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <tui-icon tuiPassword />
+          </tui-textfield>
+          @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+            <tui-error error="Informe a senha." />
           }
-        </mat-form-field>
-        <button
-          mat-flat-button
-          class="submit"
-          type="submit"
-          [disabled]="submitting() || form.invalid"
-        >
+        </div>
+        <button tuiButton class="submit" type="submit" [disabled]="submitting() || form.invalid">
           Entrar
         </button>
       </form>
@@ -79,7 +60,6 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly submitting = signal(false);
-  protected readonly showPassword = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({

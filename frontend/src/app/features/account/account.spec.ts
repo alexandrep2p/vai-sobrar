@@ -1,12 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { TuiNotificationService } from '@taiga-ui/core';
 import { provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
-import { one, text, type } from '../../../testing/helpers';
+import { AppDialog } from '../../shared/ui/dialog';
+import { dialogProviders, dialogRef, one, text, type } from '../../../testing/helpers';
 import { AccountPage } from './account.page';
 import { DeleteAccountDialog } from './delete-account-dialog';
 
@@ -19,17 +19,18 @@ describe('AccountPage', () => {
     updateProfile: vi.fn(),
     changePassword: vi.fn(),
   };
-  const snackBar = { open: vi.fn() };
+  const notifications = { open: vi.fn() };
   const dialog = { open: vi.fn() };
 
   beforeEach(() => {
     vi.resetAllMocks();
+    notifications.open.mockReturnValue(EMPTY);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: auth },
-        { provide: MatSnackBar, useValue: snackBar },
-        { provide: MatDialog, useValue: dialog },
+        { provide: TuiNotificationService, useValue: notifications },
+        { provide: AppDialog, useValue: dialog },
       ],
     });
   });
@@ -51,7 +52,7 @@ describe('AccountPage', () => {
     expect(input(fixture, 'username').value).toBe('Ana.Souza');
     const email = one<HTMLInputElement>(fixture, '[data-testid="email"]');
     expect(email.value).toBe('ana@x.com');
-    expect(email.disabled).toBe(true);
+    expect(email.readOnly).toBe(true);
     expect(button(fixture, 'save-profile').disabled).toBe(true);
   });
 
@@ -64,7 +65,10 @@ describe('AccountPage', () => {
       name: 'Ana Maria Souza',
       username: 'Ana.Souza',
     });
-    expect(snackBar.open).toHaveBeenCalledWith('Perfil atualizado.', 'Fechar', expect.anything());
+    expect(notifications.open).toHaveBeenCalledWith(
+      'Perfil atualizado.',
+      expect.objectContaining({ appearance: 'positive' }),
+    );
   });
 
   it('nome de uma palavra bloqueia; username em uso aparece no campo', async () => {
@@ -99,26 +103,25 @@ describe('AccountPage', () => {
       current_password: 'antiga1!',
       new_password: 'nova123!@',
     });
-    expect(snackBar.open).toHaveBeenCalledWith(
+    expect(notifications.open).toHaveBeenCalledWith(
       'Senha alterada. As outras sessões foram encerradas.',
-      'Fechar',
-      expect.anything(),
+      expect.objectContaining({ appearance: 'positive' }),
     );
     expect(input(fixture, 'current').value).toBe('');
   });
 
   it('CA-AUTH-14: excluir conta abre a confirmação e, se confirmada, vai ao login', async () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     const fixture = await render();
     button(fixture, 'delete-account').click();
-    expect(dialog.open).toHaveBeenCalledWith(DeleteAccountDialog, expect.anything());
+    expect(dialog.open).toHaveBeenCalledWith(DeleteAccountDialog);
     expect(navigate).toHaveBeenCalledWith('/login');
   });
 
   it('excluir conta cancelado não faz nada', async () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
-    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    dialog.open.mockReturnValue(of(undefined));
     const fixture = await render();
     button(fixture, 'delete-account').click();
     expect(navigate).not.toHaveBeenCalled();
@@ -127,15 +130,12 @@ describe('AccountPage', () => {
 
 describe('DeleteAccountDialog', () => {
   const auth = { deleteAccount: vi.fn() };
-  const close = vi.fn();
+  const ref = dialogRef();
 
   beforeEach(() => {
     vi.resetAllMocks();
     TestBed.configureTestingModule({
-      providers: [
-        { provide: AuthService, useValue: auth },
-        { provide: MatDialogRef, useValue: { close } },
-      ],
+      providers: [{ provide: AuthService, useValue: auth }, ...dialogProviders(undefined, ref)],
     });
   });
 
@@ -162,12 +162,12 @@ describe('DeleteAccountDialog', () => {
     confirm().click();
     fixture.detectChanges();
     expect(text(fixture)).toContain('Senha atual incorreta.');
-    expect(close).not.toHaveBeenCalled();
+    expect(ref.close).not.toHaveBeenCalled();
 
     auth.deleteAccount.mockReturnValueOnce(of(undefined));
     await type(fixture, password, 'certa');
     confirm().click();
     expect(auth.deleteAccount).toHaveBeenLastCalledWith('certa');
-    expect(close).toHaveBeenCalledWith(true);
+    expect(ref.close).toHaveBeenCalledWith(true);
   });
 });

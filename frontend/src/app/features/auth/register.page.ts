@@ -1,13 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { ErrorStateMatcher } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
-import { MatInput } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TuiButton, TuiError, TuiIcon, TuiInput, TuiNotificationService } from '@taiga-ui/core';
+import { TuiPassword } from '@taiga-ui/kit';
 import { ApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -18,7 +14,6 @@ import {
   usernameFormat,
 } from '../../shared/forms/auth-validators';
 import { PasswordChecklist } from './password-checklist';
-import { mismatchMatcher } from './mismatch-matcher';
 
 /** Cadastro (auth.md §4–§5): sem sessão; ao concluir, vai para o login com o email preenchido. */
 @Component({
@@ -26,14 +21,13 @@ import { mismatchMatcher } from './mismatch-matcher';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    MatFormFieldModule,
-    MatInput,
-    MatButton,
-    MatIconButton,
-    MatIcon,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiIcon,
+    TuiPassword,
     PasswordChecklist,
   ],
-  providers: [{ provide: ErrorStateMatcher, useValue: mismatchMatcher }],
   template: `
     <main class="auth-card">
       <p class="brand">Vai Sobrar</p>
@@ -42,94 +36,94 @@ import { mismatchMatcher } from './mismatch-matcher';
         <p class="form-error" role="alert" data-testid="form-error">{{ message }}</p>
       }
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Nome completo</mat-label>
-          <input matInput formControlName="name" required autocomplete="name" maxlength="150" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Informe o nome.</mat-error>
-          } @else if (form.controls.name.hasError('fullName')) {
-            <mat-error>Informe nome e sobrenome.</mat-error>
-          } @else if (form.controls.name.hasError('maxlength')) {
-            <mat-error>Máximo de 100 caracteres.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Nome completo</label>
+            <input tuiInput formControlName="name" autocomplete="name" maxlength="150" />
+          </tui-textfield>
+          @if (show(form.controls.name); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe o nome." />
+            } @else if (c.hasError('fullName')) {
+              <tui-error error="Informe nome e sobrenome." />
+            } @else if (c.hasError('maxlength')) {
+              <tui-error error="Máximo de 100 caracteres." />
+            }
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Username</mat-label>
-          <input
-            matInput
-            formControlName="username"
-            required
-            autocomplete="username"
-            autocapitalize="none"
-            maxlength="30"
-          />
-          <mat-hint>3 a 30 caracteres: letras sem acento, números, "." e "-".</mat-hint>
-          @if (form.controls.username.hasError('required')) {
-            <mat-error>Informe o username.</mat-error>
-          } @else if (form.controls.username.hasError('username')) {
-            <mat-error>Use 3 a 30 caracteres: letras sem acento, números, "." e "-".</mat-error>
-          } @else if (form.controls.username.hasError('taken')) {
-            <mat-error>Este username já está em uso.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Username</label>
+            <input
+              tuiInput
+              formControlName="username"
+              autocomplete="username"
+              autocapitalize="none"
+              maxlength="30"
+            />
+          </tui-textfield>
+          @if (show(form.controls.username); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe o username." />
+            } @else if (c.hasError('username')) {
+              <tui-error [error]="usernameRule" />
+            } @else if (c.hasError('taken')) {
+              <tui-error error="Este username já está em uso." />
+            }
+          } @else {
+            <p class="field-hint">{{ usernameRule }}</p>
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="email" />
-          @if (form.controls.email.hasError('required')) {
-            <mat-error>Informe o email.</mat-error>
-          } @else if (form.controls.email.hasError('email')) {
-            <mat-error>Email inválido.</mat-error>
-          } @else if (form.controls.email.hasError('taken')) {
-            <mat-error>Já existe uma conta com este email.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Email</label>
+            <input tuiInput type="email" formControlName="email" autocomplete="email" />
+          </tui-textfield>
+          @if (show(form.controls.email); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe o email." />
+            } @else if (c.hasError('email')) {
+              <tui-error error="Email inválido." />
+            } @else if (c.hasError('taken')) {
+              <tui-error error="Já existe uma conta com este email." />
+            }
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Senha</mat-label>
-          <input
-            matInput
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            required
-            autocomplete="new-password"
-            maxlength="128"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="showPassword.set(!showPassword())"
-            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          >
-            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          @if (form.controls.password.hasError('required')) {
-            <mat-error>Informe a senha.</mat-error>
-          } @else if (form.controls.password.invalid) {
-            <mat-error>A senha não atende aos requisitos abaixo.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Senha</label>
+            <input
+              tuiInput
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              maxlength="128"
+            />
+            <tui-icon tuiPassword />
+          </tui-textfield>
+          @if (show(form.controls.password); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe a senha." />
+            } @else {
+              <tui-error error="A senha não atende aos requisitos abaixo." />
+            }
           }
-        </mat-form-field>
+        </div>
         <app-password-checklist [password]="password()" />
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Confirmar senha</mat-label>
-          <input
-            matInput
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="confirm"
-            required
-            autocomplete="new-password"
-          />
-          @if (form.controls.confirm.hasError('required')) {
-            <mat-error>Confirme a senha.</mat-error>
-          } @else if (form.hasError('mismatch')) {
-            <mat-error>As senhas não conferem.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Confirmar senha</label>
+            <input tuiInput type="password" formControlName="confirm" autocomplete="new-password" />
+          </tui-textfield>
+          @if (form.controls.confirm.touched) {
+            @if (form.controls.confirm.hasError('required')) {
+              <tui-error error="Confirme a senha." />
+            } @else if (form.hasError('mismatch')) {
+              <tui-error error="As senhas não conferem." />
+            }
           }
-        </mat-form-field>
-        <button
-          mat-flat-button
-          class="submit"
-          type="submit"
-          [disabled]="submitting() || form.invalid"
-        >
+        </div>
+        <button tuiButton class="submit" type="submit" [disabled]="submitting() || form.invalid">
           Criar conta
         </button>
       </form>
@@ -141,10 +135,10 @@ import { mismatchMatcher } from './mismatch-matcher';
 export class RegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notifications = inject(TuiNotificationService);
 
+  protected readonly usernameRule = '3 a 30 caracteres: letras sem acento, números, "." e "-".';
   protected readonly submitting = signal(false);
-  protected readonly showPassword = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly form = inject(FormBuilder).nonNullable.group(
@@ -162,6 +156,11 @@ export class RegisterPage {
     initialValue: '',
   });
 
+  /** O campo, se já tocado e inválido (para exibir o erro). */
+  protected show(control: AbstractControl): AbstractControl | null {
+    return control.touched && control.invalid ? control : null;
+  }
+
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -178,9 +177,12 @@ export class RegisterPage {
     this.error.set(null);
     this.auth.register(body).subscribe({
       next: (user) => {
-        this.snackBar.open('Conta criada. Entre com seu email e senha.', 'Fechar', {
-          duration: 6000,
-        });
+        this.notifications
+          .open('Conta criada. Entre com seu email e senha.', {
+            appearance: 'positive',
+            autoClose: 6000,
+          })
+          .subscribe();
         void this.router.navigateByUrl('/login', { state: { email: user.email } });
       },
       error: (error: unknown) => {
@@ -200,7 +202,7 @@ export class RegisterPage {
     }
   }
 
-  private markTaken(control: { setErrors(e: object): void; markAsTouched(): void }): void {
+  private markTaken(control: AbstractControl): void {
     control.setErrors({ taken: true });
     control.markAsTouched();
   }

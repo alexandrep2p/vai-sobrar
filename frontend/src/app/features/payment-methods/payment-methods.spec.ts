@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import type { PaymentMethod } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, one, submitButton, text, type } from '../../../testing/helpers';
+import { AppDialog } from '../../shared/ui/dialog';
+import {
+  all,
+  click,
+  dialogProviders,
+  dialogRef,
+  one,
+  submitButton,
+  text,
+  type,
+} from '../../../testing/helpers';
 import { MethodDialog } from './method-dialog';
 import { PaymentMethodsPage } from './payment-methods.page';
 
@@ -28,7 +37,7 @@ describe('PaymentMethodsPage', () => {
       providers: [
         provideRouter([]),
         { provide: CatalogService, useValue: catalog },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
       ],
     });
   });
@@ -88,14 +97,15 @@ describe('PaymentMethodsPage', () => {
   });
 
   it('abre o diálogo de criação', async () => {
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     const fixture = await render([method({})]);
     await click(fixture, one(fixture, '.page-header button'));
-    expect(dialog.open).toHaveBeenCalledWith(MethodDialog, expect.objectContaining({ data: null }));
+    expect(dialog.open).toHaveBeenCalledWith(MethodDialog, null);
   });
 });
 
 describe('MethodDialog', () => {
+  const ref = dialogRef();
   const catalog = { createPaymentMethod: vi.fn(), updatePaymentMethod: vi.fn() };
 
   function setup(data: PaymentMethod | null) {
@@ -103,11 +113,7 @@ describe('MethodDialog', () => {
     catalog.createPaymentMethod.mockReturnValue(of({}));
     catalog.updatePaymentMethod.mockReturnValue(of({}));
     TestBed.configureTestingModule({
-      providers: [
-        { provide: CatalogService, useValue: catalog },
-        { provide: MAT_DIALOG_DATA, useValue: data },
-        dialogRefMock(),
-      ],
+      providers: [{ provide: CatalogService, useValue: catalog }, ...dialogProviders(data, ref)],
     });
     const fixture = TestBed.createComponent(MethodDialog);
     fixture.detectChanges();
@@ -119,7 +125,7 @@ describe('MethodDialog', () => {
     await type(fixture, one(fixture, 'input'), 'Vale-refeição');
     one<HTMLFormElement>(fixture, 'form').dispatchEvent(new Event('submit'));
     expect(catalog.createPaymentMethod).toHaveBeenCalledWith({ name: 'Vale-refeição' });
-    expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalledWith(true);
+    expect(ref.close).toHaveBeenCalledWith(true);
   });
 
   it('mantém o botão desabilitado enquanto o nome estiver vazio', async () => {

@@ -1,7 +1,8 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { TuiNotificationService } from '@taiga-ui/core';
+import { EMPTY } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { errorInterceptor } from '../api/error.interceptor';
 import { safeReturnUrl } from './auth.guards';
@@ -14,7 +15,7 @@ describe('AuthService', () => {
   let auth: AuthService;
   let http: HttpTestingController;
   let store: AuthStore;
-  const open = vi.fn();
+  const open = vi.fn(() => EMPTY);
 
   beforeEach(() => {
     open.mockClear();
@@ -23,7 +24,7 @@ describe('AuthService', () => {
         provideRouter([]),
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open } },
+        { provide: TuiNotificationService, useValue: { open } },
       ],
     });
     auth = TestBed.inject(AuthService);
@@ -39,7 +40,7 @@ describe('AuthService', () => {
     expect(store.user()).toEqual(USER);
   });
 
-  it('loadMe sem sessão resulta em null, sem snackbar', () => {
+  it('loadMe sem sessão resulta em null, sem notificação', () => {
     let result: User | null | undefined;
     auth.loadMe().subscribe((u) => (result = u));
     http
@@ -59,7 +60,7 @@ describe('AuthService', () => {
     expect(again).toEqual(USER);
   });
 
-  it('login guarda o usuário; erro de credencial não mostra snackbar', () => {
+  it('login guarda o usuário; erro de credencial não mostra notificação', () => {
     auth.login({ email: 'ana@x.com', password: 'x' }).subscribe({ error: () => undefined });
     const req = http.expectOne({ method: 'POST', url: '/api/auth/login' });
     expect(req.request.body).toEqual({ email: 'ana@x.com', password: 'x' });

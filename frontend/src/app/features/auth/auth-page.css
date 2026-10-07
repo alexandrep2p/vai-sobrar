@@ -11,35 +11,28 @@
   max-width: 26rem;
   align-self: flex-start;
   padding: 1.5rem 1.25rem;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-large);
+  background: var(--tui-background-elevation-1);
+  border: 1px solid var(--tui-border-normal);
+  border-radius: var(--tui-radius-l);
 }
 
 .brand {
   margin: 0 0 0.25rem;
-  font: var(--mat-sys-title-large);
-  color: var(--mat-sys-primary);
+  font: var(--tui-typography-heading-h5);
+  color: var(--tui-text-action);
 }
 
 h1 {
   margin: 0 0 1.25rem;
-  font: var(--mat-sys-headline-small);
-}
-
-/* Subscrito dinâmico (mensagens quebram linha): o espaço entre campos vem da margem. */
-.full-width {
-  width: 100%;
-  margin-bottom: 0.75rem;
 }
 
 .form-error {
   margin: 0 0 1rem;
   padding: 0.75rem;
-  border-radius: var(--mat-sys-corner-small);
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
-  font: var(--mat-sys-body-medium);
+  border-radius: var(--tui-radius-m);
+  background: var(--tui-status-negative-pale);
+  color: var(--tui-text-negative);
+  font: var(--tui-typography-body-m);
 }
 
 .submit {
@@ -50,7 +43,11 @@ h1 {
 .switch {
   margin: 1.25rem 0 0;
   text-align: center;
-  font: var(--mat-sys-body-medium);
+  font: var(--tui-typography-body-m);
+}
+
+.switch a {
+  color: var(--tui-text-action);
 }
 
 @media (min-width: 768px) {

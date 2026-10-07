@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import type {
@@ -12,7 +11,8 @@ import { Clock } from '../../core/clock';
 import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { PayDialog } from '../../shared/ui/pay-dialog';
-import { all, click, one, text } from '../../../testing/helpers';
+import { AppDialog } from '../../shared/ui/dialog';
+import { all, click, dialogProviders, one, text } from '../../../testing/helpers';
 import { InvoiceDetailDialog } from './invoice-detail-dialog';
 import { InvoicesPage } from './invoices.page';
 
@@ -56,14 +56,14 @@ describe('InvoicesPage', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     ledger.invoices.mockReturnValue(of([]));
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue(of(true));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         clock,
         { provide: CatalogService, useValue: catalog },
         { provide: LedgerService, useValue: ledger },
-        { provide: MatDialog, useValue: dialog },
+        { provide: AppDialog, useValue: dialog },
       ],
     });
   });
@@ -159,10 +159,11 @@ describe('InvoicesPage', () => {
     expect(row.querySelector('[data-testid="amount-due"]')?.textContent).toContain('40,00');
     expect(row.querySelector('[data-testid="projected-chip"]')?.textContent).toContain('Previsto');
     await click(fixture, one(fixture, '[data-testid="open"]'));
-    expect(dialog.open).toHaveBeenCalledWith(
-      InvoiceDetailDialog,
-      expect.objectContaining({ data: { invoiceId: null, month: '2027-02', card: card() } }),
-    );
+    expect(dialog.open).toHaveBeenCalledWith(InvoiceDetailDialog, {
+      invoiceId: null,
+      month: '2027-02',
+      card: card(),
+    });
   });
 
   it('fatura persistida com previsão mostra o total somado e a parte prevista', async () => {
@@ -190,12 +191,11 @@ describe('InvoicesPage', () => {
   it('abre o detalhe da fatura', async () => {
     const fixture = await render([card()], [summary()]);
     await click(fixture, one(fixture, '[data-testid="open"]'));
-    expect(dialog.open).toHaveBeenCalledWith(
-      InvoiceDetailDialog,
-      expect.objectContaining({
-        data: { invoiceId: 'inv1', month: '2027-01', card: card() },
-      }),
-    );
+    expect(dialog.open).toHaveBeenCalledWith(InvoiceDetailDialog, {
+      invoiceId: 'inv1',
+      month: '2027-01',
+      card: card(),
+    });
   });
 
   it('sem cartões mostra o estado vazio', async () => {
@@ -264,15 +264,14 @@ describe('InvoiceDetailDialog', () => {
     TestBed.configureTestingModule({
       providers: [
         clock,
-        { provide: MatDialogRef, useValue: ref },
-        { provide: MAT_DIALOG_DATA, useValue: { ...data, card: card() } },
+        ...dialogProviders({ ...data, card: card() }, ref),
         { provide: LedgerService, useValue: ledger },
         { provide: CatalogService, useValue: catalog },
       ],
     });
-    // MatDialogModule (importado pelo componente) provê o próprio MatDialog; o mock entra no componente.
+    // O mock do AppDialog entra no componente (prevalece sobre o do TestBed).
     TestBed.overrideComponent(InvoiceDetailDialog, {
-      set: { providers: [{ provide: MatDialog, useValue: dialog }] },
+      set: { providers: [{ provide: AppDialog, useValue: dialog }] },
     });
     const fixture = TestBed.createComponent(InvoiceDetailDialog);
     fixture.detectChanges();
@@ -350,9 +349,9 @@ describe('InvoiceDetailDialog', () => {
 
   it('avisa, ao pagar, que as recorrências previstas serão geradas e pagas', async () => {
     const f = setup(detail({ projected_total: 4000, projected_items: [projectedItem] }));
-    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    dialog.open.mockReturnValue(of(undefined));
     await click(f, one(f, '[data-testid="pay-invoice"]'));
-    expect(dialog.open.mock.calls[0][1].data.message).toContain('40,00 de recorrências previstas');
+    expect(dialog.open.mock.calls[0][1].message).toContain('40,00 de recorrências previstas');
   });
 
   it('fatura atrasada é sinalizada', () => {
@@ -376,13 +375,11 @@ describe('InvoiceDetailDialog', () => {
 
   it('paga com data e método, excluindo o próprio cartão e os métodos inativos', async () => {
     const f = setup(detail());
-    dialog.open.mockReturnValue({
-      afterClosed: () => of({ paid_at: '2027-01-12', payment_method_id: 'pix' }),
-    });
+    dialog.open.mockReturnValue(of({ paid_at: '2027-01-12', payment_method_id: 'pix' }));
     await click(f, one(f, '[data-testid="pay-invoice"]'));
     const [component, config] = dialog.open.mock.calls[0];
     expect(component).toBe(PayDialog);
-    expect(config.data.methods).toEqual([{ id: 'pix', name: 'PIX' }]);
+    expect(config.methods).toEqual([{ id: 'pix', name: 'PIX' }]);
     expect(ledger.payInvoice).toHaveBeenCalledWith('inv1', {
       paid_at: '2027-01-12',
       payment_method_id: 'pix',
@@ -402,17 +399,15 @@ describe('InvoiceDetailDialog', () => {
         },
       }),
     );
-    dialog.open.mockReturnValue({
-      afterClosed: () => of({ paid_at: '2027-01-12', payment_method_id: 'pix' }),
-    });
+    dialog.open.mockReturnValue(of({ paid_at: '2027-01-12', payment_method_id: 'pix' }));
     await click(f, one(f, '[data-testid="pay-invoice"]'));
-    expect(dialog.open.mock.calls[0][1].data.message).toContain('0,00');
+    expect(dialog.open.mock.calls[0][1].message).toContain('0,00');
     expect(ledger.payInvoice).toHaveBeenCalled();
   });
 
   it('cancelar o diálogo de pagamento não paga', async () => {
     const f = setup(detail());
-    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    dialog.open.mockReturnValue(of(undefined));
     await click(f, one(f, '[data-testid="pay-invoice"]'));
     expect(ledger.payInvoice).not.toHaveBeenCalled();
   });

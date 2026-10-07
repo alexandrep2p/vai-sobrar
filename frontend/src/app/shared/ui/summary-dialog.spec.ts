@@ -1,24 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { all, one, text } from '../../../testing/helpers';
+import { all, dialogProviders, one, text } from '../../../testing/helpers';
 import { SummaryDialog } from './summary-dialog';
 
 describe('SummaryDialog', () => {
   it('lista os dados e oferece Voltar e Confirmar', () => {
     TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: MAT_DIALOG_DATA,
-          useValue: {
-            title: 'Confirmar lançamento',
-            confirmLabel: 'Confirmar',
-            rows: [
-              { label: 'Descrição', value: 'Luz' },
-              { label: 'Valor', value: 'R$ 10,00' },
-            ],
-          },
-        },
-      ],
+      providers: dialogProviders({
+        title: 'Confirmar lançamento',
+        confirmLabel: 'Confirmar',
+        rows: [
+          { label: 'Descrição', value: 'Luz' },
+          { label: 'Valor', value: 'R$ 10,00' },
+        ],
+      }),
     });
     const fixture = TestBed.createComponent(SummaryDialog);
     fixture.detectChanges();

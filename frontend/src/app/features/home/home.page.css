@@ -17,9 +17,17 @@
 }
 
 .month-picker {
-  position: relative;
-  font: var(--mat-sys-title-large);
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--tui-radius-m);
+  background: none;
+  color: inherit;
+  font: var(--tui-typography-heading-h6);
   cursor: pointer;
+}
+
+.month-picker:hover {
+  background: var(--tui-background-neutral-1-hover);
 }
 
 .month-picker span {
@@ -28,13 +36,6 @@
 
 .month-picker span::first-letter {
   text-transform: uppercase;
-}
-
-.month-picker input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .summary {
@@ -49,23 +50,23 @@
   align-items: baseline;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: var(--mat-sys-surface-container-lowest);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: var(--mat-sys-corner-medium);
+  background: var(--tui-background-base);
+  border: 1px solid var(--tui-border-normal);
+  border-radius: var(--tui-radius-m);
 }
 
 .summary-card .label {
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-ui-s-bold);
+  color: var(--tui-text-secondary);
 }
 
 .summary-card strong {
-  font: var(--mat-sys-title-large);
+  font: var(--tui-typography-heading-h6);
 }
 
 .summary-card.balance {
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  background: var(--tui-status-info-pale);
+  color: var(--tui-text-primary);
 }
 
 .no-margin {
@@ -87,7 +88,7 @@
   align-items: start;
   gap: 0.25rem 0.5rem;
   padding: 0.75rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--tui-border-normal);
 }
 
 .statement-row:last-child {
@@ -95,14 +96,14 @@
 }
 
 .statement-row.projected {
-  background: var(--mat-sys-surface-container-low);
+  background: var(--tui-background-neutral-1);
   font-style: italic;
 }
 
 .statement-row .date {
   grid-area: date;
-  font: var(--mat-sys-label-large);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-ui-s-bold);
+  color: var(--tui-text-secondary);
 }
 
 .statement-row .main {
@@ -111,8 +112,8 @@
 }
 
 .statement-row .sub {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
 }
 
 .statement-row .side {
@@ -124,7 +125,7 @@
 }
 
 .statement-row .amount {
-  font: var(--mat-sys-title-small);
+  font: var(--tui-typography-ui-m-bold);
   white-space: nowrap;
 }
 
@@ -133,7 +134,8 @@
 }
 
 .link {
-  padding-left: 0;
+  margin-top: 0.25rem;
+  font: var(--tui-typography-body-s);
 }
 
 .filters {
@@ -144,29 +146,41 @@
   margin-bottom: 0.75rem;
 }
 
-.filters mat-form-field {
+.filters tui-textfield {
   flex: 1 1 14rem;
 }
 
+.card-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font: inherit; /* o accordion define a própria fonte; os itens seguem a da lista */
+}
+
+.panel-header {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.panel-title {
+  flex: 1 1 auto;
+  text-align: start;
+}
+
+.panel-summary {
+  flex: 0 0 auto;
+  font: var(--tui-typography-body-s);
+  color: var(--tui-text-secondary);
+  white-space: nowrap;
+}
+
+.panel-body {
+  padding: 0;
+}
+
 .panel-list {
-  margin: 0 -1rem;
   border: 0;
   border-radius: 0;
-}
-
-mat-expansion-panel {
-  margin-bottom: 0.5rem;
-}
-
-mat-panel-title {
-  flex: 1 1 auto;
-}
-
-mat-panel-description {
-  flex: 0 0 auto;
-  justify-content: flex-end;
-  margin-right: 0.5rem;
-  white-space: nowrap;
 }
 
 .final-balance {
@@ -174,10 +188,10 @@ mat-panel-description {
   justify-content: space-between;
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  font: var(--mat-sys-title-medium);
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  border-radius: var(--mat-sys-corner-medium);
+  font: var(--tui-typography-heading-h6);
+  background: var(--tui-status-info-pale);
+  color: var(--tui-text-primary);
+  border-radius: var(--tui-radius-m);
 }
 
 @media (min-width: 768px) {

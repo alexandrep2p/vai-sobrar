@@ -1,13 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { ErrorStateMatcher } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TuiButton, TuiError, TuiIcon, TuiInput, TuiNotificationService } from '@taiga-ui/core';
+import { TuiPassword } from '@taiga-ui/kit';
 import { ApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -17,58 +13,79 @@ import {
   strongPassword,
   usernameFormat,
 } from '../../shared/forms/auth-validators';
-import { mismatchMatcher } from '../auth/mismatch-matcher';
+import { AppDialog } from '../../shared/ui/dialog';
 import { PasswordChecklist } from '../auth/password-checklist';
 import { DeleteAccountDialog } from './delete-account-dialog';
 
 /** Minha conta (auth.md §8): perfil, trocar senha e excluir conta. */
 @Component({
   selector: 'app-account-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInput, MatButton, PasswordChecklist],
-  providers: [{ provide: ErrorStateMatcher, useValue: mismatchMatcher }],
+  imports: [
+    ReactiveFormsModule,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiIcon,
+    TuiPassword,
+    PasswordChecklist,
+  ],
   template: `
     <h1>Minha conta</h1>
 
     <section class="list-card section" aria-labelledby="profile-title">
       <h2 id="profile-title">Perfil</h2>
       <form [formGroup]="profile" (ngSubmit)="saveProfile()" novalidate>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Nome completo</mat-label>
-          <input matInput formControlName="name" required autocomplete="name" maxlength="150" />
-          @if (profile.controls.name.hasError('required')) {
-            <mat-error>Informe o nome.</mat-error>
-          } @else if (profile.controls.name.hasError('fullName')) {
-            <mat-error>Informe nome e sobrenome.</mat-error>
-          } @else if (profile.controls.name.hasError('maxlength')) {
-            <mat-error>Máximo de 100 caracteres.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Nome completo</label>
+            <input tuiInput formControlName="name" autocomplete="name" maxlength="150" />
+          </tui-textfield>
+          @if (show(profile.controls.name); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe o nome." />
+            } @else if (c.hasError('fullName')) {
+              <tui-error error="Informe nome e sobrenome." />
+            } @else if (c.hasError('maxlength')) {
+              <tui-error error="Máximo de 100 caracteres." />
+            }
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Username</mat-label>
-          <input
-            matInput
-            formControlName="username"
-            required
-            autocomplete="username"
-            autocapitalize="none"
-            maxlength="30"
-          />
-          @if (profile.controls.username.hasError('required')) {
-            <mat-error>Informe o username.</mat-error>
-          } @else if (profile.controls.username.hasError('username')) {
-            <mat-error>Use 3 a 30 caracteres: letras sem acento, números, "." e "-".</mat-error>
-          } @else if (profile.controls.username.hasError('taken')) {
-            <mat-error>Este username já está em uso.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Username</label>
+            <input
+              tuiInput
+              formControlName="username"
+              autocomplete="username"
+              autocapitalize="none"
+              maxlength="30"
+            />
+          </tui-textfield>
+          @if (show(profile.controls.username); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe o username." />
+            } @else if (c.hasError('username')) {
+              <tui-error error='Use 3 a 30 caracteres: letras sem acento, números, "." e "-".' />
+            } @else if (c.hasError('taken')) {
+              <tui-error error="Este username já está em uso." />
+            }
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Email</mat-label>
-          <input matInput [value]="auth.user()?.email ?? ''" disabled data-testid="email" />
-          <mat-hint>O email não pode ser alterado.</mat-hint>
-        </mat-form-field>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Email</label>
+            <input
+              tuiInput
+              [value]="auth.user()?.email ?? ''"
+              [readonly]="true"
+              data-testid="email"
+            />
+          </tui-textfield>
+          <p class="field-hint">O email não pode ser alterado.</p>
+        </div>
         <div class="actions">
           <button
-            mat-flat-button
+            tuiButton
             type="submit"
             data-testid="save-profile"
             [disabled]="savingProfile() || profile.invalid || profile.pristine"
@@ -82,57 +99,65 @@ import { DeleteAccountDialog } from './delete-account-dialog';
     <section class="list-card section" aria-labelledby="password-title">
       <h2 id="password-title">Trocar senha</h2>
       <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" novalidate>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Senha atual</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="current"
-            required
-            autocomplete="current-password"
-          />
-          @if (passwordForm.controls.current.hasError('required')) {
-            <mat-error>Informe a senha atual.</mat-error>
-          } @else if (passwordForm.controls.current.hasError('wrong')) {
-            <mat-error>Senha atual incorreta.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Senha atual</label>
+            <input
+              tuiInput
+              type="password"
+              formControlName="current"
+              autocomplete="current-password"
+            />
+            <tui-icon tuiPassword />
+          </tui-textfield>
+          @if (show(passwordForm.controls.current); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe a senha atual." />
+            } @else if (c.hasError('wrong')) {
+              <tui-error error="Senha atual incorreta." />
+            }
           }
-        </mat-form-field>
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Nova senha</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="password"
-            required
-            autocomplete="new-password"
-            maxlength="128"
-          />
-          @if (passwordForm.controls.password.hasError('required')) {
-            <mat-error>Informe a nova senha.</mat-error>
-          } @else if (passwordForm.controls.password.invalid) {
-            <mat-error>A senha não atende aos requisitos abaixo.</mat-error>
+        </div>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Nova senha</label>
+            <input
+              tuiInput
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              maxlength="128"
+            />
+            <tui-icon tuiPassword />
+          </tui-textfield>
+          @if (show(passwordForm.controls.password); as c) {
+            @if (c.hasError('required')) {
+              <tui-error error="Informe a nova senha." />
+            } @else {
+              <tui-error error="A senha não atende aos requisitos abaixo." />
+            }
           }
-        </mat-form-field>
+        </div>
         <app-password-checklist [password]="newPassword()" />
-        <mat-form-field class="full-width" subscriptSizing="dynamic">
-          <mat-label>Confirmar nova senha</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="confirm"
-            required
-            autocomplete="new-password"
-          />
-          @if (passwordForm.controls.confirm.hasError('required')) {
-            <mat-error>Confirme a nova senha.</mat-error>
-          } @else if (passwordForm.hasError('mismatch')) {
-            <mat-error>As senhas não conferem.</mat-error>
+        <div class="field">
+          <tui-textfield>
+            <label tuiLabel>Confirmar nova senha</label>
+            <input tuiInput type="password" formControlName="confirm" autocomplete="new-password" />
+          </tui-textfield>
+          @if (passwordForm.controls.confirm.touched) {
+            @if (passwordForm.controls.confirm.hasError('required')) {
+              <tui-error error="Confirme a nova senha." />
+            } @else if (passwordForm.hasError('mismatch')) {
+              <tui-error error="As senhas não conferem." />
+            }
           }
-        </mat-form-field>
-        <p class="note">Ao trocar a senha, suas sessões em outros dispositivos serão encerradas.</p>
+        </div>
+        <p class="hint-text">
+          Ao trocar a senha, suas sessões em outros dispositivos serão encerradas.
+        </p>
         <div class="actions">
           <button
-            mat-flat-button
+            tuiButton
             type="submit"
             data-testid="change-password"
             [disabled]="savingPassword() || passwordForm.invalid"
@@ -145,13 +170,13 @@ import { DeleteAccountDialog } from './delete-account-dialog';
 
     <section class="list-card section danger" aria-labelledby="delete-title">
       <h2 id="delete-title">Excluir conta</h2>
-      <p class="note">
+      <p class="hint-text">
         Apaga definitivamente a sua conta e todos os seus dados. Esta ação não pode ser desfeita.
       </p>
       <div class="actions">
         <button
-          mat-stroked-button
-          class="destructive-outline"
+          tuiButton
+          appearance="secondary-destructive"
           type="button"
           data-testid="delete-account"
           (click)="deleteAccount()"
@@ -172,27 +197,14 @@ import { DeleteAccountDialog } from './delete-account-dialog';
     }
     h2 {
       margin: 0 0 1rem;
-      font: var(--mat-sys-title-medium);
-    }
-    .full-width {
-      width: 100%;
-      margin-bottom: 0.75rem;
+      font: var(--tui-typography-heading-h6);
     }
     .actions {
       display: flex;
       justify-content: flex-end;
     }
-    .note {
-      margin: 0 0 1rem;
-      font: var(--mat-sys-body-small);
-      color: var(--mat-sys-on-surface-variant);
-    }
     .danger h2 {
-      color: var(--mat-sys-error);
-    }
-    .destructive-outline {
-      --mat-button-outlined-label-text-color: var(--mat-sys-error);
-      --mat-button-outlined-outline-color: var(--mat-sys-error);
+      color: var(--tui-text-negative);
     }
     @media (min-width: 768px) {
       .section {
@@ -203,8 +215,8 @@ import { DeleteAccountDialog } from './delete-account-dialog';
 })
 export class AccountPage {
   protected readonly auth = inject(AuthService);
-  private readonly snackBar = inject(MatSnackBar);
-  private readonly dialog = inject(MatDialog);
+  private readonly notifications = inject(TuiNotificationService);
+  private readonly dialog = inject(AppDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder).nonNullable;
 
@@ -229,6 +241,11 @@ export class AccountPage {
     initialValue: '',
   });
 
+  /** O campo, se já tocado e inválido (para exibir o erro). */
+  protected show(control: AbstractControl): AbstractControl | null {
+    return control.touched && control.invalid ? control : null;
+  }
+
   protected saveProfile(): void {
     if (this.profile.invalid) return;
     const { name, username } = this.profile.getRawValue();
@@ -237,7 +254,7 @@ export class AccountPage {
       next: (user) => {
         this.savingProfile.set(false);
         this.profile.reset({ name: user.name, username: user.username });
-        this.snackBar.open('Perfil atualizado.', 'Fechar', { duration: 4000 });
+        this.notify('Perfil atualizado.');
       },
       error: (error: unknown) => {
         this.savingProfile.set(false);
@@ -259,9 +276,7 @@ export class AccountPage {
       next: () => {
         this.savingPassword.set(false);
         this.passwordForm.reset();
-        this.snackBar.open('Senha alterada. As outras sessões foram encerradas.', 'Fechar', {
-          duration: 6000,
-        });
+        this.notify('Senha alterada. As outras sessões foram encerradas.');
       },
       error: (error: unknown) => {
         this.savingPassword.set(false);
@@ -276,18 +291,19 @@ export class AccountPage {
   }
 
   protected deleteAccount(): void {
-    this.dialog
-      .open<DeleteAccountDialog, void, boolean>(DeleteAccountDialog, { width: '28rem' })
-      .afterClosed()
-      .subscribe((deleted) => {
-        if (!deleted) return;
-        this.snackBar.open('Conta excluída.', 'Fechar', { duration: 6000 });
-        void this.router.navigateByUrl('/login');
-      });
+    this.dialog.open<boolean>(DeleteAccountDialog).subscribe((deleted) => {
+      if (!deleted) return;
+      this.notify('Conta excluída.');
+      void this.router.navigateByUrl('/login');
+    });
+  }
+
+  private notify(message: string): void {
+    this.notifications.open(message, { appearance: 'positive', autoClose: 6000 }).subscribe();
   }
 
   private showError(error: unknown): void {
     const message = error instanceof ApiError ? error.message : 'Não foi possível salvar.';
-    this.snackBar.open(message, 'Fechar', { duration: 6000 });
+    this.notifications.open(message, { appearance: 'negative', autoClose: 6000 }).subscribe();
   }
 }

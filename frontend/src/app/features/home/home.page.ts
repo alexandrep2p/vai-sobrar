@@ -1,18 +1,29 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIcon } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
+import {
+  TuiButton,
+  TuiDataList,
+  TuiDropdown,
+  TuiExpand,
+  TuiLink,
+  TuiSelectLike,
+} from '@taiga-ui/core';
+import {
+  TuiAccordion,
+  TuiCalendarMonth,
+  TuiChevron,
+  TuiInputChip,
+  TuiMultiSelect,
+} from '@taiga-ui/kit';
+import { type TuiMonth } from '@taiga-ui/cdk';
 import { Observable } from 'rxjs';
 import type { MonthlyStatement, Ref, RefundSituation, StatementItem } from '../../core/api/models';
 import { Clock } from '../../core/clock';
 import { LedgerService } from '../../core/data/ledger.service';
 import { addMonths, formatMonth, formatShortDate } from '../../shared/format/dates';
 import { formatCents, formatSignedCents } from '../../shared/format/money';
+import { isoToMonth, monthToIso } from '../../shared/forms/iso-dates';
 import {
   financialPeriodStatusLabel,
   invoiceStatusLabel,
@@ -22,7 +33,7 @@ import {
   transactionStatusLabel,
 } from '../../shared/labels/labels';
 import { ConfirmDialog, type ConfirmData } from '../../shared/ui/confirm-dialog';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { PayDialog, type PayDialogResult } from '../../shared/ui/pay-dialog';
 import { CloseMonthDialog } from './close-month-dialog';
@@ -50,13 +61,18 @@ function uniqueRefs(refs: Ref[]): Ref[] {
   selector: 'app-home-page',
   imports: [
     NgTemplateOutlet,
-    MatButton,
-    MatIconButton,
-    MatIcon,
-    MatMenuModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatSelectModule,
+    FormsModule,
+    TuiButton,
+    TuiLink,
+    TuiDropdown,
+    TuiDataList,
+    TuiAccordion,
+    TuiCalendarMonth,
+    TuiExpand,
+    TuiChevron,
+    TuiInputChip,
+    TuiSelectLike,
+    TuiMultiSelect,
     LoadState,
   ],
   templateUrl: './home.page.html',
@@ -64,7 +80,7 @@ function uniqueRefs(refs: Ref[]): Ref[] {
 })
 export class HomePage implements OnInit {
   private readonly ledger = inject(LedgerService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly clock = inject(Clock);
 
   protected readonly month = signal(this.clock.currentMonth());
@@ -82,6 +98,11 @@ export class HomePage implements OnInit {
   protected readonly methodOptions = computed(() =>
     uniqueRefs((this.statement()?.items ?? []).map((i) => i.payment_method)),
   );
+  /** Nomes exibidos nos chips dos filtros (o valor selecionado é o id). */
+  protected readonly categoryName = (id: string): string =>
+    this.categoryOptions().find((c) => c.id === id)?.name ?? '';
+  protected readonly methodName = (id: string): string =>
+    this.methodOptions().find((m) => m.id === id)?.name ?? '';
   protected readonly filtersActive = computed(
     () => this.categoryFilter().length > 0 || this.methodFilter().length > 0,
   );
@@ -174,8 +195,14 @@ export class HomePage implements OnInit {
     this.setMonth(this.clock.currentMonth());
   }
 
-  protected onMonthPicked(value: string): void {
-    if (/^\d{4}-\d{2}$/.test(value)) this.setMonth(value);
+  // --- seletor de mês (calendário de meses do Taiga, aberto pelo título) ---
+
+  protected readonly monthPickerOpen = signal(false);
+  protected readonly pickerMonth = computed(() => isoToMonth(this.month()));
+
+  protected pickMonth(month: TuiMonth): void {
+    this.monthPickerOpen.set(false);
+    this.setMonth(monthToIso(month));
   }
 
   private setMonth(month: string): void {
@@ -210,36 +237,45 @@ export class HomePage implements OnInit {
   }
 
   protected trackKey(item: StatementItem, index: number): string {
-    return `${item.item_type}:${item.transaction_id ?? item.recurrence_id ?? item.refund?.refund_id}:${item.occurrence_month ?? ''}:${index}`;
+    return `${this.menuKey(item)}:${index}`;
+  }
+
+  // --- menu de ações do item: um aberto por vez ---
+
+  protected readonly openMenu = signal<string | null>(null);
+
+  protected menuKey(item: StatementItem): string {
+    return `${item.item_type}:${item.transaction_id ?? item.recurrence_id ?? item.refund?.refund_id}:${item.occurrence_month ?? ''}`;
+  }
+
+  protected closeMenu(): void {
+    this.openMenu.set(null);
   }
 
   // --- ações do extrato ---
 
   protected newTransaction(): void {
-    this.afterSaved(this.dialog.open(TransactionFormDialog, dialogConfig()).afterClosed());
+    this.afterSaved(this.dialog.open(TransactionFormDialog));
   }
 
   protected closeMonth(): void {
-    this.afterSaved(this.dialog.open(CloseMonthDialog, dialogConfig(this.month())).afterClosed());
+    this.afterSaved(this.dialog.open(CloseMonthDialog, this.month()));
   }
 
   protected edit(item: StatementItem): void {
-    this.afterSaved(this.dialog.open(TransactionEditDialog, dialogConfig(item)).afterClosed());
+    this.afterSaved(this.dialog.open(TransactionEditDialog, item));
   }
 
   protected pay(item: StatementItem): void {
     const data = { title: 'Pagar lançamento', confirmLabel: 'Pagar', message: item.description };
-    this.dialog
-      .open<PayDialog, typeof data, PayDialogResult>(PayDialog, dialogConfig(data))
-      .afterClosed()
-      .subscribe((result) => {
-        if (!result) return;
-        const request: Observable<unknown> =
-          item.recurrence_id && item.occurrence_month
-            ? this.ledger.payOccurrence(item.recurrence_id, item.occurrence_month, result.paid_at)
-            : this.ledger.payTransaction(item.transaction_id as string, result.paid_at);
-        request.subscribe(() => this.load());
-      });
+    this.dialog.open<PayDialogResult>(PayDialog, data).subscribe((result) => {
+      if (!result) return;
+      const request: Observable<unknown> =
+        item.recurrence_id && item.occurrence_month
+          ? this.ledger.payOccurrence(item.recurrence_id, item.occurrence_month, result.paid_at)
+          : this.ledger.payTransaction(item.transaction_id as string, result.paid_at);
+      request.subscribe(() => this.load());
+    });
   }
 
   protected unpay(item: StatementItem): void {
@@ -289,22 +325,21 @@ export class HomePage implements OnInit {
     const data = item.installment
       ? { description: item.description, planId: item.installment.installment_plan_id }
       : { description: item.description, transactionId: item.transaction_id as string };
-    this.afterSaved(this.dialog.open(RefundDialog, dialogConfig(data)).afterClosed());
+    this.afterSaved(this.dialog.open(RefundDialog, data));
   }
 
   protected openPurchase(item: StatementItem): void {
     const data = item.installment
       ? { planId: item.installment.installment_plan_id }
       : { transactionId: item.refund?.original_transaction_id };
-    this.afterSaved(this.dialog.open(PurchaseDetailDialog, dialogConfig(data)).afterClosed());
+    this.afterSaved(this.dialog.open(PurchaseDetailDialog, data));
   }
 
   // --- internos ---
 
   private confirm(data: ConfirmData, run: () => Observable<unknown>): void {
     this.dialog
-      .open(ConfirmDialog, dialogConfig(data))
-      .afterClosed()
+      .open(ConfirmDialog, data)
       .subscribe((confirmed) => confirmed && run().subscribe(() => this.load()));
   }
 

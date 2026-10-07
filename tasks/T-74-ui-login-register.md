@@ -49,6 +49,6 @@ Telas de login e cadastro com validação e checklist de senha.
 ## Decisões técnicas registradas
 
 * `shared/forms/auth-validators.ts` espelha as regras do backend (`passwordChecks`, `strongPassword`, `fullName`, `usernameFormat`, `matchFields`).
-* `PasswordChecklist` com ícone por requisito e `aria-live`. Campos com `subscriptSizing="dynamic"` para as mensagens quebrarem linha no celular; espaço entre campos por margem.
+* Taiga UI: `tui-textfield` + `tuiInput`, `tui-error` para os erros (exibidos após tocar o campo), `tui-icon tuiPassword` para mostrar/ocultar a senha e notificação `positive` ao criar a conta. `PasswordChecklist` com `tui-icon` por requisito e `aria-live`.
 * Erros do servidor: `EMAIL_TAKEN`/`USERNAME_TAKEN` no campo; demais no topo do formulário. Email do cadastro vai ao login pelo `state` da navegação (nunca pela URL).
 * Verificado no navegador: checklist ao vivo, cadastro → login com email preenchido, senha errada com mensagem genérica, login → Home vazia e só PIX/Dinheiro/Débito.

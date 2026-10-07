@@ -1,16 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { TuiButton, TuiDataList, TuiDropdown, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiChevron, TuiInputDate, TuiSelect } from '@taiga-ui/kit';
 import { catchError, distinctUntilChanged, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 import type {
   Category,
@@ -24,121 +16,142 @@ import { CatalogService } from '../../core/data/catalog.service';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate, formatMonthShort, nextOccurrenceDate } from '../../shared/format/dates';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
+import { nameById } from '../../shared/forms/options';
 import { positiveMoney, trimmedLength } from '../../shared/forms/validators';
 import { MoneyInput } from '../../shared/forms/money-input';
 import { categoryTypeLabel } from '../../shared/labels/labels';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary } from '../../shared/ui/summary-dialog';
 
 /** Criação e edição de recorrência. A edição só vale para ocorrências ainda não geradas. */
 @Component({
   selector: 'app-recurrence-dialog',
   imports: [
+    TuiInputDate,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
     MoneyInput,
-    MatSelectModule,
-    MatButton,
+    TuiButton,
+    TuiInput,
+    TuiError,
+    TuiDataList,
+    TuiDropdown,
+    TuiChevron,
+    TuiSelect,
   ],
+  providers: [ISO_DATE_INPUTS],
   template: `
-    <h2 mat-dialog-title>{{ recurrence ? 'Editar recorrência' : 'Nova recorrência' }}</h2>
+    <h2 class="dialog-title">{{ recurrence ? 'Editar recorrência' : 'Nova recorrência' }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         @if (recurrence) {
           <p class="hint-text" data-testid="edit-hint">
             A alteração vale para as ocorrências ainda não geradas. As já geradas não mudam.
           </p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Descrição</mat-label>
-          <input matInput formControlName="description" maxlength="200" autocomplete="off" />
-          @if (form.controls.description.invalid) {
-            <mat-error>Informe a descrição.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Descrição</label>
+            <input tuiInput formControlName="description" maxlength="200" autocomplete="off" />
+          </tui-textfield>
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <tui-error error="Informe a descrição." />
           }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Valor (R$)</mat-label>
-          <input matInput appMoneyInput formControlName="amount" placeholder="0,00" />
-          @if (form.controls.amount.invalid) {
-            <mat-error>Informe um valor maior que zero.</mat-error>
+        </div>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Valor (R$)</label>
+            <input tuiInput appMoneyInput formControlName="amount" placeholder="0,00" />
+          </tui-textfield>
+          @if (form.controls.amount.touched && form.controls.amount.invalid) {
+            <tui-error error="Informe um valor maior que zero." />
           }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Categoria</mat-label>
-          <mat-select formControlName="category_id">
-            @for (category of categoryOptions(); track category.id) {
-              <mat-option [value]="category.id"
-                >{{ category.name }} ({{ typeLabel(category.type) }})</mat-option
-              >
-            }
-          </mat-select>
-          @if (form.controls.category_id.invalid) {
-            <mat-error>Escolha a categoria.</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field class="full-width">
-          <mat-label>Método de pagamento</mat-label>
-          <mat-select formControlName="payment_method_id">
-            @for (method of methodOptions(); track method.id) {
-              <mat-option [value]="method.id">{{ method.name }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.payment_method_id.invalid) {
-            <mat-error>Escolha o método.</mat-error>
-          }
-        </mat-form-field>
-        <div class="form-grid two">
-          <mat-form-field>
-            <mat-label>{{ dayLabel() }}</mat-label>
-            <input
-              matInput
-              type="number"
-              inputmode="numeric"
-              min="1"
-              max="31"
-              formControlName="due_day"
-            />
-            @if (form.controls.due_day.invalid) {
-              <mat-error>Informe um dia de 1 a 31.</mat-error>
-            }
-          </mat-form-field>
-          @if (!recurrence) {
-            <mat-form-field>
-              <mat-label>Início</mat-label>
-              <input matInput type="date" formControlName="start_date" />
-              @if (form.controls.start_date.invalid) {
-                <mat-error>Informe a data de início.</mat-error>
+        </div>
+        <div class="field full-width">
+          <tui-textfield tuiChevron [stringify]="categoryName">
+            <label tuiLabel>Categoria</label>
+            <input tuiSelect formControlName="category_id" data-testid="category_id" />
+            <tui-data-list *tuiDropdown>
+              @for (category of categoryOptions(); track category.id) {
+                <button tuiOption type="button" [value]="category.id">
+                  {{ category.name }} ({{ typeLabel(category.type) }})
+                </button>
               }
-            </mat-form-field>
+            </tui-data-list>
+          </tui-textfield>
+          @if (form.controls.category_id.touched && form.controls.category_id.invalid) {
+            <tui-error error="Escolha a categoria." />
           }
-          <mat-form-field>
-            <mat-label>Término (opcional)</mat-label>
-            <input matInput type="date" formControlName="end_date" />
-          </mat-form-field>
+        </div>
+        <div class="field full-width">
+          <tui-textfield tuiChevron [stringify]="methodName">
+            <label tuiLabel>Método de pagamento</label>
+            <input tuiSelect formControlName="payment_method_id" data-testid="payment_method_id" />
+            <tui-data-list *tuiDropdown>
+              @for (method of methodOptions(); track method.id) {
+                <button tuiOption type="button" [value]="method.id">{{ method.name }}</button>
+              }
+            </tui-data-list>
+          </tui-textfield>
+          @if (form.controls.payment_method_id.touched && form.controls.payment_method_id.invalid) {
+            <tui-error error="Escolha o método." />
+          }
+        </div>
+        <div class="form-grid two">
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>{{ dayLabel() }}</label>
+              <input
+                tuiInput
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="31"
+                formControlName="due_day"
+              />
+            </tui-textfield>
+            @if (form.controls.due_day.touched && form.controls.due_day.invalid) {
+              <tui-error error="Informe um dia de 1 a 31." />
+            }
+          </div>
+          @if (!recurrence) {
+            <div class="field">
+              <tui-textfield>
+                <label tuiLabel>Início</label>
+                <input tuiInputDate formControlName="start_date" />
+                <tui-calendar *tuiDropdown />
+              </tui-textfield>
+              @if (form.controls.start_date.touched && form.controls.start_date.invalid) {
+                <tui-error error="Informe a data de início." />
+              }
+            </div>
+          }
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Término (opcional)</label>
+              <input tuiInputDate formControlName="end_date" />
+              <tui-calendar *tuiDropdown />
+            </tui-textfield>
+          </div>
         </div>
         @if (cardHint(); as hint) {
           <p class="hint-text" data-testid="card-hint">{{ hint }}</p>
         }
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button
-          mat-flat-button
-          type="submit"
-          [disabled]="loading() || submitting() || form.invalid"
-        >
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="loading() || submitting() || form.invalid">
           Salvar
         </button>
-      </mat-dialog-actions>
+      </footer>
     </form>
   `,
 })
 export class RecurrenceDialog implements OnInit {
-  protected readonly recurrence = inject<Recurrence | null>(MAT_DIALOG_DATA, { optional: true });
-  private readonly ref = inject(MatDialogRef<RecurrenceDialog, boolean>);
+  protected readonly ref = injectDialog<Recurrence | null, boolean>();
+  protected readonly recurrence = this.ref.data ?? null;
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly typeLabel = categoryTypeLabel;
@@ -157,6 +170,12 @@ export class RecurrenceDialog implements OnInit {
   protected readonly methodOptions = computed(() =>
     this.methods().filter((m) => m.active || m.id === this.recurrence?.payment_method.id),
   );
+  /** Texto do select de categoria: nome e tipo, como nas opções. */
+  protected readonly categoryName = (id: string): string => {
+    const category = this.categories().find((c) => c.id === id);
+    return category ? `${category.name} (${this.typeLabel(category.type)})` : '';
+  };
+  protected readonly methodName = nameById(this.methods);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     description: [this.recurrence?.description ?? '', trimmedLength(200)],

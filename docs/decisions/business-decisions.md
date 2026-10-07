@@ -364,6 +364,14 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
   * as ações do item (editar, pagar, estornar, apagar etc.) são as mesmas dentro e fora dos painéis.
 * **Fonte:** `home.md` §3.2 e §7.
 
+### PD-40 — Modo escuro
+* **Status:** Vigente. Decisão de apresentação; não altera nenhuma regra financeira.
+* **Decisão:** o app tem tema claro e escuro, alternados por um botão no canto superior direito: ícone de **lua** no tema claro (muda para escuro) e de **sol** no tema escuro (muda para claro).
+* **Regra:**
+  * sem escolha feita, o tema segue o do sistema operacional (e acompanha se ele mudar);
+  * a escolha feita no botão é lembrada **neste navegador** (não sincroniza entre aparelhos) e passa a valer em vez do tema do sistema.
+* **Fonte:** `architecture.md` §2.
+
 ### PD-41 — Contas de usuário e dados separados por usuário
 * **Status:** Vigente. Substitui a PD-22.
 * **Decisão:** o sistema passa a ter contas. Só um usuário autenticado acessa a aplicação, e cada usuário vê e altera **apenas os próprios dados**.

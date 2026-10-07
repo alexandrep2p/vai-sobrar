@@ -45,5 +45,5 @@ Tela para editar perfil, trocar senha e excluir conta.
 
 ## Decisões técnicas registradas
 
-* `AccountPage` (`/conta`): perfil (email somente leitura, salvar só após alteração), trocar senha (checklist, senha atual errada no campo) e excluir conta (`DeleteAccountDialog` com aviso de irreversibilidade e senha).
+* `AccountPage` (`/conta`): perfil (email somente leitura, salvar só após alteração), trocar senha (checklist, senha atual errada no campo) e excluir conta (`DeleteAccountDialog`, aberto pelo `AppDialog`, com aviso de irreversibilidade e senha). Sucessos e falhas inesperadas usam `TuiNotificationService`.
 * Verificado no navegador: perfil salvo com espaços normalizados, cookie invisível ao JavaScript (`document.cookie` vazio), exclusão da conta de teste apagou usuário, sessões e métodos no banco.

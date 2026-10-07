@@ -1,6 +1,9 @@
-import { ComponentFixture } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TuiRoot } from '@taiga-ui/core';
+import { POLYMORPHEUS_CONTEXT } from '@taiga-ui/polymorpheus';
+import { type Observable, of, Subject, throwError } from 'rxjs';
+import { AppDialog } from '../app/shared/ui/dialog';
+import { SummaryDialog, type SummaryData } from '../app/shared/ui/summary-dialog';
 
 export const root = (fixture: ComponentFixture<unknown>): HTMLElement =>
   fixture.nativeElement as HTMLElement;
@@ -26,6 +29,8 @@ export async function click(
   element.click();
   fixture.detectChanges();
   await fixture.whenStable();
+  // Overlays (menus, dropdowns) abertos pelo clique vivem no tui-root.
+  activeRoot?.detectChanges();
 }
 
 export async function type(
@@ -47,37 +52,100 @@ export const text = (fixture: ComponentFixture<unknown>): string =>
 export const submitButton = (fixture: ComponentFixture<unknown>): HTMLButtonElement =>
   one<HTMLButtonElement>(fixture, 'button[type="submit"]');
 
-/** Valor da linha de um resumo de confirmação aberto (overlay do diálogo). */
+interface OpenDialog {
+  component: unknown;
+  data: unknown;
+  result: Subject<unknown>;
+}
+
+/** Diálogos abertos pelo `AppDialog` falso do teste atual. */
+let openDialogs: OpenDialog[] = [];
+
+/**
+ * `AppDialog` falso: registra cada diálogo aberto e devolve um resultado pendente. O resumo de
+ * confirmação é respondido por `answerSummary`.
+ */
+export function appDialogStub() {
+  openDialogs = [];
+  return {
+    open: vi.fn((component: unknown, data?: unknown): Observable<unknown> => {
+      const result = new Subject<unknown>();
+      openDialogs.push({ component, data, result });
+      return result;
+    }),
+  };
+}
+
+/** Fechamento falso do diálogo: `close(valor)` e o dispensar (sem valor) chegam em `ref.close`. */
+export const dialogRef = () => ({ close: vi.fn() });
+
+/**
+ * Providers para testar um componente aberto pelo `AppDialog`: os dados recebidos, o fechamento
+ * observado em `ref.close` e um `AppDialog` falso para os diálogos que ele abrir.
+ */
+export function dialogProviders(data: unknown, ref = dialogRef()) {
+  return [
+    {
+      provide: POLYMORPHEUS_CONTEXT,
+      useValue: {
+        data,
+        completeWith: (value: unknown) => ref.close(value),
+        $implicit: { complete: () => ref.close() },
+      },
+    },
+    { provide: AppDialog, useValue: appDialogStub() },
+  ];
+}
+
+const openSummary = (): OpenDialog | undefined =>
+  [...openDialogs].reverse().find((d) => d.component === SummaryDialog);
+
+/** Valor da linha do resumo de confirmação aberto. */
 export function summaryRow(label: string): string | undefined {
-  const rows = Array.from(document.querySelectorAll('[data-testid="summary"] .summary-row'));
-  const row = rows.find((r) => r.querySelector('dt')?.textContent?.trim() === label);
-  return row?.querySelector('dd')?.textContent?.trim();
+  return (openSummary()?.data as SummaryData | undefined)?.rows.find((r) => r.label === label)
+    ?.value;
 }
 
 /** Há resumo de confirmação aberto? */
-export const summaryOpen = (): boolean =>
-  document.querySelector('[data-testid="summary"]') !== null;
+export const summaryOpen = (): boolean => openSummary() !== undefined;
 
-/** Clica em "Confirmar" (true) ou "Voltar" (false) no resumo aberto; retorna se havia resumo. */
+/** Responde "Confirmar" (true) ou "Voltar" (false) no resumo aberto; retorna se havia resumo. */
 export async function answerSummary(
   fixture: ComponentFixture<unknown>,
   confirm: boolean,
 ): Promise<boolean> {
-  const button = document.querySelector<HTMLButtonElement>(
-    confirm ? '[data-testid="summary-confirm"]' : '[data-testid="summary-back"]',
-  );
-  if (!button) return false;
-  button.click();
-  // O fechamento do diálogo é animado: espera o resumo sair do DOM.
-  await vi.waitFor(() => {
-    fixture.detectChanges();
-    expect(summaryOpen()).toBe(false);
-  });
+  const summary = openSummary();
+  if (!summary) return false;
+  openDialogs.splice(openDialogs.indexOf(summary), 1);
+  summary.result.next(confirm);
+  summary.result.complete();
+  fixture.detectChanges();
   await fixture.whenStable();
   return true;
 }
 
-export const dialogRefMock = () => ({ provide: MatDialogRef, useValue: { close: vi.fn() } });
+/**
+ * Cria o `tui-root` do teste. Menus e dropdowns do Taiga abrem em portal dentro dele; sem ele, o
+ * conteúdo do overlay não é renderizado. Leia o overlay com `overlay()`. Exige `provideTaiga()`.
+ */
+export function tuiRoot(): ComponentFixture<TuiRoot> {
+  const root = TestBed.createComponent(TuiRoot);
+  activeRoot = root;
+  root.componentRef.onDestroy(() => {
+    if (activeRoot === root) activeRoot = null;
+  });
+  root.detectChanges();
+  return root;
+}
+
+/** Elementos abertos em overlay (menus, dropdowns) dentro do `tui-root` do teste. */
+export function overlay<T extends HTMLElement = HTMLElement>(selector: string): T[] {
+  const root = activeRoot?.nativeElement as HTMLElement | undefined;
+  return root ? Array.from(root.querySelectorAll<T>(selector)) : [];
+}
+
+/** `tui-root` do teste atual, se criado por `tuiRoot()`. */
+let activeRoot: ComponentFixture<TuiRoot> | null = null;
 
 export const ok = <T>(value: T) => of(value);
 export const fail = (code = 'ERRO') => throwError(() => new Error(code));

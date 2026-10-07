@@ -1,21 +1,16 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
+import { TuiButton, TuiError, TuiInput } from '@taiga-ui/core';
+import { TuiInputDate } from '@taiga-ui/kit';
 import type { InstallmentPlan } from '../../core/api/models';
 import { LedgerService } from '../../core/data/ledger.service';
 import { formatDate } from '../../shared/format/dates';
 import { describeInstallments } from '../../shared/format/installments';
 import { centsToInput, formatCents, parseCents } from '../../shared/format/money';
+import { ISO_DATE_INPUTS } from '../../shared/forms/iso-dates';
 import { MoneyInput } from '../../shared/forms/money-input';
 import { positiveMoney } from '../../shared/forms/validators';
+import { AppDialog, injectDialog } from '../../shared/ui/dialog';
 import { confirmSummary } from '../../shared/ui/summary-dialog';
 
 /**
@@ -25,69 +20,70 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
  */
 @Component({
   selector: 'app-plan-edit-dialog',
-  imports: [
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInput,
-    MoneyInput,
-    MatButton,
-  ],
+  imports: [TuiInputDate, ReactiveFormsModule, MoneyInput, TuiButton, TuiInput, TuiError],
+  providers: [ISO_DATE_INPUTS],
   template: `
-    <h2 mat-dialog-title>Editar compra parcelada</h2>
+    <h2 class="dialog-title">Editar compra parcelada</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-dialog-content>
+      <div class="dialog-content">
         <p class="hint-text">
           <strong>{{ plan.description }}</strong
           ><br />
           As parcelas serão recalculadas. A edição só é possível enquanto nenhuma parcela estiver em
           fatura paga ou mês fechado e a compra não tiver estorno.
         </p>
-        <mat-form-field class="full-width">
-          <mat-label>Valor total (R$)</mat-label>
-          <input matInput appMoneyInput formControlName="amount" data-testid="amount" />
-          @if (form.controls.amount.invalid) {
-            <mat-error>Informe um valor maior que zero.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Valor total (R$)</label>
+            <input tuiInput appMoneyInput formControlName="amount" data-testid="amount" />
+          </tui-textfield>
+          @if (form.controls.amount.touched && form.controls.amount.invalid) {
+            <tui-error error="Informe um valor maior que zero." />
           }
-        </mat-form-field>
-        <div class="form-grid two">
-          <mat-form-field>
-            <mat-label>Parcelas</mat-label>
-            <input
-              matInput
-              type="number"
-              inputmode="numeric"
-              min="2"
-              max="120"
-              formControlName="installment_count"
-              data-testid="count"
-            />
-            @if (form.controls.installment_count.invalid) {
-              <mat-error>Informe de 2 a 120.</mat-error>
-            }
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Data da compra</mat-label>
-            <input matInput type="date" formControlName="purchase_date" data-testid="date" />
-            @if (form.controls.purchase_date.invalid) {
-              <mat-error>Informe a data da compra.</mat-error>
-            }
-          </mat-form-field>
         </div>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
-          Salvar
-        </button>
-      </mat-dialog-actions>
+        <div class="form-grid two">
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Parcelas</label>
+              <input
+                tuiInput
+                type="number"
+                inputmode="numeric"
+                min="2"
+                max="120"
+                formControlName="installment_count"
+                data-testid="count"
+              />
+            </tui-textfield>
+            @if (
+              form.controls.installment_count.touched && form.controls.installment_count.invalid
+            ) {
+              <tui-error error="Informe de 2 a 120." />
+            }
+          </div>
+          <div class="field">
+            <tui-textfield>
+              <label tuiLabel>Data da compra</label>
+              <input tuiInputDate formControlName="purchase_date" data-testid="date" />
+              <tui-calendar *tuiDropdown />
+            </tui-textfield>
+            @if (form.controls.purchase_date.touched && form.controls.purchase_date.invalid) {
+              <tui-error error="Informe a data da compra." />
+            }
+          </div>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
+        <button tuiButton type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+      </footer>
     </form>
   `,
 })
 export class PlanEditDialog {
-  protected readonly plan = inject<InstallmentPlan>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<PlanEditDialog, boolean>);
-  private readonly dialog = inject(MatDialog);
+  protected readonly ref = injectDialog<InstallmentPlan, boolean>();
+  protected readonly plan = this.ref.data;
+  private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
 
   protected readonly submitting = signal(false);

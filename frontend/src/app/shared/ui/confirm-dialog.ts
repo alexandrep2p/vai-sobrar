@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { MatButton } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { Component } from '@angular/core';
+import { TuiButton } from '@taiga-ui/core';
+import { injectDialog } from './dialog';
 
 export interface ConfirmData {
   title: string;
@@ -12,25 +12,26 @@ export interface ConfirmData {
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [MatDialogModule, MatButton],
+  imports: [TuiButton],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>
+    <h2 class="dialog-title">{{ data.title }}</h2>
+    <div class="dialog-content">
       <p class="confirm-message">{{ data.message }}</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">Cancelar</button>
+    </div>
+    <footer class="dialog-actions">
+      <button tuiButton appearance="flat" (click)="ref.close(false)">Cancelar</button>
       <button
-        mat-flat-button
-        [class.destructive]="data.destructive"
-        [mat-dialog-close]="true"
+        tuiButton
+        [appearance]="data.destructive ? 'primary-destructive' : 'primary'"
+        (click)="ref.close(true)"
         data-testid="confirm"
       >
         {{ data.confirmLabel }}
       </button>
-    </mat-dialog-actions>
+    </footer>
   `,
 })
 export class ConfirmDialog {
-  protected readonly data = inject<ConfirmData>(MAT_DIALOG_DATA);
+  protected readonly ref = injectDialog<ConfirmData, boolean>();
+  protected readonly data = this.ref.data;
 }

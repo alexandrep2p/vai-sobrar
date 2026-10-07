@@ -1,19 +1,19 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { TuiNotificationService } from '@taiga-ui/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthStore } from '../auth/auth.store';
 import { SILENT_ERROR } from './api-client';
 import { toApiError } from './api-error';
 
 /**
- * Converte erros HTTP em `ApiError` e os exibe em um snackbar com a mensagem amigável.
- * Sessão ausente/encerrada (401) leva ao login, sem snackbar (auth.md §10). Requisições
+ * Converte erros HTTP em `ApiError` e os exibe em uma notificação com a mensagem amigável.
+ * Sessão ausente/encerrada (401) leva ao login, sem notificação (auth.md §10). Requisições
  * marcadas com `SILENT_ERROR` têm o erro exibido pela própria tela.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const snackBar = inject(MatSnackBar);
+  const notifications = inject(TuiNotificationService);
   const store = inject(AuthStore);
   const router = inject(Router);
   return next(req).pipe(
@@ -35,7 +35,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => apiError);
       }
       if (!req.context.get(SILENT_ERROR) && !sessionProbe) {
-        snackBar.open(apiError.message, 'Fechar', { duration: 6000 });
+        notifications
+          .open(apiError.message, { appearance: 'negative', autoClose: 6000 })
+          .subscribe();
       }
       return throwError(() => apiError);
     }),

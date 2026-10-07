@@ -17,7 +17,7 @@ Estado do usuário, proteção das rotas e tratamento de sessão no frontend.
 
 * `core/auth`: store, service, `authGuard` e `guestGuard`.
 * Rotas `/login`, `/cadastro` (fora do Shell) e Shell protegido.
-* Interceptor: 401 → login, sem snackbar; mensagens dos novos códigos.
+* Interceptor: 401 → login, sem notificação; mensagens dos novos códigos.
 * Shell: nome, username, "Minha conta" e "Sair".
 
 ## Fora de escopo
@@ -49,6 +49,6 @@ Estado do usuário, proteção das rotas e tratamento de sessão no frontend.
 ## Decisões técnicas registradas
 
 * `core/auth`: `AuthStore` (signal sem HTTP, usado pelo interceptor), `AuthService` (`loadMe`/`ensureLoaded`, login, cadastro, logout, perfil, senha, exclusão) e guards funcionais `authGuard`/`guestGuard`; `safeReturnUrl` aceita só caminhos internos.
-* `ApiClient` ganhou `RequestOptions.silent` (`HttpContextToken SILENT_ERROR`) e corpo no `DELETE`. Interceptor: `UNAUTHENTICATED` limpa o usuário e leva a `/login?returnUrl=...` sem snackbar, exceto a consulta `GET /auth/me`.
-* Shell: nome, @username, "Minha conta" (`mat-nav-list`) e "Sair" (`mat-action-list`).
+* `ApiClient` ganhou `RequestOptions.silent` (`HttpContextToken SILENT_ERROR`) e corpo no `DELETE`. Interceptor: `UNAUTHENTICATED` limpa o usuário e leva a `/login?returnUrl=...` sem notificação, exceto a consulta `GET /auth/me`.
+* Shell (Taiga UI, após a migração do main): nome, @username, "Minha conta" (link `nav-link`) e "Sair" (botão com a aparência dos links).
 * Verificado no navegador (375px): rota protegida → login com destino; menu com usuário.

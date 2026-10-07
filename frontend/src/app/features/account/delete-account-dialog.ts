@@ -1,71 +1,65 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
+import { TuiButton, TuiError, TuiIcon, TuiInput } from '@taiga-ui/core';
+import { TuiPassword } from '@taiga-ui/kit';
 import { ApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
+import { injectDialog } from '../../shared/ui/dialog';
 
 /** Exclusão da conta (auth.md §8.3): senha atual + confirmação explícita; fecha com `true`. */
 @Component({
   selector: 'app-delete-account-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInput, MatButton],
+  imports: [ReactiveFormsModule, TuiButton, TuiInput, TuiError, TuiIcon, TuiPassword],
   template: `
-    <h2 mat-dialog-title>Excluir conta</h2>
+    <h2 class="dialog-title">Excluir conta</h2>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <mat-dialog-content>
+      <div class="dialog-content">
         <p class="warning">
           Esta ação é <strong>irreversível</strong>. Sua conta e todos os seus dados — categorias,
           métodos, cartões, faturas, lançamentos, recorrências e meses fechados — serão apagados
           definitivamente.
         </p>
         @if (error(); as message) {
-          <p class="form-error" role="alert">{{ message }}</p>
+          <p class="inline-error" role="alert">{{ message }}</p>
         }
-        <mat-form-field class="full-width">
-          <mat-label>Senha atual</mat-label>
-          <input
-            matInput
-            type="password"
-            formControlName="password"
-            autocomplete="current-password"
-          />
-          @if (form.controls.password.hasError('required')) {
-            <mat-error>Informe a senha atual.</mat-error>
-          } @else if (form.controls.password.hasError('wrong')) {
-            <mat-error>Senha atual incorreta.</mat-error>
+        <div class="field full-width">
+          <tui-textfield>
+            <label tuiLabel>Senha atual</label>
+            <input
+              tuiInput
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <tui-icon tuiPassword />
+          </tui-textfield>
+          @if (form.controls.password.hasError('wrong')) {
+            <tui-error error="Senha atual incorreta." />
           }
-        </mat-form-field>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cancelar</button>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button tuiButton appearance="flat" type="button" (click)="ref.close()">Cancelar</button>
         <button
-          mat-flat-button
-          class="destructive"
+          tuiButton
+          appearance="primary-destructive"
           type="submit"
           data-testid="confirm-delete"
           [disabled]="submitting() || form.invalid"
         >
           Excluir definitivamente
         </button>
-      </mat-dialog-actions>
+      </footer>
     </form>
   `,
   styles: `
     .warning {
       margin-top: 0;
     }
-    .form-error {
-      padding: 0.75rem;
-      border-radius: var(--mat-sys-corner-small);
-      background: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
-    }
   `,
 })
 export class DeleteAccountDialog {
-  private readonly ref = inject(MatDialogRef<DeleteAccountDialog, boolean>);
+  protected readonly ref = injectDialog<undefined, boolean>();
   private readonly auth = inject(AuthService);
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);

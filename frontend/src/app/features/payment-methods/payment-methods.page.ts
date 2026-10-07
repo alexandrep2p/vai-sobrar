@@ -1,23 +1,21 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { TuiButton } from '@taiga-ui/core';
 import type { PaymentMethod } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
 import { paymentMethodKindLabel, paymentMethodSourceLabel } from '../../shared/labels/labels';
-import { dialogConfig } from '../../shared/ui/dialog';
+import { AppDialog } from '../../shared/ui/dialog';
 import { LoadState, type LoadStatus } from '../../shared/ui/load-state';
 import { MethodDialog } from './method-dialog';
 
 @Component({
   selector: 'app-payment-methods-page',
-  imports: [MatButton, MatIconButton, MatIcon, LoadState, RouterLink],
+  imports: [LoadState, RouterLink, TuiButton],
   templateUrl: './payment-methods.page.html',
 })
 export class PaymentMethodsPage implements OnInit {
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(AppDialog);
 
   protected readonly status = signal<LoadStatus>('loading');
   protected readonly methods = signal<PaymentMethod[]>([]);
@@ -61,9 +59,6 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   private open(method: PaymentMethod | null): void {
-    this.dialog
-      .open(MethodDialog, dialogConfig(method))
-      .afterClosed()
-      .subscribe((saved) => saved && this.load());
+    this.dialog.open(MethodDialog, method).subscribe((saved) => saved && this.load());
   }
 }

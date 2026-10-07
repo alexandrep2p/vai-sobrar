@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { TuiNotificationService } from '@taiga-ui/core';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { ApiError } from '../../core/api/api-error';
 import { AuthService } from '../../core/auth/auth.service';
 import { all, one, submitButton, text, type } from '../../../testing/helpers';
@@ -100,7 +100,7 @@ describe('LoginPage', () => {
     const fixture = await render();
     const input = one<HTMLInputElement>(fixture, 'input[formcontrolname="password"]');
     expect(input.type).toBe('password');
-    one(fixture, 'button[aria-label="Mostrar senha"]').click();
+    one(fixture, 'tui-icon[tuiPassword]').click();
     fixture.detectChanges();
     expect(input.type).toBe('text');
   });
@@ -113,15 +113,16 @@ describe('LoginPage', () => {
 
 describe('RegisterPage', () => {
   const auth = { register: vi.fn() };
-  const snackBar = { open: vi.fn() };
+  const notifications = { open: vi.fn(() => EMPTY) };
 
   beforeEach(() => {
     vi.resetAllMocks();
+    notifications.open.mockReturnValue(EMPTY);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: auth },
-        { provide: MatSnackBar, useValue: snackBar },
+        { provide: TuiNotificationService, useValue: notifications },
       ],
     });
   });
@@ -172,17 +173,16 @@ describe('RegisterPage', () => {
       email: 'ana@x.com',
       password: 'abc123!@',
     });
-    expect(snackBar.open).toHaveBeenCalledWith(
+    expect(notifications.open).toHaveBeenCalledWith(
       'Conta criada. Entre com seu email e senha.',
-      'Fechar',
-      expect.anything(),
+      expect.objectContaining({ appearance: 'positive' }),
     );
     expect(navigate).toHaveBeenCalledWith('/login', { state: { email: 'ana@x.com' } });
   });
 
   it.each([
     ['nome com uma palavra', { name: 'Ana' }, 'Informe nome e sobrenome.'],
-    ['username inválido', { username: 'ana_souza' }, 'Use 3 a 30 caracteres'],
+    ['username inválido', { username: 'ana_souza' }, '3 a 30 caracteres'],
     ['senha fraca', { password: 'abcdefgh', confirm: 'abcdefgh' }, 'não atende aos requisitos'],
     ['confirmação diferente', { confirm: 'abc123!#' }, 'As senhas não conferem.'],
   ])('bloqueia %s', async (_label, over, message) => {
