@@ -3,7 +3,16 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { of } from 'rxjs';
 import type { Category } from '../../core/api/models';
 import { CatalogService } from '../../core/data/catalog.service';
-import { all, click, dialogRefMock, fail, one, submitButton, text, type } from '../../../testing/helpers';
+import {
+  all,
+  click,
+  dialogRefMock,
+  fail,
+  one,
+  submitButton,
+  text,
+  type,
+} from '../../../testing/helpers';
 import { CategoriesPage } from './categories.page';
 import { CategoryDialog } from './category-dialog';
 

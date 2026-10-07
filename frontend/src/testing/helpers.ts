@@ -55,7 +55,8 @@ export function summaryRow(label: string): string | undefined {
 }
 
 /** Há resumo de confirmação aberto? */
-export const summaryOpen = (): boolean => document.querySelector('[data-testid="summary"]') !== null;
+export const summaryOpen = (): boolean =>
+  document.querySelector('[data-testid="summary"]') !== null;
 
 /** Clica em "Confirmar" (true) ou "Voltar" (false) no resumo aberto; retorna se havia resumo. */
 export async function answerSummary(

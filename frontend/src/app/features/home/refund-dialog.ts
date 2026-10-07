@@ -86,7 +86,9 @@ export interface RefundDialogData {
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Estornar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
+          Estornar
+        </button>
       </mat-dialog-actions>
     </form>
   `,
@@ -149,7 +151,9 @@ export class RefundDialog implements OnInit {
         { label: 'Compra', value: this.data.description },
         { label: 'Valor do estorno', value: formatCents(body.amount) },
         { label: 'Data do estorno', value: formatDate(body.refund_date) },
-        ...(this.data.planId ? [{ label: 'Estratégia', value: refundStrategyLabel(v.strategy) }] : []),
+        ...(this.data.planId
+          ? [{ label: 'Estratégia', value: refundStrategyLabel(v.strategy) }]
+          : []),
       ],
       confirmLabel: 'Confirmar',
     }).subscribe((confirmed) => {

@@ -13,6 +13,8 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | 4 | Frontend |
 | 5 | Validação transversal |
 
+Contas e isolamento por usuário (PD-40): T-60..T-68.
+
 ## Ordem sugerida
 
 `T-01 → T-04 → T-05…T-14 → T-15 → T-16 → T-17 → … → T-34`, com o frontend (T-35 em diante) avançando em paralelo assim que cada API existir. As Fases 1 e 2 são independentes entre si.
@@ -80,6 +82,15 @@ Tasks de implementação derivadas da documentação SDD (`docs/`). Cada task é
 | [T-57](T-57-api-delete.md) | Apagar lançamentos e compras parceladas (backend) | 3 | T-26, T-27, T-31, T-53 | Concluída |
 | [T-58](T-58-ui-delete.md) | Apagar lançamentos e compras parceladas (frontend) | 4 | T-57, T-41 | Concluída |
 | [T-59](T-59-ui-home-card-panels-filters.md) | Home: painéis por cartão e filtros | 4 | T-39, T-41 | Concluída |
+| [T-60](T-60-registro-pd40.md) | Registrar a PD-40 (contas e dados por usuário) | 0 | — | Concluída |
+| [T-61](T-61-api-auth.md) | API de autenticação | 3 | T-60 | Concluída |
+| [T-62](T-62-tenancy.md) | Dados separados por usuário | 3 | T-61 | Concluída |
+| [T-63](T-63-tenancy-tests.md) | Testes de isolamento entre usuários | 5 | T-62 | Concluída |
+| [T-64](T-64-api-account.md) | Minha conta (backend) | 3 | T-62 | Concluída |
+| [T-65](T-65-ui-auth-core.md) | Núcleo de autenticação (frontend) | 4 | T-61 | Concluída |
+| [T-66](T-66-ui-login-register.md) | Telas de login e cadastro | 4 | T-65 | Concluída |
+| [T-67](T-67-ui-account.md) | Tela Minha conta | 4 | T-64, T-66 | Concluída |
+| [T-68](T-68-bruno-auth.md) | Collection do Bruno com autenticação | 5 | T-64 | Concluída |
 
 ## Como usar
 

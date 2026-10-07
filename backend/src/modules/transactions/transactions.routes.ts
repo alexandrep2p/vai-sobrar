@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import {
   asyncHandler,
   descriptionSchema,
@@ -56,12 +56,13 @@ const listQuery = z.object({
   payment_method_id: uuidSchema.optional(),
 });
 
-export const transactionsRouter = (ctx: AppContext): Router => {
+export const transactionsRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const q = listQuery.parse(req.query);
       res.json({
         data: await listTransactions(ctx, {
@@ -78,6 +79,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.get(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await getTransaction(ctx, id));
     }),
@@ -86,6 +88,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.post(
     '/',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const b = createBody.parse(req.body);
       const result = await createTransaction(ctx, {
         description: b.description,
@@ -104,6 +107,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const b = updateBody.parse(req.body);
       res.json(
@@ -122,6 +126,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/pay',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const { paid_at } = payBody.parse(req.body);
       res.json(await payTransaction(ctx, id, paid_at));
@@ -131,6 +136,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/unpay',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await unpayTransaction(ctx, id));
     }),
@@ -139,6 +145,7 @@ export const transactionsRouter = (ctx: AppContext): Router => {
   router.delete(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       await deleteTransaction(ctx, id);
       res.status(204).end();

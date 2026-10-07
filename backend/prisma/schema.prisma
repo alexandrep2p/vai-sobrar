@@ -89,17 +89,24 @@ enum RefundStrategy {
 
 model FinancialPeriod {
   id             String                @id @default(uuid()) @db.Uuid
-  referenceMonth String                @unique @map("reference_month") @db.Char(7)
+  // Dono do registro (PD-40).
+  userId         String                @map("user_id") @db.Uuid
+  user           User                  @relation(fields: [userId], references: [id])
+  referenceMonth String                @map("reference_month") @db.Char(7)
   status         FinancialPeriodStatus @default(OPEN)
   closedAt       DateTime?             @map("closed_at") @db.Timestamptz(3)
   createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  @@unique([userId, referenceMonth])
   @@map("financial_periods")
 }
 
 model Category {
   id           String        @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId       String        @map("user_id") @db.Uuid
+  user         User          @relation(fields: [userId], references: [id])
   name         String        @db.VarChar(100)
   type         CategoryType
   active       Boolean       @default(true)
@@ -108,11 +115,15 @@ model Category {
   transactions Transaction[]
   recurrences  Recurrence[]
 
+  @@index([userId])
   @@map("categories")
 }
 
 model PaymentMethod {
   id           String              @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId       String              @map("user_id") @db.Uuid
+  user         User                @relation(fields: [userId], references: [id])
   name         String              @db.VarChar(100)
   source       PaymentMethodSource
   kind         PaymentMethodKind   @default(STANDARD)
@@ -124,11 +135,15 @@ model PaymentMethod {
   recurrences  Recurrence[]
   paidInvoices Invoice[]           @relation("InvoicePaymentMethod")
 
+  @@index([userId])
   @@map("payment_methods")
 }
 
 model CreditCard {
   id               String            @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId           String            @map("user_id") @db.Uuid
+  user             User              @relation(fields: [userId], references: [id])
   paymentMethodId  String            @unique @map("payment_method_id") @db.Uuid
   bestPurchaseDay  Int               @map("best_purchase_day") @db.SmallInt
   dueDay           Int               @map("due_day") @db.SmallInt
@@ -138,11 +153,15 @@ model CreditCard {
   invoices         Invoice[]
   installmentPlans InstallmentPlan[]
 
+  @@index([userId])
   @@map("credit_cards")
 }
 
 model Invoice {
   id                           String             @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId                       String             @map("user_id") @db.Uuid
+  user                         User               @relation(fields: [userId], references: [id])
   creditCardId                 String             @map("credit_card_id") @db.Uuid
   referenceMonth               String             @map("reference_month") @db.Char(7)
   closingDate                  DateTime           @map("closing_date") @db.Date
@@ -163,11 +182,15 @@ model Invoice {
 
   @@unique([creditCardId, referenceMonth])
   @@index([creditTransferredToInvoiceId])
+  @@index([userId, referenceMonth])
   @@map("invoices")
 }
 
 model Transaction {
   id                String             @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId            String             @map("user_id") @db.Uuid
+  user              User               @relation(fields: [userId], references: [id])
   description       String             @db.VarChar(200)
   amount            Int
   financialMonth    String             @map("financial_month") @db.Char(7)
@@ -193,7 +216,7 @@ model Transaction {
 
   // Nulos são distintos no PostgreSQL: a unicidade só vale para ocorrências de recorrência.
   @@unique([recurrenceId, occurrenceMonth])
-  @@index([financialMonth])
+  @@index([userId, financialMonth])
   @@index([invoiceId])
   @@index([categoryId])
   @@index([paymentMethodId])
@@ -202,6 +225,9 @@ model Transaction {
 
 model InstallmentPlan {
   id               String        @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId           String        @map("user_id") @db.Uuid
+  user             User          @relation(fields: [userId], references: [id])
   creditCardId     String        @map("credit_card_id") @db.Uuid
   totalAmount      Int           @map("total_amount")
   installmentCount Int           @map("installment_count") @db.SmallInt
@@ -213,11 +239,15 @@ model InstallmentPlan {
   refunds          Refund[]
 
   @@index([creditCardId])
+  @@index([userId])
   @@map("installment_plans")
 }
 
 model Installment {
   id                String          @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId            String          @map("user_id") @db.Uuid
+  user              User            @relation(fields: [userId], references: [id])
   installmentPlanId String          @map("installment_plan_id") @db.Uuid
   transactionId     String          @unique @map("transaction_id") @db.Uuid
   number            Int             @db.SmallInt
@@ -226,11 +256,15 @@ model Installment {
   transaction       Transaction     @relation(fields: [transactionId], references: [id])
 
   @@unique([installmentPlanId, number])
+  @@index([userId])
   @@map("installments")
 }
 
 model Recurrence {
   id              String                @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId          String                @map("user_id") @db.Uuid
+  user            User                  @relation(fields: [userId], references: [id])
   description     String                @db.VarChar(200)
   amount          Int
   categoryId      String                @map("category_id") @db.Uuid
@@ -254,22 +288,30 @@ model Recurrence {
 
   @@index([categoryId])
   @@index([paymentMethodId])
+  @@index([userId])
   @@map("recurrences")
 }
 
 model RecurrenceException {
   id              String     @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId          String     @map("user_id") @db.Uuid
+  user            User       @relation(fields: [userId], references: [id])
   recurrenceId    String     @map("recurrence_id") @db.Uuid
   occurrenceMonth String     @map("occurrence_month") @db.Char(7)
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   recurrence      Recurrence @relation(fields: [recurrenceId], references: [id])
 
   @@unique([recurrenceId, occurrenceMonth])
+  @@index([userId])
   @@map("recurrence_exceptions")
 }
 
 model Refund {
   id                String             @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId            String             @map("user_id") @db.Uuid
+  user              User               @relation(fields: [userId], references: [id])
   transactionId     String?            @map("transaction_id") @db.Uuid
   installmentPlanId String?            @map("installment_plan_id") @db.Uuid
   amount            Int
@@ -282,11 +324,15 @@ model Refund {
 
   @@index([transactionId])
   @@index([installmentPlanId])
+  @@index([userId])
   @@map("refunds")
 }
 
 model RefundAllocation {
   id            String      @id @default(uuid()) @db.Uuid
+  // Dono do registro (PD-40).
+  userId        String      @map("user_id") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id])
   refundId      String      @map("refund_id") @db.Uuid
   transactionId String      @map("transaction_id") @db.Uuid
   amount        Int
@@ -299,7 +345,51 @@ model RefundAllocation {
   @@index([refundId])
   @@index([transactionId])
   @@index([invoiceId])
+  @@index([userId])
   @@map("refund_allocations")
+}
+
+// ---------- Contas (PD-40, auth.md) ----------
+// Unicidade de email/username sem diferenciar maiúsculas e CHECK do username vivem em SQL
+// (migration *_auth_users_sessions).
+
+model User {
+  id                   String                @id @default(uuid()) @db.Uuid
+  name                 String                @db.VarChar(100)
+  username             String                @db.VarChar(30)
+  // Gravado em minúsculas.
+  email                String                @db.VarChar(254)
+  passwordHash         String                @map("password_hash")
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sessions             Session[]
+  financialPeriods     FinancialPeriod[]
+  categories           Category[]
+  paymentMethods       PaymentMethod[]
+  creditCards          CreditCard[]
+  invoices             Invoice[]
+  transactions         Transaction[]
+  installmentPlans     InstallmentPlan[]
+  installments         Installment[]
+  recurrences          Recurrence[]
+  recurrenceExceptions RecurrenceException[]
+  refunds              Refund[]
+  refundAllocations    RefundAllocation[]
+
+  @@map("users")
+}
+
+// Sessão de login: o cookie leva o token; aqui fica somente o SHA-256 dele.
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @unique @map("token_hash") @db.Char(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 // Estado técnico de rotinas (ex.: marca d'água da geração de ocorrências); não é entidade de domínio.

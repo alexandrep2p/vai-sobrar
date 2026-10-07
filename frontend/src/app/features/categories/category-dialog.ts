@@ -46,7 +46,9 @@ import { categoryTypeLabel, type CategoryType } from '../../shared/labels/labels
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
+          Salvar
+        </button>
       </mat-dialog-actions>
     </form>
   `,

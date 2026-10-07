@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import { asyncHandler, yearMonthSchema } from '../../shared/http.js';
 import { closeMonth } from './close-month.service.js';
 import { getPeriodState } from './periods.service.js';
 
 const monthParams = z.object({ month: yearMonthSchema });
 
-export const periodsRouter = (ctx: AppContext): Router => {
+export const periodsRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/:month',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { month } = monthParams.parse(req.params);
       res.json(await getPeriodState(ctx, month));
     }),
@@ -21,6 +22,7 @@ export const periodsRouter = (ctx: AppContext): Router => {
   router.post(
     '/:month/close',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { month } = monthParams.parse(req.params);
       res.json(await closeMonth(ctx, month));
     }),

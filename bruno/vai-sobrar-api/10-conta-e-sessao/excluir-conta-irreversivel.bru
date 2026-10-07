@@ -1,0 +1,25 @@
+meta {
+  name: Excluir conta (IRREVERSIVEL)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/auth/me
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "password": "{{newPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  ATENÇÃO: apaga definitivamente a conta desta execução e todos os dados dela. Para explorar os dados criados pela collection, pare o Runner antes desta pasta.
+}

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import {
   asyncHandler,
   idParams,
@@ -51,12 +51,13 @@ const createBody = z
     }
   });
 
-export const refundsRouter = (ctx: AppContext): Router => {
+export const refundsRouter = (): Router => {
   const router = Router();
 
   router.post(
     '/refunds',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const b = createBody.parse(req.body);
       res.status(201).json(
         await createRefund(ctx, {
@@ -73,6 +74,7 @@ export const refundsRouter = (ctx: AppContext): Router => {
   router.get(
     '/refunds/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await getRefund(ctx, id));
     }),
@@ -81,6 +83,7 @@ export const refundsRouter = (ctx: AppContext): Router => {
   router.get(
     '/transactions/:id/refunds',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await listTransactionRefunds(ctx, id));
     }),
@@ -89,6 +92,7 @@ export const refundsRouter = (ctx: AppContext): Router => {
   router.get(
     '/installment-plans/:id/refunds',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await listPlanRefunds(ctx, id));
     }),

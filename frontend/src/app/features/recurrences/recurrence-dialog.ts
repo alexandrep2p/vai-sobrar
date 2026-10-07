@@ -123,7 +123,13 @@ import { confirmSummary } from '../../shared/ui/summary-dialog';
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="loading() || submitting() || form.invalid">Salvar</button>
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="loading() || submitting() || form.invalid"
+        >
+          Salvar
+        </button>
       </mat-dialog-actions>
     </form>
   `,

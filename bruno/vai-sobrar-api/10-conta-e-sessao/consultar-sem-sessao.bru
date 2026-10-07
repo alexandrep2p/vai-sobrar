@@ -1,0 +1,19 @@
+meta {
+  name: Consultar sem sessao (401)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/categories
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Depois de sair, o cookie antigo não vale mais: `UNAUTHENTICATED`.
+}

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import {
   asyncHandler,
   dayOfMonthSchema,
@@ -65,12 +65,13 @@ const occurrenceEditBody = z
 const occurrenceParams = z.object({ id: uuidSchema, month: yearMonthSchema });
 const payBody = z.object({ paid_at: localDateSchema }).strict();
 
-export const recurrencesRouter = (ctx: AppContext): Router => {
+export const recurrencesRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       res.json({ data: await listRecurrences(ctx) });
     }),
   );
@@ -78,6 +79,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.get(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await getRecurrence(ctx, id));
     }),
@@ -86,6 +88,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const b = createBody.parse(req.body);
       res.status(201).json(
         await createRecurrence(ctx, {
@@ -104,6 +107,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const b = updateBody.parse(req.body);
       res.json(
@@ -122,6 +126,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/pause',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const b = pauseBody.parse(req.body);
       res.json(
@@ -133,6 +138,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/resume',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await resumeRecurrence(ctx, id));
     }),
@@ -141,6 +147,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/cancel',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await cancelRecurrence(ctx, id));
     }),
@@ -149,6 +156,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/occurrences/:month/skip',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id, month } = occurrenceParams.parse(req.params);
       res.json(await skipOccurrence(ctx, id, month));
     }),
@@ -157,6 +165,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id/occurrences/:month',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id, month } = occurrenceParams.parse(req.params);
       const b = occurrenceEditBody.parse(req.body);
       res.json(
@@ -174,6 +183,7 @@ export const recurrencesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/occurrences/:month/pay',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id, month } = occurrenceParams.parse(req.params);
       const { paid_at } = payBody.parse(req.body);
       res.json(await payOccurrence(ctx, id, month, paid_at));

@@ -1,10 +1,24 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './core/auth/auth.guards';
 import { ShellComponent } from './core/layout/shell';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    title: 'Entrar · Vai Sobrar',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'cadastro',
+    title: 'Criar conta · Vai Sobrar',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/register.page').then((m) => m.RegisterPage),
+  },
+  {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       {
@@ -43,6 +57,11 @@ export const routes: Routes = [
         title: 'Cartões · Vai Sobrar',
         loadComponent: () =>
           import('./features/credit-cards/credit-cards.page').then((m) => m.CreditCardsPage),
+      },
+      {
+        path: 'conta',
+        title: 'Minha conta · Vai Sobrar',
+        loadComponent: () => import('./features/account/account.page').then((m) => m.AccountPage),
       },
       { path: '**', redirectTo: 'home' },
     ],

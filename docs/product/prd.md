@@ -33,7 +33,7 @@ O planejamento considera entradas, despesas, lançamentos em aberto e pagos, rec
 * Dados históricos são preservados: entidades usadas são desativadas, canceladas ou estornadas, não apagadas.
 * Fechar um mês é uma ação explícita, cronológica e irreversível.
 * O sistema não toma decisões implícitas que alterem o planejamento sem regra configurada pelo usuário.
-* O MVP é para um único usuário.
+* Cada usuário tem uma conta e vê somente os próprios dados (PD-40).
 
 ---
 
@@ -63,6 +63,14 @@ Aluguel    − R$ 1.500   Pago
 Internet   − R$   120   Em aberto
 Saldo previsto = R$ 6.880
 ```
+
+---
+
+### 4.3 Contas e acesso
+
+O usuário cria uma conta (nome, username, email e senha), entra com email e senha e permanece conectado até sair. Cada usuário vê e altera apenas os próprios dados. Em "Minha conta", o usuário edita nome e username, troca a senha e pode excluir a conta com todos os dados.
+
+Detalhes: `docs/specs/auth.md` (PD-40).
 
 ---
 
@@ -202,7 +210,7 @@ Não há exclusão de categorias, métodos, cartões, faturas nem meses fechados
 
 ## 15. Fora do escopo do MVP
 
-Saldo bancário realizado, conciliação, importação de extratos, Open Banking, sincronização bancária, múltiplas contas, transferências, orçamento por categoria, investimentos detalhados, gráficos avançados, notificações, juros e multas de cartão, limite de crédito, antecipação ou renegociação de parcelas, alteração do número de parcelas, pagamento parcial de fatura, multiusuário e autenticação.
+Saldo bancário realizado, conciliação, importação de extratos, Open Banking, sincronização bancária, múltiplas contas, transferências, orçamento por categoria, investimentos detalhados, gráficos avançados, notificações, juros e multas de cartão, limite de crédito, antecipação ou renegociação de parcelas, alteração do número de parcelas, pagamento parcial de fatura, recuperação de senha, 2FA, papéis e permissões, compartilhamento de dados entre usuários.
 
 ---
 

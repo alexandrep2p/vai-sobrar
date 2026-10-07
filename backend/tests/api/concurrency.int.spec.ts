@@ -180,7 +180,7 @@ describe('proteção contra concorrência (T-34, architecture §20)', () => {
     const pending = await prisma.transaction.count({
       where: { financialMonth: '2027-10', status: 'PENDING' },
     });
-    const period = await prisma.financialPeriod.findUnique({
+    const period = await prisma.financialPeriod.findFirst({
       where: { referenceMonth: '2027-10' },
     });
     if (closeRes.status === 200) {
@@ -227,7 +227,7 @@ describe('proteção contra concorrência (T-34, architecture §20)', () => {
       start_date: '2027-10-01',
     });
     env.clock.set(parseLocalDate('2027-10-25'));
-    const ctx = { prisma, clock: env.clock };
+    const { ctx } = env;
     await Promise.all([
       ...Array.from({ length: 4 }, () => generateDueOccurrences(ctx)),
       ...Array.from({ length: 4 }, () => generateDueOccurrences(ctx, { fromToday: true })),
@@ -246,7 +246,7 @@ describe('proteção contra concorrência (T-34, architecture §20)', () => {
       start_date: '2027-10-01',
     });
     env.clock.set(parseLocalDate('2027-10-25'));
-    const ctx = { prisma, clock: env.clock };
+    const { ctx } = env;
     await Promise.all([
       api.post(`/api/recurrences/${rec.body.id}/occurrences/2027-10/skip`),
       generateDueOccurrences(ctx, { fromToday: true }),

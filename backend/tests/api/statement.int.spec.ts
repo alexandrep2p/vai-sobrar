@@ -243,7 +243,12 @@ describe('inclusão por mês financeiro', () => {
     expect(paid.totals).toEqual(before.totals);
     expect(paid.totals).toEqual({ incomes: 100000, expenses: 30000, balance: 70000 });
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-08', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-08',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     expect((await statement('2027-08')).month.status).toBe('CLOSED');
   });

@@ -31,6 +31,7 @@ Refund ──► Transaction | InstallmentPlan
 * Plano de parcelamento (`InstallmentPlan`) é metadado da compra parcelada; não gera transação-mãe.
 * Recorrência (`Recurrence`) é regra; ocorrências são lançamentos.
 * Estorno (`Refund`) é crédito sobre compra de cartão; não é lançamento e não tem categoria.
+* Toda entidade acima pertence a um usuário (`User`, PD-40). Os dados de um usuário nunca são vistos nem alterados por outro, e todas as regras (unicidade de nomes, meses, fechamento) valem dentro dos dados de cada usuário.
 
 ---
 
@@ -249,6 +250,23 @@ created_at
 * Mês financeiro da alocação = `reference_month` da fatura de reconhecimento.
 * Soma das alocações = `Refund.amount`; nenhuma alocação ultrapassa o saldo estornável do lançamento-alvo.
 
+### 3.13 User — conta do usuário (PD-40)
+
+```text
+User
+├── id
+├── name        (1–100, ao menos 2 palavras)
+├── username    (3–30, A–Z a–z 0–9 . -; único sem diferenciar maiúsculas)
+├── email       (único sem diferenciar maiúsculas; imutável)
+├── password_hash
+├── created_at
+└── updated_at
+```
+
+* Todas as entidades das seções 3.1 a 3.12 têm `user_id` e pertencem a exatamente um usuário.
+* A sessão de login (`Session`) é registro técnico, sem efeito financeiro (`specs/auth.md`).
+* Excluir a conta apaga o usuário e todos os dados dele (`specs/auth.md`).
+
 ---
 
 ## 4. Relacionamentos
@@ -336,9 +354,10 @@ Não existem: `REFUND` como origem, tipo de estorno `TOTAL`/`PARCIAL` persistido
 12. **Configuração futura** (categoria, método, cartão, recorrência) nunca reescreve histórico.
 13. **Nada é excluído** se comprometer o histórico: categorias, métodos, cartões, faturas e meses fechados não têm exclusão. Exclusão física existe, de forma provisória (PD-38), para lançamentos, compras de cartão e compras parceladas inteiras em mês aberto e fatura não `PAID` (com seus estornos), e para ocorrências de recorrência (substituídas por `RecurrenceException`). No futuro será privilégio de super admin.
 14. **Valores monetários** em centavos inteiros.
+15. **Isolamento por usuário**: toda entidade pertence a um usuário; um usuário não lê, referencia nem altera dados de outro (PD-40). A exclusão da conta apaga todos os dados do usuário, exceção explícita ao invariante 13.
 
 ---
 
 ## 7. Fora do modelo do MVP
 
-Saldo bancário realizado, contas bancárias, transferências, conciliação, orçamento por categoria, limite de crédito, juros e encargos, pagamento parcial de fatura, multiusuário.
+Saldo bancário realizado, contas bancárias, transferências, conciliação, orçamento por categoria, limite de crédito, juros e encargos, pagamento parcial de fatura, papéis e compartilhamento de dados entre usuários.

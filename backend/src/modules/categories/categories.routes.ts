@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import { asyncHandler, idParams, nameSchema } from '../../shared/http.js';
 import {
   createCategory,
@@ -18,12 +18,13 @@ const updateBody = z
     message: 'Informe name e/ou type.',
   });
 
-export const categoriesRouter = (ctx: AppContext): Router => {
+export const categoriesRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       res.json({ data: await listCategories(ctx) });
     }),
   );
@@ -31,6 +32,7 @@ export const categoriesRouter = (ctx: AppContext): Router => {
   router.post(
     '/',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const body = createBody.parse(req.body);
       res.status(201).json(await createCategory(ctx, body));
     }),
@@ -39,6 +41,7 @@ export const categoriesRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const body = updateBody.parse(req.body);
       res.json(await updateCategory(ctx, id, body));
@@ -48,6 +51,7 @@ export const categoriesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/activate',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await setCategoryActive(ctx, id, true));
     }),
@@ -56,6 +60,7 @@ export const categoriesRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/deactivate',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await setCategoryActive(ctx, id, false));
     }),

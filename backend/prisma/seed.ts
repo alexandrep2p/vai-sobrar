@@ -3,8 +3,14 @@ import { seedSystemMethods } from '../src/shared/seed.js';
 
 const prisma = new PrismaClient();
 
-seedSystemMethods(prisma)
-  .then(() => console.log('Seed concluído: métodos de pagamento do sistema.'))
+/** Garante os métodos do sistema de cada conta existente (o cadastro já os cria — PD-40). */
+const run = async (): Promise<void> => {
+  const users = await prisma.user.findMany({ select: { id: true } });
+  for (const { id } of users) await seedSystemMethods(prisma, id);
+  console.log(`Seed concluído: métodos do sistema de ${users.length} conta(s).`);
+};
+
+run()
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;

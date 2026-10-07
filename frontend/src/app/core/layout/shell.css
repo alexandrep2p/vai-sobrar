@@ -19,6 +19,22 @@
   text-decoration: none;
 }
 
+.account {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1rem 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.account-name {
+  font: var(--mat-sys-title-small);
+}
+
+.account-username {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .topbar {
   position: sticky;
   top: 0;

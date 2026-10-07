@@ -62,7 +62,9 @@ export interface PayDialogResult {
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="form.invalid">{{ data.confirmLabel }}</button>
+        <button mat-flat-button type="submit" [disabled]="form.invalid">
+          {{ data.confirmLabel }}
+        </button>
       </mat-dialog-actions>
     </form>
   `,

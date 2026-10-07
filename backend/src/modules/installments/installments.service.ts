@@ -25,6 +25,7 @@ import {
   updateTransactionInTx,
 } from '../transactions/transactions.service.js';
 import { transactionInclude } from '../transactions/transaction-dto.js';
+import { tenantIdOf } from '../../shared/tenant.js';
 
 const planInclude = {
   installments: {
@@ -121,6 +122,7 @@ export const createInstallmentPurchase = async (
     await lockCard(tx, input.card.id);
     const created = await tx.installmentPlan.create({
       data: {
+        userId: ctx.userId,
         creditCardId: input.card.id,
         totalAmount: input.totalAmount,
         installmentCount: input.installmentCount,
@@ -153,8 +155,10 @@ const insertInstallments = async (
         : await invoiceForCycle(tx, input.card, addMonths(referenceMonth, 1), today);
     referenceMonth = invoice.referenceMonth as YearMonth;
 
+    const userId = tenantIdOf(tx);
     const transaction = await tx.transaction.create({
       data: {
+        userId,
         description: input.description,
         amount,
         financialMonth: invoice.referenceMonth,
@@ -168,7 +172,12 @@ const insertInstallments = async (
       },
     });
     await tx.installment.create({
-      data: { installmentPlanId: planId, transactionId: transaction.id, number: index + 1 },
+      data: {
+        userId,
+        installmentPlanId: planId,
+        transactionId: transaction.id,
+        number: index + 1,
+      },
     });
   }
 };

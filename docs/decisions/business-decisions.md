@@ -213,7 +213,8 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Fonte:** `categories.md` §4.1.
 
 ### PD-22 — Usuário único
-* **Decisão:** o MVP é single-user, sem autenticação, autorização, multiusuário ou tenancy. `user_id` pode existir no futuro.
+* **Status:** Substituída pela PD-40.
+* **Decisão (original):** o MVP é single-user, sem autenticação, autorização, multiusuário ou tenancy. `user_id` pode existir no futuro.
 * **Fonte:** `architecture.md` §22.
 
 ### PD-23 — Fatura `CLOSED` não recebe crédito de estorno (Q-01)
@@ -341,6 +342,7 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 ### PD-38 — Apagar lançamentos e compras parceladas (provisório)
 * **Status:** Vigente, **provisório**. Substitui, para lançamentos e compra parcelada, as regras de não exclusão (RN-TRA-14/15, RN-CAR-15, RN-PAR-12, RN-REC-12 e a decisão 13 do modelo de domínio).
 * **Decisão:** enquanto o sistema não tem usuários, o usuário pode **apagar** (exclusão física, sem rastro) lançamentos e compras parceladas. Quando existirem usuários e papéis, apagar passa a ser privilégio de **super admin**, com auditoria; isso não faz parte desta decisão.
+* **Nota (PD-40):** com contas de usuário e ainda sem papéis, cada usuário continua podendo apagar os **próprios** lançamentos e compras parceladas. Papéis e super admin ficam para o futuro.
 * **Regra:**
   * **o que se apaga:** lançamento `MANUAL`; ocorrência gerada de recorrência (método comum ou cartão, `PENDING` ou `PAID`); compra à vista no cartão; compra parcelada **somente inteira** (todas as parcelas de uma vez). Parcela isolada não é apagada;
   * **travas:** mês financeiro fechado (do lançamento, de qualquer parcela ou de crédito de estorno afetado) → `PERIOD_CLOSED`; fatura `PAID` (do lançamento, de qualquer parcela ou que recebeu crédito de estorno) → `INVOICE_ALREADY_PAID`;
@@ -361,6 +363,26 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
   * os totais do topo (Entradas, Saídas, Saldo previsto) continuam sendo os do mês inteiro; com filtro ativo, mostra-se à parte "Filtrados: N itens · total";
   * as ações do item (editar, pagar, estornar, apagar etc.) são as mesmas dentro e fora dos painéis.
 * **Fonte:** `home.md` §3.2 e §7.
+
+### PD-40 — Contas de usuário e dados separados por usuário
+* **Status:** Vigente. Substitui a PD-22.
+* **Decisão:** o sistema passa a ter contas. Só um usuário autenticado acessa a aplicação, e cada usuário vê e altera **apenas os próprios dados**.
+* **Regra:**
+  * **cadastro:** nome, username, email, senha e confirmação da senha. Não há 2FA nem confirmação por email ou SMS. Depois do cadastro, o usuário vai para a tela de login (não entra automaticamente);
+  * **nome:** 1 a 100 caracteres, com no mínimo 2 palavras ("Carlos Abreu" é aceito, "Carlos" não). Qualquer caractere é aceito; espaços no início e no fim são removidos e espaços repetidos viram um só;
+  * **username:** 3 a 30 caracteres, apenas letras sem acento (`A–Z`, `a–z`), números, `.` e `-`. Único sem diferenciar maiúsculas ("Carlos.Abreu" impede "carlos.abreu"); guarda a grafia digitada;
+  * **email:** formato válido, único sem diferenciar maiúsculas; não pode ser alterado depois do cadastro;
+  * **senha:** 8 a 128 caracteres, com ao menos uma letra, um número e um caractere especial da lista `!@#$%^&*()_+-=[]{};':"\|,.<>/?~` e acento grave. Espaço e letras acentuadas são aceitos, mas não contam como especial. Abaixo do campo, a tela mostra quais requisitos já foram atendidos;
+  * **login:** por email e senha. Erro genérico "Email ou senha inválidos", sem revelar qual dos dois está errado;
+  * **sessão:** não expira por tempo; termina somente com "Sair". Cada dispositivo tem a sua sessão, e várias podem estar ativas ao mesmo tempo; "Sair" encerra apenas a sessão atual;
+  * **isolamento:** categorias, métodos de pagamento, cartões, faturas, lançamentos, parcelamentos, recorrências, estornos e meses (inclusive o fechamento) pertencem a um usuário. Nomes únicos (categoria, método) passam a ser únicos **por usuário**. Cada conta recebe os próprios métodos do sistema (PIX, Dinheiro, Débito) ao ser criada;
+  * **trocar senha:** exige a senha atual e a nova (com confirmação, mesmas regras). Encerra as **outras** sessões do usuário; a atual continua;
+  * **editar perfil:** apenas nome e username, com as mesmas regras e a mesma unicidade do cadastro. Não exige senha;
+  * **excluir conta:** exige a senha atual e uma confirmação explícita de irreversibilidade. Apaga definitivamente o usuário, as sessões e todos os dados financeiros; o email e o username ficam livres para novo cadastro;
+  * **dados existentes:** os dados gravados antes desta decisão (ambiente de desenvolvimento) são descartados.
+* **Fora de escopo:** recuperação de senha (depende de envio de email), 2FA, papéis e permissões, compartilhamento de dados entre usuários.
+* **Exemplo:** Ana cadastra o cartão "Nubank" e o lançamento "Mercado R$ 200". Bruno entra com a conta dele e não vê nenhum dos dois; ele também pode criar o próprio cartão "Nubank". Se Ana fechar setembro, o setembro de Bruno continua aberto.
+* **Fonte:** `auth.md`; `architecture.md` §22.
 
 ---
 

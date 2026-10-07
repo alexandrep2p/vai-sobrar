@@ -120,7 +120,12 @@ describe('compra à vista no cartão (T-22)', () => {
   it('compra tardia também pula mês financeiro fechado', async () => {
     const { methodId } = await setup('2027-10-20');
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-10', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-10',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const res = await buy(methodId, '2027-10-05');
     expect(res.body.financial_month).toBe('2027-11');
@@ -405,7 +410,12 @@ describe('pagar fatura (T-25)', () => {
       'INVALID_PAYMENT_DATE',
     );
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-09', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-09',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     expect((await payInvoice(a.body.invoice.id, '2027-09-30')).body.error.code).toBe(
       'INVALID_PAYMENT_DATE',
@@ -425,7 +435,12 @@ describe('pagar fatura (T-25)', () => {
     const { methodId } = await setup('2027-10-20');
     const a = await buy(methodId, '2027-10-02');
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-10', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-10',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     expect((await payInvoice(a.body.invoice.id, '2027-10-12')).body.error.code).toBe(
       'PERIOD_CLOSED',
@@ -455,6 +470,7 @@ describe('pagar fatura (T-25)', () => {
     const app = createApp({ prisma: failing, clock: env.clock });
     const res = await request(app)
       .post(`/api/invoices/${a.body.invoice.id}/pay`)
+      .set('Cookie', env.cookie)
       .send({ paid_at: '2027-10-12', payment_method_id: pix });
     expect(res.status).toBe(500);
     const tx = await prisma.transaction.findFirstOrThrow();
@@ -629,7 +645,12 @@ describe('compra parcelada (T-26)', () => {
     const planId = res.body.installment_plan.id as string;
     // mês da última parcela fechado
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-12', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-12',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const closedParcel = await api.put(`/api/installment-plans/${planId}`, { description: 'X' });
     expect(closedParcel.status).toBe(422);
@@ -660,7 +681,12 @@ describe('compra parcelada (T-26)', () => {
   it('criação atômica: se uma parcela falha, nada é criado', async () => {
     const { methodId } = await setup('2027-10-20');
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-12', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-12',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
     expect(res.status).toBe(409);
@@ -848,7 +874,12 @@ describe('edição da compra parcelada (T-55, PD-36)', () => {
     const { methodId } = await setup('2027-10-20');
     const res = await buy(methodId, '2027-10-05', { installment_count: 3, amount: 30000 });
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-12', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-12',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const blocked = await edit(res.body.installment_plan.id, { installment_count: 4 });
     expect(blocked.body.error.code).toBe('PERIOD_CLOSED');
@@ -879,7 +910,12 @@ describe('edição da compra parcelada (T-55, PD-36)', () => {
     const planId = res.body.installment_plan.id as string;
     const before = await plan(planId);
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2028-02', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2028-02',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const failed = await edit(planId, { installment_count: 6 });
     expect(failed.status).toBeGreaterThanOrEqual(400);

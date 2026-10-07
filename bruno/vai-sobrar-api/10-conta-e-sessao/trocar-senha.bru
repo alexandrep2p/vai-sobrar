@@ -1,0 +1,26 @@
+meta {
+  name: Trocar senha
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/me/password
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "current_password": "{{password}}",
+    "new_password": "{{newPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  Exige a senha atual; encerra as outras sessões e mantém a atual.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Editar perfil
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/auth/me
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Usuario Bruno Editado"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

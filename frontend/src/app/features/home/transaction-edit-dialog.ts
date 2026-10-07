@@ -90,7 +90,9 @@ import { editableFields } from './item-actions';
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Salvar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
+          Salvar
+        </button>
       </mat-dialog-actions>
     </form>
   `,
@@ -193,8 +195,10 @@ export class TransactionEditDialog implements OnInit {
     const rows: SummaryRow[] = [{ label: 'Lançamento', value: item.description }];
     const change = (label: string, before: string, after: string) =>
       rows.push({ label, value: `${before} → ${after}` });
-    if ('description' in changes) change('Descrição', item.description, String(changes['description']));
-    if ('amount' in changes) change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
+    if ('description' in changes)
+      change('Descrição', item.description, String(changes['description']));
+    if ('amount' in changes)
+      change('Valor', formatCents(item.amount), formatCents(Number(changes['amount'])));
     if ('due_date' in changes) {
       change(
         'Vencimento',
@@ -203,7 +207,11 @@ export class TransactionEditDialog implements OnInit {
       );
     }
     if ('category_id' in changes) {
-      change('Categoria', item.category.name, name(this.categories(), String(changes['category_id'])));
+      change(
+        'Categoria',
+        item.category.name,
+        name(this.categories(), String(changes['category_id'])),
+      );
     }
     if ('payment_method_id' in changes) {
       change(

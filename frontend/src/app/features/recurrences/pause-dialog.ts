@@ -31,7 +31,9 @@ import { LedgerService } from '../../core/data/ledger.service';
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">Pausar</button>
+        <button mat-flat-button type="submit" [disabled]="submitting() || form.invalid">
+          Pausar
+        </button>
       </mat-dialog-actions>
     </form>
   `,

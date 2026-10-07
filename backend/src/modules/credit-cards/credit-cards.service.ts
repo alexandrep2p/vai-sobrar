@@ -56,17 +56,18 @@ export const getCreditCard = async ({ prisma }: AppContext, id: string): Promise
 
 /** credit-cards.md §3: `PaymentMethod` (CREDIT_CARD, USER, ativo) + `CreditCard` na mesma operação. */
 export const createCreditCard = async (
-  { prisma }: AppContext,
+  { prisma, userId }: AppContext,
   input: { name: string; bestPurchaseDay: number; dueDay: number },
 ): Promise<CreditCardDto> => {
   try {
     const card = await prisma.$transaction(async (tx) => {
       await assertMethodNameAvailable(tx, input.name);
       const method = await tx.paymentMethod.create({
-        data: { name: input.name, source: 'USER', kind: 'CREDIT_CARD', active: true },
+        data: { userId, name: input.name, source: 'USER', kind: 'CREDIT_CARD', active: true },
       });
       return tx.creditCard.create({
         data: {
+          userId,
           paymentMethodId: method.id,
           bestPurchaseDay: input.bestPurchaseDay,
           dueDay: input.dueDay,

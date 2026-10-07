@@ -1,0 +1,30 @@
+meta {
+  name: Entrar com a nova senha
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "bruno-{{runId}}@vaisobrar.test",
+    "password": "{{newPassword}}"
+  }
+}
+
+script:post-response {
+  // Guarda o cookie de sessão (httpOnly) para as próximas requisições (header da collection).
+  const raw = res.getHeader('set-cookie');
+  const list = Array.isArray(raw) ? raw : [raw];
+  const cookie = list.find((c) => c && c.startsWith('vs_session='));
+  if (cookie) bru.setVar('sessionCookie', cookie.split(';')[0]);
+}
+
+assert {
+  res.status: eq 200
+}

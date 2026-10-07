@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { AppContext } from '../../shared/context.js';
+import { ctxOf } from '../../shared/context.js';
 import { asyncHandler, dayOfMonthSchema, idParams, nameSchema } from '../../shared/http.js';
 import {
   createCreditCard,
@@ -27,12 +27,13 @@ const updateBody = z
   .strict()
   .refine((body) => Object.keys(body).length > 0, { message: 'Informe ao menos um campo.' });
 
-export const creditCardsRouter = (ctx: AppContext): Router => {
+export const creditCardsRouter = (): Router => {
   const router = Router();
 
   router.get(
     '/',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       res.json({ data: await listCreditCards(ctx) });
     }),
   );
@@ -40,6 +41,7 @@ export const creditCardsRouter = (ctx: AppContext): Router => {
   router.get(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await getCreditCard(ctx, id));
     }),
@@ -48,6 +50,7 @@ export const creditCardsRouter = (ctx: AppContext): Router => {
   router.post(
     '/',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const body = createBody.parse(req.body);
       res.status(201).json(
         await createCreditCard(ctx, {
@@ -62,6 +65,7 @@ export const creditCardsRouter = (ctx: AppContext): Router => {
   router.put(
     '/:id',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       const body = updateBody.parse(req.body);
       res.json(
@@ -77,6 +81,7 @@ export const creditCardsRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/activate',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await setCreditCardActive(ctx, id, true));
     }),
@@ -85,6 +90,7 @@ export const creditCardsRouter = (ctx: AppContext): Router => {
   router.post(
     '/:id/deactivate',
     asyncHandler(async (req, res) => {
+      const ctx = ctxOf(req);
       const { id } = idParams.parse(req.params);
       res.json(await setCreditCardActive(ctx, id, false));
     }),

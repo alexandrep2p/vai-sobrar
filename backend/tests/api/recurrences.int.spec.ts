@@ -222,7 +222,7 @@ describe('projeção e geração (T-29, T-30)', () => {
     goto('2027-10-10');
     for (let i = 0; i < 3; i += 1) await api.get('/api/transactions');
     const { generateDueOccurrences } = await import('../../src/modules/recurrences/occurrences.js');
-    const ctx = { prisma, clock: env.clock };
+    const { ctx } = env;
     await Promise.all([
       generateDueOccurrences(ctx, { fromToday: true }),
       generateDueOccurrences(ctx, { fromToday: true }),
@@ -330,7 +330,12 @@ describe('projeção e geração (T-29, T-30)', () => {
   it('mês fechado: método comum não projeta nem gera (CA-REC-16)', async () => {
     await createRec({ due_day: 10 });
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-10', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-10',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     expect(await projected('2027-10')).toHaveLength(0);
     goto('2027-10-10');
@@ -565,7 +570,12 @@ describe('ações em ocorrências (T-31)', () => {
     goto('2027-10-05');
     await api.get('/api/transactions'); // gera a ocorrência de outubro
     await prisma.financialPeriod.create({
-      data: { referenceMonth: '2027-10', status: 'CLOSED', closedAt: new Date() },
+      data: {
+        userId: env.userId,
+        referenceMonth: '2027-10',
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
     });
     const base = `/api/recurrences/${rec.body.id}/occurrences/2027-10`;
     expect((await api.post(`${base}/skip`)).body.error.code).toBe(

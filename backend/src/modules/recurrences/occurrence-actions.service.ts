@@ -24,6 +24,7 @@ import {
   generateOccurrenceInTx,
 } from './occurrences.js';
 import { findRecurrenceOrThrow } from './recurrence-store.js';
+import { tenantIdOf } from '../../shared/tenant.js';
 
 const notFound = (): BusinessError =>
   new BusinessError('RECURRENCE_OCCURRENCE_NOT_FOUND', 'Ocorrência não encontrada para o mês.');
@@ -122,7 +123,7 @@ export const skipOccurrence = async (
       if (card) await lockCard(tx, card.id);
     }
     await tx.recurrenceException.create({
-      data: { recurrenceId, occurrenceMonth: month },
+      data: { userId: tenantIdOf(tx), recurrenceId, occurrenceMonth: month },
     });
   }, TRANSACTION_OPTIONS);
   return { recurrence_id: recurrenceId, occurrence_month: month, skipped: true };
