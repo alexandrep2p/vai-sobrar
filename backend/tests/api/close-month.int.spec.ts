@@ -71,7 +71,9 @@ describe('fechamento de mês (T-33)', () => {
   });
 
   it('CA-PER-03: lançamento PENDING impede o fechamento', async () => {
+    goto('2027-09-01');
     await manual('Aluguel', 150000, '2027-09-05');
+    goto('2027-09-30');
     const res = await close('2027-09');
     expect(res.status).toBe(409);
     expect(codeOf(res)).toBe('PERIOD_HAS_PENDING_TRANSACTIONS');
