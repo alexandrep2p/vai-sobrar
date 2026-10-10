@@ -230,8 +230,11 @@ export const createManualTransaction = async (
       'Compras de cartão seguem o fluxo de compra no cartão.',
     );
   }
-  assertWithinRetroactiveWindow(input.dueDate, ctx.clock.today(), 'INVALID_DUE_DATE');
+  const today = ctx.clock.today();
+  assertWithinRetroactiveWindow(input.dueDate, today, 'INVALID_DUE_DATE');
   const month = yearMonthOf(input.dueDate);
+  // PD-42: PIX/Dinheiro/Débito (métodos do sistema) já saíram da conta; data futura segue em aberto.
+  const settled = method.source === 'SYSTEM' && compareLocalDates(input.dueDate, today) <= 0;
 
   const row = await ctx.prisma.$transaction(async (tx) => {
     await lockPeriodsShared(tx);
@@ -245,7 +248,8 @@ export const createManualTransaction = async (
         amount: input.amount,
         financialMonth: month,
         dueDate: toDbDate(input.dueDate),
-        status: 'PENDING',
+        status: settled ? 'PAID' : 'PENDING',
+        paidAt: settled ? toDbDate(input.dueDate) : null,
         origin: 'MANUAL',
         userId: ctx.userId,
         categoryId: input.categoryId,

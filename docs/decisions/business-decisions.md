@@ -392,6 +392,18 @@ Status: **Vigente**, **Ampliada** (vigente, com escopo detalhado por decisão po
 * **Exemplo:** Ana cadastra o cartão "Nubank" e o lançamento "Mercado R$ 200". Bruno entra com a conta dele e não vê nenhum dos dois; ele também pode criar o próprio cartão "Nubank". Se Ana fechar setembro, o setembro de Bruno continua aberto.
 * **Fonte:** `auth.md`; `architecture.md` §22.
 
+
+### PD-42 — Lançamento manual em PIX, Dinheiro ou Débito nasce pago
+* **Status:** Vigente.
+* **Decisão:** o lançamento manual feito com um método do sistema (PIX, Dinheiro, Débito) representa um gasto ou ganho que já aconteceu, então é criado como `PAID`, com `paid_at` igual à data informada.
+* **Regra:**
+  * vale só para lançamento manual (não para recorrência, fatura ou cartão) e só para os métodos do sistema; métodos criados pelo usuário continuam nascendo `PENDING`;
+  * data **futura** fica `PENDING` (a data de pagamento não pode ser futura); data de hoje ou passada (no mês corrente) nasce paga;
+  * o usuário ainda pode voltar para pendente pelo fluxo normal de "desfazer pagamento".
+* **Exemplo:** hoje é dia 10. "Lanche R$ 30" no PIX com data dia 10 entra pago. "Aluguel R$ 1.500" no PIX com data dia 25 fica em aberto.
+* **Fonte:** `transactions.md` §10.
+
+---
 ---
 
 ## 3. Consequências registradas (CD)

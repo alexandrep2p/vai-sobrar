@@ -158,6 +158,7 @@ Hoje 30/09
 * Para compras de cartão, a janela se aplica à `purchase_date` (`credit-cards.md` §9).
 * A criação é rejeitada se o mês financeiro resultante estiver fechado. Para cartão, aplica-se antes a regra de compra tardia (`credit-cards.md` §8.2).
 * As janelas não se aplicam a lançamentos gerados pelo sistema (parcelas e ocorrências).
+* **Situação inicial (PD-42):** lançamento manual com método do sistema (PIX, Dinheiro, Débito) e data de hoje ou passada nasce `PAID`, com `paid_at` = data informada. Data futura, ou método criado pelo usuário, nasce `PENDING`.
 
 ---
 

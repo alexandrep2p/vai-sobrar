@@ -32,19 +32,32 @@ beforeEach(async () => {
 afterAll(() => prisma.$disconnect());
 
 describe('lançamentos manuais — criação (T-21)', () => {
-  it('CA-TRA-01: saída com categoria EXPENSE e método válido', async () => {
+  it('CA-TRA-01: saída com categoria EXPENSE e método válido (PIX já nasce pago, PD-42)', async () => {
     const res = await api.post('/api/transactions', manual());
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({
       description: 'Aluguel',
       amount: 150000,
       type: 'EXPENSE',
-      status: 'PENDING',
+      status: 'PAID',
       origin: 'MANUAL',
       financial_month: '2027-09',
       due_date: '2027-09-15',
-      paid_at: null,
+      paid_at: '2027-09-15',
     });
+  });
+
+  it('PD-42: data de hoje também nasce paga; data futura fica em aberto', async () => {
+    const today = await api.post('/api/transactions', manual({ due_date: '2027-09-30' }));
+    expect(today.body).toMatchObject({ status: 'PAID', paid_at: '2027-09-30' });
+    const future = await api.post('/api/transactions', manual({ due_date: '2027-10-01' }));
+    expect(future.body).toMatchObject({ status: 'PENDING', paid_at: null });
+  });
+
+  it('PD-42: método personalizado do usuário continua em aberto', async () => {
+    const created = await api.post('/api/payment-methods', { name: 'Vale' });
+    const res = await api.post('/api/transactions', manual({ payment_method_id: created.body.id }));
+    expect(res.body).toMatchObject({ status: 'PENDING', paid_at: null });
   });
 
   it('CA-TRA-02: entrada com categoria INCOME', async () => {
@@ -115,7 +128,7 @@ describe('lançamentos manuais — criação (T-21)', () => {
 
 describe('lançamentos manuais — status, pagamento e exclusão (T-21)', () => {
   it('CA-TRA-06/07: pagar antecipado mantém o mês financeiro', async () => {
-    const created = await api.post('/api/transactions', manual());
+    const created = await api.post('/api/transactions', manual({ due_date: '2027-10-15' }));
     const res = await api.post(`/api/transactions/${created.body.id}/pay`, {
       paid_at: '2027-09-08',
     });
@@ -123,7 +136,7 @@ describe('lançamentos manuais — status, pagamento e exclusão (T-21)', () => 
     expect(res.body).toMatchObject({
       status: 'PAID',
       paid_at: '2027-09-08',
-      financial_month: '2027-09',
+      financial_month: '2027-10',
     });
   });
 
@@ -143,7 +156,7 @@ describe('lançamentos manuais — status, pagamento e exclusão (T-21)', () => 
   });
 
   it('CA-TRA-18: paid_at futuro ou em mês fechado é rejeitado', async () => {
-    const created = await api.post('/api/transactions', manual());
+    const created = await api.post('/api/transactions', manual({ due_date: '2027-10-15' }));
     const future = await api.post(`/api/transactions/${created.body.id}/pay`, {
       paid_at: '2027-10-01',
     });
@@ -273,8 +286,7 @@ describe('lançamentos manuais — edição (T-21, T-14)', () => {
 describe('listagem (T-21)', () => {
   it('filtra por mês financeiro, status e origem', async () => {
     await api.post('/api/transactions', manual());
-    const b = await api.post('/api/transactions', manual({ due_date: '2027-10-05' }));
-    await api.post(`/api/transactions/${b.body.id}/pay`, { paid_at: '2027-09-30' });
+    await api.post('/api/transactions', manual({ due_date: '2027-10-05' }));
     expect((await api.get('/api/transactions')).body.data).toHaveLength(2);
     expect((await api.get('/api/transactions?month=2027-10')).body.data).toHaveLength(1);
     expect((await api.get('/api/transactions?status=PAID')).body.data).toHaveLength(1);

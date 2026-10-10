@@ -159,6 +159,7 @@ export class TransactionFormDialog implements OnInit {
   private readonly catalog = inject(CatalogService);
   private readonly dialog = inject(AppDialog);
   private readonly ledger = inject(LedgerService);
+  private readonly clock = inject(Clock);
 
   protected readonly types: CategoryType[] = ['EXPENSE', 'INCOME'];
   protected readonly typeLabel = categoryTypeLabel;
@@ -174,7 +175,7 @@ export class TransactionFormDialog implements OnInit {
     amount: ['', positiveMoney],
     category_id: ['', Validators.required],
     payment_method_id: ['', Validators.required],
-    date: [inject(Clock).today(), Validators.required],
+    date: [this.clock.today(), Validators.required],
     installments: [1, [Validators.required, Validators.min(1), Validators.max(120)]],
   });
 
@@ -285,6 +286,11 @@ export class TransactionFormDialog implements OnInit {
       },
       { label: isCard ? 'Data da compra' : 'Vencimento', value: formatDate(v.date) },
     ];
+    const method = this.methods().find((m) => m.id === v.payment_method_id);
+    if (!isCard && method?.source === 'SYSTEM') {
+      // PD-42: PIX/Dinheiro/Débito já saíram da conta; data futura segue em aberto.
+      rows.push({ label: 'Situação', value: v.date <= this.clock.today() ? 'Pago' : 'Em aberto' });
+    }
     if (isCard) {
       const count = body.installment_count ?? 1;
       rows.push({
